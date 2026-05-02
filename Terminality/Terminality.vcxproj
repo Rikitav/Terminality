@@ -160,6 +160,7 @@
     <ClCompile Include="include\terminality\Layout\ControlBase.ixx" />
     <ClCompile Include="include\terminality\Controls\Border.ixx" />
     <ClCompile Include="include\terminality\Controls\Button.ixx" />
+    <ClCompile Include="include\terminality\Controls\TextBox.ixx" />
     <ClCompile Include="include\terminality\EventSignal.ixx" />
     <ClCompile Include="include\terminality\Layout\DependencyObject.ixx" />
     <ClCompile Include="include\terminality\HostApplication.ixx" />
@@ -178,6 +179,7 @@
     <ClCompile Include="src\Layout\ControlBase.cpp" />
     <ClCompile Include="src\Controls\Border.cpp" />
     <ClCompile Include="src\Controls\Button.cpp" />
+    <ClCompile Include="src\Controls\TextBox.cpp" />
     <ClCompile Include="src\Layout\DependencyObject.cpp" />
     <ClCompile Include="src\HostApplication.cpp" />
     <ClCompile Include="src\FocusManager.cpp" />

@@ -5,6 +5,16 @@ import std.compat;
 
 using namespace terminality;
 
+void VisualTreeNode::PopFocus(Direction direction, InputModifier modifiers)
+{
+	FocusManager::Current().MoveNext(direction, modifiers);
+}
+
+void VisualTreeNode::PushFocus(VisualTreeNode* focused)
+{
+	FocusManager::Current().SetFocused(focused);
+}
+
 VisualTreeNode* VisualTreeNode::GetParent() const
 {
 	return parent_;
@@ -81,7 +91,7 @@ int VisualTreeNode::GetTabIndex() const
 	return tabIndex_;
 }
 
-bool VisualTreeNode::MoveFocusNext(NavigationDirection direction)
+bool VisualTreeNode::MoveFocusNext(Direction direction, InputModifier modifiers)
 {
 	if (!focusable_)
 	{
@@ -120,11 +130,6 @@ void VisualTreeNode::OnDettachedFromTree()
 
 void VisualTreeNode::OnKeyDown(InputEvent input)
 {
-	return;
-}
-
-void VisualTreeNode::OnKeyUp(InputEvent input)
-{
 	switch (input.Key)
 	{
 		case InputKey::None:
@@ -134,32 +139,32 @@ void VisualTreeNode::OnKeyUp(InputEvent input)
 
 		case InputKey::UP:
 		{
-			FocusManager::Current().MoveNext(NavigationDirection::Up);
+			PopFocus(Direction::Up, input.Modifier);
 			break;
 		}
 
 		case InputKey::DOWN:
 		{
-			FocusManager::Current().MoveNext(NavigationDirection::Down);
+			PopFocus(Direction::Down, input.Modifier);
 			break;
 		}
 
 		case InputKey::LEFT:
 		{
-			FocusManager::Current().MoveNext(NavigationDirection::Left);
+			PopFocus(Direction::Left, input.Modifier);
 			break;
 		}
 
 		case InputKey::RIGHT:
 		{
-			FocusManager::Current().MoveNext(NavigationDirection::Right);
+			PopFocus(Direction::Right, input.Modifier);
 			break;
 		}
 
 		case InputKey::TAB:
 		{
-			FocusManager::Current().MoveNext(hasFlag(input.Modifier, InputModifier::Shift)
-				? NavigationDirection::Previous : NavigationDirection::Next);
+			PopFocus(hasFlag(input.Modifier, InputModifier::Shift)
+				? Direction::Previous : Direction::Next, input.Modifier);
 			break;
 		}
 
@@ -169,6 +174,11 @@ void VisualTreeNode::OnKeyUp(InputEvent input)
 			break;
 		}
 	}
+}
+
+void VisualTreeNode::OnKeyUp(InputEvent input)
+{
+	return;
 }
 
 void VisualTreeNode::OnGotFocus()

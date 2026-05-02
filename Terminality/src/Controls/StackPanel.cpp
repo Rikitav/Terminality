@@ -57,7 +57,7 @@ void StackPanel::OnGotFocus()
 		focusedIndex_ = 0;
 
 	VisualTreeNode* focusedControl = contents_[focusedIndex_].get();
-	FocusManager::Current().SetFocused(focusedControl);
+	PushFocus(focusedControl);
 	InvalidateVisual();
 }
 
@@ -67,19 +67,19 @@ void StackPanel::OnLostFocus()
 	InvalidateVisual();
 }
 
-bool StackPanel::MoveFocusNext(NavigationDirection direction)
+bool StackPanel::MoveFocusNext(Direction direction, InputModifier modifiers)
 {
 	if (contents_.empty())
 		return false;
 
 	switch (direction)
 	{
-		case NavigationDirection::Left:
-		case NavigationDirection::Right:
+		case Direction::Left:
+		case Direction::Right:
 			return false;
 
-		case NavigationDirection::Up:
-		case NavigationDirection::Previous:
+		case Direction::Up:
+		case Direction::Previous:
 		{
 			if (focusedIndex_ == 0)
 				focusedIndex_ = contents_.size() - 1;
@@ -92,7 +92,7 @@ bool StackPanel::MoveFocusNext(NavigationDirection direction)
 				if (control->IsFocusable() && control->IsTabStop())
 				{
 					focusedIndex_ = i;
-					FocusManager::Current().SetFocused(control);
+					PushFocus(control);
 					return true;
 				}
 			}
@@ -100,8 +100,8 @@ bool StackPanel::MoveFocusNext(NavigationDirection direction)
 			break;
 		}
 
-		case NavigationDirection::Down:
-		case NavigationDirection::Next:
+		case Direction::Down:
+		case Direction::Next:
 		{
 			if (contents_.size() - 1 == focusedIndex_)
 				focusedIndex_ = 0;
@@ -114,7 +114,7 @@ bool StackPanel::MoveFocusNext(NavigationDirection direction)
 				if (control->IsFocusable() && control->IsTabStop())
 				{
 					focusedIndex_ = i;
-					FocusManager::Current().SetFocused(control);
+					PushFocus(control);
 					return true;
 				}
 			}

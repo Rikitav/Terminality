@@ -19,8 +19,8 @@ void HostApplication::EnterTerminal()
     try
     {
         std::locale::global(std::locale(".UTF-8"));
-        std::cout.imbue(std::locale());
-        std::cerr.imbue(std::locale());
+        std::wcout.imbue(std::locale());
+        std::wcerr.imbue(std::locale());
     }
     catch (...)
     {
@@ -30,24 +30,30 @@ void HostApplication::EnterTerminal()
     SetConsoleOutputCP(65001);
     SetConsoleCP(65001);
 
-    DWORD dwMode = 0;
-    static HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
+    HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
+    HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    GetConsoleMode(hInput, &dwMode);
-    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-    SetConsoleMode(hInput, dwMode);
-
-    HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
-    DWORD inMode = 0;
-    if (GetConsoleMode(hIn, &inMode))
-        SetConsoleMode(hIn, inMode | ENABLE_WINDOW_INPUT);
+    DWORD outMode = 0;
+    if (GetConsoleMode(hOutput, &outMode))
+    {
+        outMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+        SetConsoleMode(hOutput, outMode);
+    }
 
     CONSOLE_CURSOR_INFO cursorInfo;
-    GetConsoleCursorInfo(hInput, &cursorInfo);
-    cursorInfo.bVisible = FALSE;
-    SetConsoleCursorInfo(hInput, &cursorInfo);
+    if (GetConsoleCursorInfo(hOutput, &cursorInfo))
+    {
+        cursorInfo.bVisible = FALSE;
+        SetConsoleCursorInfo(hOutput, &cursorInfo);
+    }
 
-	//std::wcout << L"\x1b[2J\x1b[?25l";
+    DWORD inMode = 0;
+    if (GetConsoleMode(hInput, &inMode))
+        SetConsoleMode(hInput, inMode | ENABLE_WINDOW_INPUT);
+
+    std::ios_base::sync_with_stdio(false);
+    std::wcout.tie(nullptr);
+	std::wcout << L"\x1b[2J\x1b[?25l";
 }
 
 void HostApplication::ExitTerminal()

@@ -26,7 +26,7 @@ export namespace terminality
 		void SetFocusable(bool value) override;
 		void SetTabStop(bool value) override;
 		void SetTabIndex(int value) override;
-		
+
 		// Layout
 		Size Measure(const Size& availableSize) override;
 		void Arrange(const Rect& finalRect) override;

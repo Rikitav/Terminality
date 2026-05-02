@@ -15,6 +15,7 @@ export import :Border;
 export import :Button;
 export import :Grid;
 export import :StackPanel;
+export import :TextBox;
 
 export import :EventSignal;
 export import :RenderBuffer;

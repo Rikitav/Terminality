@@ -6,6 +6,9 @@ using namespace terminality;
 
 FocusManager& FocusManager::Current()
 {
+	if (HostApplication::IsUiThread())
+		throw std::runtime_error("Cannot get FocusManager within running UI thread or Before UI thread was started.");
+
 	static FocusManager focusManager;
 	return focusManager;
 }
@@ -38,7 +41,7 @@ bool FocusManager::SetFocused(VisualTreeNode* node)
 	return true;
 }
 
-bool FocusManager::MoveNext(NavigationDirection direction)
+bool FocusManager::MoveNext(Direction direction, InputModifier modifiers)
 {
 	if (focusStack.empty())
 		return false;
@@ -47,7 +50,7 @@ bool FocusManager::MoveNext(NavigationDirection direction)
 	for (auto i = focusStackCopy.rbegin(); i != focusStackCopy.rend(); i++)
 	{
 		VisualTreeNode* node = *i;
-		if (node->MoveFocusNext(direction))
+		if (node->MoveFocusNext(direction, modifiers))
 			return true;
 
 		focusStack.pop_back();

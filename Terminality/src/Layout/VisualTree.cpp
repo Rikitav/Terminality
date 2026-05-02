@@ -4,6 +4,15 @@ import std;
 
 using namespace terminality;
 
+VisualTree& VisualTree::Current()
+{
+	if (HostApplication::IsUiThread())
+		throw std::runtime_error("Cannot get FocusManager within running UI thread or Before UI thread was started.");
+
+	static VisualTree visualTree;
+	return visualTree;
+}
+
 void VisualTree::SetRoot(std::unique_ptr<VisualTreeNode> rootNode)
 {
 	rootNode_ = std::move(rootNode);

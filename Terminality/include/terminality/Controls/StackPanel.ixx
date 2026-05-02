@@ -20,7 +20,7 @@ export namespace terminality
 		void AddChild(std::unique_ptr<ControlBase> child);
 		std::unique_ptr<ControlBase> RemoveChild(ControlPredicate predicate);
 
-		bool MoveFocusNext(NavigationDirection direction) override;
+		bool MoveFocusNext(Direction direction, InputModifier modifiers) override;
 		void OnGotFocus() override;
 		void OnLostFocus() override;
 

@@ -178,6 +178,8 @@ export namespace terminality
         NONAME = 0xFC,              // Reserved
         PA1 = 0xFD,                 // PA1 key
         OEM_CLEAR = 0xFE,           // Clear key
+        
+        CHAR = 0xFC,                // Got char (Internal)
     };
     
     enum class InputModifier
@@ -201,7 +203,7 @@ export namespace terminality
     	bool Pressed = false;
     
         InputEvent(wchar_t ch, bool pressed)
-            : Char(ch), Pressed(pressed) { }
+            : Key(InputKey::CHAR), Char(ch), Pressed(pressed) { }
     
     	InputEvent(InputModifier modifier, InputKey key, bool pressed)
             : Modifier(modifier), Key(key), Pressed(pressed) { }

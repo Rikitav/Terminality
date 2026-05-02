@@ -52,7 +52,7 @@ void Border::SetBorderThickness(Thickness thickness)
 }
 */
 
-bool Border::MoveFocusNext(NavigationDirection direction)
+bool Border::MoveFocusNext(Direction direction, InputModifier modifiers)
 {
 	OnLostFocus();
 	return false;
@@ -67,7 +67,7 @@ void Border::OnGotFocus()
 	}
 
 	VisualTreeNode* focusedControl = content_.get();
-	FocusManager::Current().SetFocused(focusedControl);
+	PushFocus(focusedControl);
 	InvalidateVisual();
 }
 

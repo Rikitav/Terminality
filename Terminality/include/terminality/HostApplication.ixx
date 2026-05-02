@@ -19,18 +19,19 @@ export namespace terminality
 
 	class HostApplication
 	{
-		VisualTree* visualTree_;
-		FocusManager* focusManager_;
+		static std::optional<std::thread::id> uiThreadId;
+
+		std::unique_ptr<VisualTreeNode> rootNode;
 		RenderBuffer renderBuffer_{ 1, 1 };
 		std::atomic<bool> Running = false;
 
-		HostApplication();
-
+		HostApplication() = default;
+		
 	public:
-		static HostApplication* Current();
-		VisualTree& Tree() { return *visualTree_; }
-		FocusManager& Focus() { return *focusManager_; }
-		RenderBuffer& Buffer() { return renderBuffer_; }
+		static HostApplication& Current();
+		static bool IsUiThread();
+
+		void SetRoot(std::unique_ptr<VisualTreeNode> root);
 
 		void EnterTerminal();
 		void ExitTerminal();

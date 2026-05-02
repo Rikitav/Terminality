@@ -115,6 +115,9 @@ void RenderBuffer::BulkRender(std::wostream& out)
 	output.reserve(width * height * 24);
 
 	output += L"\x1b[H";
+	std::optional<Color> currentFore;
+	std::optional<Color> currentBack;
+
 	for (uint32_t y = 0; y < height; ++y)
 	{
 		for (uint32_t x = 0; x < width; ++x)
@@ -122,8 +125,17 @@ void RenderBuffer::BulkRender(std::wostream& out)
 			const size_t idx = GetIndex(x, y);
 			const CellInfo& cell = buffer[idx];
 
-			output += GetAsniFg(cell.Fore);
-			output += GetAsniBg(cell.Back);
+			if (!currentFore.has_value() || *currentFore != cell.Fore)
+			{
+				output += GetAsniFg(cell.Fore);
+				currentFore = cell.Fore;
+			}
+			
+			if (!currentBack.has_value() || *currentBack != cell.Back)
+			{
+				output += GetAsniBg(cell.Back);
+				currentBack = cell.Back;
+			}
 			
 			output += cell.Symbol;
 			snapshotBuffer[idx] = cell;
@@ -133,7 +145,8 @@ void RenderBuffer::BulkRender(std::wostream& out)
 			output += L"\n";
 	}
 
-	out << output;
+	out << std::nounitbuf;
+	out.write(output.data(), output.size());
 	out.flush();
 
 	Snapshot();
@@ -158,6 +171,14 @@ void RenderBuffer::DiffRender(std::wostream& out)
 	const uint32_t endX = (hasDirtyRect) ? static_cast<uint32_t>(std::min<int32_t>(width, dirtyRect.Right())) : width;
 	const uint32_t endY = (hasDirtyRect) ? static_cast<uint32_t>(std::min<int32_t>(height, dirtyRect.Bottom())) : height;
 
+	std::wstring output;
+	output.reserve(8192);
+
+	std::optional<Color> currentFore;
+	std::optional<Color> currentBack;
+	uint32_t expectedX = static_cast<uint32_t>(-1);
+	uint32_t expectedY = static_cast<uint32_t>(-1);
+
 	for (uint32_t y = startY; y < endY; ++y)
 	{
 		for (uint32_t x = startX; x < endX; ++x)
@@ -167,12 +188,37 @@ void RenderBuffer::DiffRender(std::wostream& out)
 			if (cell == snapshotBuffer[idx])
 				continue;
 
-			out << L"\x1b[" << (y + 1) << L";" << (x + 1) << L"H";
-			out << GetAsniFg(cell.Fore) << GetAsniBg(cell.Back) << cell.Symbol;
+			if (expectedX != x || expectedY != y)
+			{
+				output += L"\x1b[";
+				output += std::to_wstring(y + 1);
+				output += L";";
+				output += std::to_wstring(x + 1);
+				output += L"H";
+			}
+
+			if (!currentFore.has_value() || *currentFore != cell.Fore)
+			{
+				output += GetAsniFg(cell.Fore);
+				currentFore = cell.Fore;
+			}
+			
+			if (!currentBack.has_value() || *currentBack != cell.Back)
+			{
+				output += GetAsniBg(cell.Back);
+				currentBack = cell.Back;
+			}
+			
+			output += cell.Symbol;
 			snapshotBuffer[idx] = cell;
+			
+			expectedX = x + 1;
+			expectedY = y;
 		}
 	}
 
+	out << std::nounitbuf;
+	out.write(output.data(), output.size());
 	out.flush();
 
 	Snapshot();

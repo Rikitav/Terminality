@@ -23,7 +23,7 @@ export namespace terminality
 		//void SetBorderThickness(Thickness thickness);
 		void SetContent(std::unique_ptr<ControlBase> child);
 
-		bool MoveFocusNext(NavigationDirection direction) override;
+		bool MoveFocusNext(Direction direction, InputModifier modifiers = InputModifier::None) override;
 		void OnGotFocus() override;
 		void OnLostFocus() override;
 

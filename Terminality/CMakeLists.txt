@@ -8,6 +8,7 @@ target_sources(terminality
         include/terminality/Controls/Button.ixx
         include/terminality/Controls/Grid.ixx
         include/terminality/Controls/StackPanel.ixx
+        include/terminality/Controls/TextBox.ixx
         include/terminality/EventSignal.ixx
         include/terminality/FocusManager.ixx
         include/terminality/HostApplication.ixx
@@ -28,6 +29,7 @@ target_sources(terminality
         src/Controls/Button.cpp
         src/Controls/Grid.cpp
         src/Controls/StackPanel.cpp
+        src/Controls/TextBox.cpp
         src/EventSignal.cpp
         src/FocusManager.cpp
         src/HostApplication.cpp

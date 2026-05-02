@@ -47,6 +47,8 @@ void HostApplication::EnterTerminal()
 
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 
+    std::ios_base::sync_with_stdio(false);
+    std::wcout.tie(nullptr);
 	std::wcout << L"\x1b[2J\x1b[?25l";
 }
 

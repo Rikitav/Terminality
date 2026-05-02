@@ -2,6 +2,7 @@ export module terminality:VisualTree;
 
 import std;
 import std.compat;
+import :Geometry;
 import :VisualTreeNode;
 import :RenderBuffer;
 
@@ -13,9 +14,12 @@ export namespace terminality
 		bool hasDirtyVisual_ = true;
 		Rect dirtyRect_;
 
+		VisualTree() = default;
 		void CollectDirtyNodeRect(const VisualTreeNode& node);
 
 	public:
+		static VisualTree& Current();
+
 		void SetRoot(std::unique_ptr<VisualTreeNode> rootNode);
 		VisualTreeNode* Root() const { return rootNode_.get(); }
 

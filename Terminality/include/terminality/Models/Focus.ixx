@@ -4,7 +4,7 @@ export namespace terminality
 {
 	class VisualTreeNode;
 
-	enum class NavigationDirection
+	enum class Direction
 	{
 		Up,
 		Down,

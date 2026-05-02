@@ -25,6 +25,9 @@ export namespace terminality
 
 		VisualTreeNode* parent_ = nullptr;
 
+		static void PopFocus(Direction direction, InputModifier modifiers);
+		static void PushFocus(VisualTreeNode* focused);
+
 	public:
 		VisualTreeNode() = default;
 		virtual ~VisualTreeNode() = default;
@@ -39,7 +42,7 @@ export namespace terminality
 		virtual const std::span<VisualTreeNode*> GetChildren() const = 0;
 
 		// Focus management
-		virtual bool MoveFocusNext(NavigationDirection direction);
+		virtual bool MoveFocusNext(Direction direction, InputModifier modifiers = InputModifier::None);
 		virtual void OnGotFocus();
 		virtual void OnLostFocus();
 

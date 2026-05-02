@@ -34,10 +34,16 @@ namespace
                 leftPanel->AddChild(std::move(btn));
             }
 
+            auto textBox = std::make_unique<TextBox>();
+            textBox->SetText(L"Type here...");
+            textBox->SetMargin(Thickness(1));
+            leftPanel->AddChild(std::move(textBox));
+
             // Добавляем левую панель в первую колонку (0, 0)
 			auto leftBorder = std::make_unique<Border>();
 			leftBorder->SetBorderColor(Color::YELLOW);
 			leftBorder->SetContent(std::move(leftPanel));
+            leftBorder->SetHorizontalAlignment(HorizontalAlignment::Center);
             AddChild(std::move(leftBorder), 0, 0);
 
             // 3. Создаем правую панель
@@ -52,7 +58,6 @@ namespace
                 rightPanel->AddChild(std::move(btn));
             }
 
-            // Добавляем правую панель во вторую колонку (0, 1)
             auto rightBorder = std::make_unique<Border>();
             rightBorder->SetBorderColor(Color::YELLOW);
             rightBorder->SetContent(std::move(rightPanel));
@@ -63,11 +68,10 @@ namespace
 
 int main()
 {
-	HostApplication& app = *HostApplication::Current();
+	HostApplication& app = HostApplication::Current();
 	app.EnterTerminal();
-	app.Tree().SetRoot(std::make_unique<DemoRoot>());
-	app.Focus().SetFocused(app.Tree().Root());
-	app.RunUILoop();
+    app.SetRoot(std::make_unique<DemoRoot>());
+    app.RunUILoop();
 	app.ExitTerminal();
 	return 0;
 }
