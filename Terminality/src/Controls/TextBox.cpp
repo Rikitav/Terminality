@@ -80,123 +80,135 @@ void TextBox::OnKeyDown(InputEvent input)
 	bool handled = false;
 	bool textChanged = false;
 
-	if (input.Key == InputKey::CHAR && input.Char != L'\0' && input.Char >= 32)
+	switch (input.Key)
 	{
-		text_.insert(cursorPosition_, 1, input.Char);
-		cursorPosition_++;
-		handled = true;
-		textChanged = true;
-	}
-	else
-	{
-		switch (input.Key)
+		default:
 		{
-			case InputKey::UP:
+			if (input.Char != L'\0' && input.Char >= 32)
 			{
-				PopFocus(Direction::Up, input.Modifier);
-				return;
-			}
-
-			case InputKey::DOWN:
-			{
-				PopFocus(Direction::Down, input.Modifier);
-				return;
-			}
-
-			case InputKey::LEFT:
-			{
-				if (terminality::hasFlag(input.Modifier, InputModifier::LeftAlt) || terminality::hasFlag(input.Modifier, InputModifier::RightAlt))
-				{
-					PopFocus(Direction::Left, input.Modifier);
-					return;
-				}
-
-				if (cursorPosition_ > 0)
-				{
-					cursorPosition_--;
-					handled = true;
-				}
-				/*
-				else
-				{
-					PopFocus(Direction::Right, input.Modifier);
-					return;
-				}
-				*/
-
-				break;
-			}
-
-			case InputKey::RIGHT:
-			{
-				if (terminality::hasFlag(input.Modifier, InputModifier::LeftAlt) || terminality::hasFlag(input.Modifier, InputModifier::RightAlt))
-				{
-					PopFocus(Direction::Right, input.Modifier);
-					return;
-				}
-
-				if (cursorPosition_ < text_.length())
-				{
-					cursorPosition_++;
-					handled = true;
-				}
-				/*
-				else
-				{
-					PopFocus(Direction::Right, input.Modifier);
-					return;
-				}
-				*/
-
-				break;
-			}
-
-			case InputKey::BACK:
-			{
-				if (cursorPosition_ > 0)
-				{
-					text_.erase(cursorPosition_ - 1, 1);
-					cursorPosition_--;
-					handled = true;
-					textChanged = true;
-				}
-
-				break;
-			}
-
-			case InputKey::DELETE:
-			{
-				if (cursorPosition_ < text_.length())
-				{
-					text_.erase(cursorPosition_, 1);
-					handled = true;
-					textChanged = true;
-				}
-
-				break;
-			}
-
-			case InputKey::HOME:
-			{
-				if (cursorPosition_ > 0)
-				{
-					cursorPosition_ = 0;
-					handled = true;
-				}
-
-				break;
+				text_.insert(cursorPosition_, 1, input.Char);
+				cursorPosition_++;
+				handled = true;
+				textChanged = true;
 			}
 			
-			case InputKey::END:
-			{
-				if (cursorPosition_ < text_.length())
-				{
-					cursorPosition_ = text_.length();
-					handled = true;
-				}
+			break;
+		}
 
-				break;
+		case InputKey::SPACE:
+		{
+			text_.insert(cursorPosition_, 1, L' ');
+			cursorPosition_++;
+			handled = true;
+			textChanged = true;
+			break;
+		}
+
+		case InputKey::UP:
+		{
+			PopFocus(Direction::Up, input.Modifier);
+			return;
+		}
+
+		case InputKey::DOWN:
+		{
+			PopFocus(Direction::Down, input.Modifier);
+			return;
+		}
+
+		case InputKey::LEFT:
+		{
+			if (terminality::hasFlag(input.Modifier, InputModifier::LeftAlt) || terminality::hasFlag(input.Modifier, InputModifier::RightAlt))
+			{
+				PopFocus(Direction::Left, input.Modifier);
+				return;
 			}
+
+			if (cursorPosition_ > 0)
+			{
+				cursorPosition_--;
+				handled = true;
+			}
+			/*
+			else
+			{
+				PopFocus(Direction::Right, input.Modifier);
+				return;
+			}
+			*/
+
+			break;
+		}
+
+		case InputKey::RIGHT:
+		{
+			if (terminality::hasFlag(input.Modifier, InputModifier::LeftAlt) || terminality::hasFlag(input.Modifier, InputModifier::RightAlt))
+			{
+				PopFocus(Direction::Right, input.Modifier);
+				return;
+			}
+
+			if (cursorPosition_ < text_.length())
+			{
+				cursorPosition_++;
+				handled = true;
+			}
+			/*
+			else
+			{
+				PopFocus(Direction::Right, input.Modifier);
+				return;
+			}
+			*/
+
+			break;
+		}
+
+		case InputKey::BACK:
+		{
+			if (cursorPosition_ > 0)
+			{
+				text_.erase(cursorPosition_ - 1, 1);
+				cursorPosition_--;
+				handled = true;
+				textChanged = true;
+			}
+
+			break;
+		}
+
+		case InputKey::DELETE:
+		{
+			if (cursorPosition_ < text_.length())
+			{
+				text_.erase(cursorPosition_, 1);
+				handled = true;
+				textChanged = true;
+			}
+
+			break;
+		}
+
+		case InputKey::HOME:
+		{
+			if (cursorPosition_ > 0)
+			{
+				cursorPosition_ = 0;
+				handled = true;
+			}
+
+			break;
+		}
+
+		case InputKey::END:
+		{
+			if (cursorPosition_ < text_.length())
+			{
+				cursorPosition_ = text_.length();
+				handled = true;
+			}
+
+			break;
 		}
 	}
 
