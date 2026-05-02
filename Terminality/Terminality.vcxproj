@@ -181,13 +181,16 @@
     <ClCompile Include="src\Layout\DependencyObject.cpp" />
     <ClCompile Include="src\HostApplication.cpp" />
     <ClCompile Include="src\FocusManager.cpp" />
+    <ClCompile Include="src\PlatformSpecific\HostApplication.Linux.cpp" />
     <ClCompile Include="src\PlatformSpecific\HostApplication.Windows.cpp" />
-    <ClCompile Include="src\PlatformSpecific\HostBackend.Windows.cpp" />
     <ClCompile Include="src\RenderBuffer.cpp" />
     <ClCompile Include="src\RenderContext.cpp" />
     <ClCompile Include="src\Layout\UIElement.cpp" />
     <ClCompile Include="src\Layout\VisualTreeNode.cpp" />
     <ClCompile Include="src\Layout\VisualTree.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="CMakeLists.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

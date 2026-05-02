@@ -5,37 +5,37 @@ import std.compat;
 
 using namespace terminality;
 
-const char* RenderBuffer::GetAsniBg(Color color)
+const wchar_t* RenderBuffer::GetAsniBg(Color color)
 {
 	switch (color)
 	{
-		case Color::BLACK:          return "\x1b[40m";
-		case Color::DARK_CYAN:      return "\x1b[46m";
-		case Color::CYAN:           return "\x1b[106m";
-		case Color::GREEN:          return "\x1b[42m";
-		case Color::DARK_YELLOW:    return "\x1b[43m";
-		case Color::YELLOW:         return "\x1b[103m";
-		case Color::MAGENTA:        return "\x1b[45m";
-		case Color::WHITE:          return "\x1b[47m";
-		case Color::DARK_GRAY:      return "\x1b[100m";
-		default:                    return "\x1b[40m";
+		case Color::BLACK:          return L"\x1b[40m";
+		case Color::DARK_CYAN:      return L"\x1b[46m";
+		case Color::CYAN:           return L"\x1b[106m";
+		case Color::GREEN:          return L"\x1b[42m";
+		case Color::DARK_YELLOW:    return L"\x1b[43m";
+		case Color::YELLOW:         return L"\x1b[103m";
+		case Color::MAGENTA:        return L"\x1b[45m";
+		case Color::WHITE:          return L"\x1b[47m";
+		case Color::DARK_GRAY:      return L"\x1b[100m";
+		default:                    return L"\x1b[40m";
 	}
 }
 
-const char* RenderBuffer::GetAsniFg(Color color)
+const wchar_t* RenderBuffer::GetAsniFg(Color color)
 {
     switch (color)
     {
-        case Color::BLACK:          return "\x1b[30m";
-        case Color::DARK_CYAN:      return "\x1b[36m";
-        case Color::CYAN:           return "\x1b[96m";
-        case Color::GREEN:          return "\x1b[32m";
-        case Color::DARK_YELLOW:    return "\x1b[33m";
-        case Color::YELLOW:         return "\x1b[93m";
-        case Color::MAGENTA:        return "\x1b[95m";
-        case Color::WHITE:          return "\x1b[37m";
-        case Color::DARK_GRAY:      return "\x1b[90m";
-        default:                    return "\x1b[37m";
+        case Color::BLACK:          return L"\x1b[30m";
+        case Color::DARK_CYAN:      return L"\x1b[36m";
+        case Color::CYAN:           return L"\x1b[96m";
+        case Color::GREEN:          return L"\x1b[32m";
+        case Color::DARK_YELLOW:    return L"\x1b[33m";
+        case Color::YELLOW:         return L"\x1b[93m";
+        case Color::MAGENTA:        return L"\x1b[95m";
+        case Color::WHITE:          return L"\x1b[37m";
+        case Color::DARK_GRAY:      return L"\x1b[90m";
+        default:                    return L"\x1b[37m";
     }
 }
 
@@ -76,9 +76,7 @@ void RenderBuffer::SetCell(uint32_t x, uint32_t y, const CellInfo& cell)
 {
 	std::lock_guard<std::recursive_mutex> guard(renderMutex);
 	if (x >= width || y >= height)
-	{
 		return;
-	}
 
 	CellInfo& target = buffer[GetIndex(x, y)];
 	if (target != cell)
@@ -113,7 +111,10 @@ void RenderBuffer::BulkRender(std::wostream& out)
 	if (!hasDirtyRect)
 		return;
 
-	out << L"\x1b[H";
+	std::wstring output;
+	output.reserve(width * height * 24);
+
+	output += L"\x1b[H";
 	for (uint32_t y = 0; y < height; ++y)
 	{
 		for (uint32_t x = 0; x < width; ++x)
@@ -121,43 +122,36 @@ void RenderBuffer::BulkRender(std::wostream& out)
 			const size_t idx = GetIndex(x, y);
 			const CellInfo& cell = buffer[idx];
 
-			out << GetAsniFg(cell.Fore) << GetAsniBg(cell.Back); 
-			out << cell.Symbol;
-			//snapshotBuffer[idx] = cell;
+			output += GetAsniFg(cell.Fore);
+			output += GetAsniBg(cell.Back);
+			
+			output += cell.Symbol;
+			snapshotBuffer[idx] = cell;
 		}
 
 		if (y < height - 1)
-			out << L"\n";
+			output += L"\n";
 	}
 
+	out << output;
 	out.flush();
+
+	Snapshot();
 	hasDirtyRect = false;
+	dirtyRect = Rect();
 }
 
 void RenderBuffer::DiffRender(std::wostream& out)
 {
 	std::lock_guard<std::recursive_mutex> guard(renderMutex);
+	if (snapshotWidth != width || snapshotHeight != height)
+	{
+		BulkRender(out);
+		return;
+	}
 
 	if (!hasDirtyRect)
 		return;
-
-	out << L"\x1b[H";
-	if (snapshotWidth != width || snapshotHeight != height)
-	{
-		for (uint32_t y = 0; y < height; ++y)
-		{
-			for (uint32_t x = 0; x < width; ++x)
-			{
-				snapshotBuffer[GetIndex(x, y)] = CellInfo{ L'\0' };
-			}
-		}
-
-		snapshotWidth = width;
-		snapshotHeight = height;
-		hasDirtyRect = true;
-		dirtyRect = Rect(0, 0, static_cast<int32_t>(width), static_cast<int32_t>(height));
-		out << L"\x1b[2J";
-	}
 
 	const uint32_t startX = (hasDirtyRect) ? static_cast<uint32_t>(std::max(0, dirtyRect.X)) : 0U;
 	const uint32_t startY = (hasDirtyRect) ? static_cast<uint32_t>(std::max(0, dirtyRect.Y)) : 0U;
@@ -180,6 +174,8 @@ void RenderBuffer::DiffRender(std::wostream& out)
 	}
 
 	out.flush();
+
+	Snapshot();
 	hasDirtyRect = false;
 	dirtyRect = Rect();
 }

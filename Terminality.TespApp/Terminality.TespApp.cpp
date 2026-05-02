@@ -64,8 +64,10 @@ namespace
 int main()
 {
 	HostApplication& app = *HostApplication::Current();
+	app.EnterTerminal();
 	app.Tree().SetRoot(std::make_unique<DemoRoot>());
 	app.Focus().SetFocused(app.Tree().Root());
 	app.RunUILoop();
+	app.ExitTerminal();
 	return 0;
 }

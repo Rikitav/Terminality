@@ -24,6 +24,8 @@ export namespace terminality
 		RenderBuffer renderBuffer_{ 1, 1 };
 		std::atomic<bool> Running = false;
 
+		HostApplication();
+
 	public:
 		static HostApplication* Current();
 		VisualTree& Tree() { return *visualTree_; }

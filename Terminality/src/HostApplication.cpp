@@ -5,14 +5,27 @@ import std.compat;
 
 using namespace terminality;
 
+HostApplication::HostApplication()
+{
+	focusManager_ = &FocusManager::Current();
+	visualTree_ = new VisualTree();
+}
+
+HostApplication* HostApplication::Current()
+{
+	static HostApplication app;
+	return &app;
+}
+
 void HostApplication::RunUILoop()
 {
 	if (visualTree_->Root() == nullptr)
 		return;
 
-	Running.store(true);
-	bool firstRender = true;
+	const Size initViewport = HostBackend::QueryViewportSize();
+	renderBuffer_.Resize(static_cast<uint32_t>(initViewport.Width), static_cast<uint32_t>(initViewport.Height));
 
+	Running.store(true);
 	while (Running.load())
 	{
 		const Size viewport = HostBackend::QueryViewportSize();
@@ -45,14 +58,7 @@ void HostApplication::RunUILoop()
 		if (visualTree_->HasDirtyVisual())
 		{
 			visualTree_->Render(renderBuffer_);
-			if (!firstRender)
-			{
-				renderBuffer_.DiffRender(std::wcout);
-				continue;
-			}
-
-			renderBuffer_.BulkRender(std::wcout);
-			firstRender = false;
+			renderBuffer_.DiffRender(std::wcout);
 		}
 	}
 }

@@ -5,9 +5,8 @@ import std.compat;
 
 using namespace terminality;
 
-/*
 RenderContext::RenderContext(RenderBuffer& buffer, Rect targetRect)
-    : buffer_(buffer), rect_(targetRect) { }
+    : buffer_(buffer), rect_(targetRect) {}
 
 RenderContext RenderContext::CreateInner(Rect targetRect)
 {
@@ -21,14 +20,14 @@ Rect RenderContext::ContextRect()
 
 void RenderContext::SetCell(uint32_t x, uint32_t y, const CellInfo& cell)
 {
-	if (x >= static_cast<uint32_t>(rect_.Width))
+    if (x >= static_cast<uint32_t>(rect_.Width))
         return;
 
     if (y >= static_cast<uint32_t>(rect_.Height))
-       	return;
+        return;
 
-	int32_t absX = rect_.X + x;
-	int32_t absY = rect_.Y + y;
+    int32_t absX = rect_.X + x;
+    int32_t absY = rect_.Y + y;
 
     buffer_.SetCell(absX, absY, cell);
     buffer_.MarkDirty(Rect(absX, absY, 1, 1));
@@ -239,4 +238,3 @@ void RenderContext::RenderLine(const Point& point, const int32_t length, VectorS
     Point to(point.X + (length > 0 ? length - 1 : 0), point.Y);
     RenderLine(point, to, style);
 }
-*/

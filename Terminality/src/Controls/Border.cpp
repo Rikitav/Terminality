@@ -114,20 +114,20 @@ void Border::Render(RenderContext& context)
 	
 	for (int32_t x = 0; x < rect.Width; ++x)
 	{
-		context.SetCell(x, 0,				L'-', borderColor_, Color::BLACK);
-		context.SetCell(x, rect.Height - 1,	L'-', borderColor_, Color::BLACK);
+		context.SetCell(x, 0,				L'\x2500', borderColor_, Color::BLACK);
+		context.SetCell(x, rect.Height - 1,	L'\x2500', borderColor_, Color::BLACK);
 	}
 
 	for (int32_t y = 0; y < rect.Height; ++y)
 	{
-		context.SetCell(0, y,				L'|', borderColor_, Color::BLACK);
-		context.SetCell(rect.Width - 1, y,	L'|', borderColor_, Color::BLACK);
+		context.SetCell(0, y,				L'\x2502', borderColor_, Color::BLACK);
+		context.SetCell(rect.Width - 1, y,	L'\x2502', borderColor_, Color::BLACK);
 	}
 
-	context.SetCell(0, 0,							 L'+', borderColor_, Color::BLACK);
-	context.SetCell(rect.Width - 1, 0,				 L'+', borderColor_, Color::BLACK);
-	context.SetCell(0, rect.Height - 1,				 L'+', borderColor_, Color::BLACK);
-	context.SetCell(rect.Width - 1, rect.Height - 1, L'+', borderColor_, Color::BLACK);
+	context.SetCell(0, 0,							 L'\x256D', borderColor_, Color::BLACK);
+	context.SetCell(rect.Width - 1, 0,				 L'\x256E', borderColor_, Color::BLACK);
+	context.SetCell(0, rect.Height - 1,				 L'\x2570', borderColor_, Color::BLACK);
+	context.SetCell(rect.Width - 1, rect.Height - 1, L'\x256F', borderColor_, Color::BLACK);
 
 	if (rect.Width > 2 || rect.Height > 2)
 	{
