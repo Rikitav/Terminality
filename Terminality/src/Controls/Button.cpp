@@ -17,16 +17,20 @@ void Button::Click()
 	InvalidateVisual();
 }
 
-Size Button::Measure(const Size& availableSize)
+Size Button::MeasureOverride(const Size& availableSize)
 {
-	Size desiredSize = ControlBase::Measure(availableSize);
-	const int32_t width = std::min<int32_t>(desiredSize.Width, static_cast<int32_t>(text_.size()) + 6);
-	
-	actualSize_ = Size(width, 1);
-	return actualSize_;
+	int32_t contentWidth = static_cast<int32_t>(text_.size()) + 6;
+	int32_t width = availableSize.Width >= 0 ? std::min(availableSize.Width, contentWidth) : contentWidth;
+	int32_t height = availableSize.Height >= 0 ? std::min(availableSize.Height, 1) : 1;
+	return Size(width, height);
 }
 
-void Button::Render(RenderContext& context)
+void Button::ArrangeOverride(const Rect& contentRect)
+{
+	return;
+}
+
+void Button::RenderOverride(RenderContext& context)
 {
 	const Rect rect = context.ContextRect();
 	std::wstring line = L"[  " + text_ + L"  ]";

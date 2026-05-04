@@ -77,38 +77,45 @@ void Border::OnLostFocus()
 	InvalidateVisual();
 }
 
-Size Border::Measure(const Size& availableSize)
+Size Border::MeasureOverride(const Size& availableSize)
 {
-	Size desiredSize = ControlBase::Measure(availableSize);
-	if (content_ == nullptr)
-		return Size(2, 2);
-
-	const Size innerSize(std::max(0, desiredSize.Width - 2), std::max(0, desiredSize.Height - 2));
-	const Size childSize = content_->Measure(innerSize);
-	
-	actualSize_ = Size(std::min(innerSize.Width, childSize.Width + 2), std::min(innerSize.Height, childSize.Height + 2));
-	return actualSize_;
-}
-
-void Border::Arrange(const Rect& contentRect)
-{
-	ControlBase::Arrange(contentRect);
-	Rect arrangedRect = GetArrangedRect();
+	const int thickness = 2;
+	Size result(
+		availableSize.Width >= 0 ? availableSize.Width : thickness,
+		availableSize.Height >= 0 ? availableSize.Height : thickness);
 
 	if (content_ != nullptr)
 	{
-		const Rect innerRect(1, 1,
-			std::max(0, arrangedRect.Width - 2),
-			std::max(0, arrangedRect.Height - 2));
+		const Size innerSize(
+			availableSize.Width >= 0 ? std::max(0, availableSize.Width - thickness) : -1,
+			availableSize.Height >= 0 ? std::max(0, availableSize.Height - thickness) : -1
+		);
 
-		content_->Arrange(innerRect);
+		const Size childSize = content_->Measure(innerSize);
+		if (availableSize.Width < 0)
+			result.Width = std::max(thickness, childSize.Width + thickness);
+
+		if (availableSize.Height < 0)
+			result.Height = std::max(thickness, childSize.Height + thickness);
 	}
 
-	arrangedRect_ = arrangedRect;
-	arrangeDirty_ = false;
+	return result;
 }
 
-void Border::Render(RenderContext& context)
+void Border::ArrangeOverride(const Rect& contentRect)
+{
+	if (content_ == nullptr)
+		return;
+
+	Rect arrangedRect = GetArrangedRect();
+	const Rect innerRect(1, 1,
+		std::max(0, arrangedRect.Width - 2),
+		std::max(0, arrangedRect.Height - 2));
+
+	content_->Arrange(innerRect);
+}
+
+void Border::RenderOverride(RenderContext& context)
 {
 	const Rect rect = context.ContextRect();
 	
@@ -131,9 +138,10 @@ void Border::Render(RenderContext& context)
 
 	if (rect.Width > 2 || rect.Height > 2)
 	{
-		Point point(1, 1);
-		Size size(rect.Width - 2, rect.Height - 2);
-		context.RenderRectangle(point, size, [](const Point& point, const Size& size) { return L' '; });
+		/*
+		context.RenderRectangle(Point(1, 1), Size(rect.Width - 2, rect.Height - 2),
+			[](const Point& point, const Size& size) { return L' '; });
+		*/
 
 		if (content_ != nullptr)
 		{
@@ -142,6 +150,4 @@ void Border::Render(RenderContext& context)
 			content_->Render(childContext);
 		}
 	}
-
-	visualDirty_ = false;
 }

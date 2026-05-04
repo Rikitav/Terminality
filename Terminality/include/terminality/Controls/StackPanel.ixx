@@ -24,8 +24,9 @@ export namespace terminality
 		void OnGotFocus() override;
 		void OnLostFocus() override;
 
-		Size Measure(const Size& availableSize) override;
-		void Arrange(const Rect& contentRect) override;
-		void Render(RenderContext& context) override;
+	protected:
+		Size MeasureOverride(const Size& availableSize) override;
+		void ArrangeOverride(const Rect& contentRect) override;
+		void RenderOverride(RenderContext& context) override;
 	};
 }

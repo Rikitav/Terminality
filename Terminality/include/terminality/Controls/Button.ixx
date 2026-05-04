@@ -19,8 +19,9 @@ export namespace terminality
 		void Click();
 
 	protected:
-		Size Measure(const Size& availableSize) override;
-		void Render(RenderContext& context) override;
+		Size MeasureOverride(const Size& availableSize) override;
+		void ArrangeOverride(const Rect& contentRect) override;
+		void RenderOverride(RenderContext& context) override;
 	};
 }
 

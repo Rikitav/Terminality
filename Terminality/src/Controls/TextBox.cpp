@@ -2,8 +2,81 @@ module terminality;
 
 import std;
 import std.compat;
+import :FocusManager;
+import :Focus;
 
 using namespace terminality;
+
+namespace
+{
+	struct LineInfo
+	{
+		std::wstring Text;
+		size_t StartIndex;
+	};
+
+	std::vector<LineInfo> GetLines(const std::wstring& text, int32_t availableWidth, TextWrapping wrapping)
+	{
+		std::vector<LineInfo> lines;
+		if (text.empty())
+		{
+			lines.push_back({ L"", 0 });
+			return lines;
+		}
+
+		size_t start = 0;
+		while (start < text.length())
+		{
+			size_t end = start;
+			int32_t width = 0;
+
+			if (wrapping == TextWrapping::NoWrap || availableWidth <= 0)
+			{
+				while (end < text.length() && text[end] != L'\n')
+					end++;
+			}
+			else if (wrapping == TextWrapping::Wrap)
+			{
+				while (end < text.length() && text[end] != L'\n' && width < availableWidth)
+				{
+					end++;
+					width++;
+				}
+			}
+			else // WrapWholeWords
+			{
+				size_t lastSpace = std::wstring::npos;
+				while (end < text.length() && text[end] != L'\n' && width < availableWidth)
+				{
+					if (text[end] == L' ')
+						lastSpace = end;
+					end++;
+					width++;
+				}
+
+				if (end < text.length() && text[end] != L'\n' && text[end] != L' ' && lastSpace != std::wstring::npos && lastSpace > start)
+				{
+					end = lastSpace; // Break at last space
+				}
+			}
+
+			lines.push_back({ text.substr(start, end - start), start });
+			start = end;
+
+			if (start < text.length() && text[start] == L'\n')
+				start++;
+			else if (wrapping == TextWrapping::WrapWholeWords && start < text.length() && text[start] == L' ')
+				start++; // Skip space at beginning of next line
+		}
+
+		if (!text.empty() && text.back() == L'\n')
+		{
+			lines.push_back({ L"", text.length() });
+		}
+
+		return lines;
+	}
+}
 
 TextBox::TextBox()
 {
@@ -27,19 +100,76 @@ std::wstring TextBox::GetText() const
 	return text_;
 }
 
-Size TextBox::Measure(const Size& availableSize)
+TextWrapping TextBox::GetTextWrapping() const
 {
-	Size desiredSize = ControlBase::Measure(availableSize);
-	const int32_t width = std::max<int32_t>(desiredSize.Width, static_cast<int32_t>(text_.length()) + 1);
-	
-	actualSize_ = Size(width, 1);
-	return actualSize_;
+	return textWrapping_;
 }
 
-void TextBox::Render(RenderContext& context)
+void TextBox::SetTextWrapping(TextWrapping textWrapping)
+{
+	if (textWrapping_ == textWrapping)
+		return;
+
+	textWrapping_ = textWrapping;
+	InvalidateMeasure();
+	InvalidateVisual();
+}
+
+TextAlignment TextBox::GetTextAlignment() const
+{
+	return textAlignment_;
+}
+
+void TextBox::SetTextAlignment(TextAlignment textAlignment)
+{
+	if (textAlignment_ == textAlignment)
+		return;
+
+	textAlignment_ = textAlignment;
+	InvalidateVisual();
+}
+
+bool TextBox::GetAcceptsReturn() const
+{
+	return acceptsReturn_;
+}
+
+void TextBox::SetAcceptsReturn(bool acceptsReturn)
+{
+	if (acceptsReturn_ == acceptsReturn)
+		return;
+
+	acceptsReturn_ = acceptsReturn;
+	InvalidateMeasure();
+	InvalidateVisual();
+}
+
+Size TextBox::MeasureOverride(const Size& availableSize)
+{
+	std::vector<LineInfo> lines = GetLines(text_, availableSize.Width, textWrapping_);
+
+	int32_t maxWidth = availableSize.Width;
+	for (const auto& line : lines)
+		maxWidth = std::clamp(static_cast<int32_t>(line.Text.length()), 0, availableSize.Width);
+
+	int32_t width = std::clamp(maxWidth + 1, 0, availableSize.Width);
+	int32_t height = availableSize.Height;
+
+	if (textWrapping_ != TextWrapping::NoWrap && availableSize.Width > 0)
+		width = std::min(width, availableSize.Width);
+
+	return Size(width, height);
+}
+
+void TextBox::ArrangeOverride(const Rect& contentRect)
+{
+	return;
+}
+
+void TextBox::RenderOverride(RenderContext& context)
 {
 	const Rect rect = context.ContextRect();
-	
+
 	Color fore = focused_ ? Color::BLACK : Color::WHITE;
 	Color back = focused_ ? Color::WHITE : Color::DARK_GRAY;
 
@@ -51,25 +181,76 @@ void TextBox::Render(RenderContext& context)
 		}
 	}
 
-	int32_t viewWidth = rect.Width;
-	int32_t offset = 0;
-	
-	if (static_cast<int32_t>(cursorPosition_) >= viewWidth)
+	std::vector<LineInfo> lines = GetLines(text_, rect.Width, textWrapping_);
+
+	int32_t cursorY = 0;
+	int32_t cursorX = 0;
+	bool cursorFound = false;
+
+	// First find the cursor
+	for (size_t y = 0; y < lines.size(); ++y)
 	{
-		offset = static_cast<int32_t>(cursorPosition_) - viewWidth + 1;
+		const auto& line = lines[y];
+		if (!cursorFound && cursorPosition_ >= line.StartIndex && (y + 1 == lines.size() || cursorPosition_ < lines[y + 1].StartIndex))
+		{
+			cursorY = static_cast<int32_t>(y);
+			cursorX = static_cast<int32_t>(cursorPosition_ - line.StartIndex);
+			cursorFound = true;
+			break;
+		}
 	}
 
-	std::wstring visibleText = text_.substr(offset, viewWidth);
-	context.RenderText(Point(0, 0), visibleText, fore, back, false);
+	int32_t viewWidth = rect.Width;
+	int32_t offset = 0;
 
-	if (focused_)
+	if (textWrapping_ == TextWrapping::NoWrap)
 	{
-		int32_t cursorX = static_cast<int32_t>(cursorPosition_) - offset;
-		if (cursorX >= 0 && cursorX < rect.Width)
+		if (cursorX >= viewWidth)
 		{
-			wchar_t cursorChar = (cursorPosition_ < text_.length()) ? text_[cursorPosition_] : L' ';
-			context.SetCell(cursorX, 0, cursorChar, back, fore);
+			offset = cursorX - viewWidth + 1;
 		}
+	}
+
+	// Adjust cursorX based on scroll offset
+	cursorX -= offset;
+
+	for (int32_t y = 0; y < std::min(rect.Height, static_cast<int32_t>(lines.size())); ++y)
+	{
+		const auto& line = lines[y];
+		int32_t xOffset = 0;
+
+		std::wstring visibleText = line.Text;
+		if (offset > 0 && offset < visibleText.length())
+			visibleText = visibleText.substr(offset);
+		else if (offset >= visibleText.length())
+			visibleText = L"";
+
+		int32_t textLen = static_cast<int32_t>(visibleText.length());
+		if (textAlignment_ == TextAlignment::Center)
+		{
+			xOffset = std::max(0, (rect.Width - textLen) / 2);
+		}
+		else if (textAlignment_ == TextAlignment::Right)
+		{
+			xOffset = std::max(0, rect.Width - textLen);
+		}
+
+		if (y == cursorY)
+		{
+			cursorX += xOffset;
+		}
+
+		int32_t renderWidth = std::min(rect.Width - xOffset, textLen);
+		if (renderWidth > 0)
+		{
+			context.RenderText(Point(xOffset, y), visibleText.substr(0, renderWidth), fore, back, false);
+		}
+	}
+
+	if (focused_ && cursorY < rect.Height && cursorX < rect.Width && cursorX >= 0)
+	{
+		wchar_t cursorChar = (cursorPosition_ < text_.length() && text_[cursorPosition_] != L'\n') ? text_[cursorPosition_] : L' ';
+		context.SetCell(cursorX, cursorY, cursorChar, back, fore);
 	}
 
 	visualDirty_ = false;
@@ -91,7 +272,7 @@ void TextBox::OnKeyDown(InputEvent input)
 				handled = true;
 				textChanged = true;
 			}
-			
+
 			break;
 		}
 
@@ -104,15 +285,84 @@ void TextBox::OnKeyDown(InputEvent input)
 			break;
 		}
 
+		case InputKey::RETURN:
+		{
+			if (acceptsReturn_)
+			{
+				text_.insert(cursorPosition_, 1, L'\n');
+				cursorPosition_++;
+				handled = true;
+				textChanged = true;
+			}
+			break;
+		}
+
 		case InputKey::UP:
 		{
-			PopFocus(Direction::Up, input.Modifier);
+			if (acceptsReturn_ || textWrapping_ != TextWrapping::NoWrap)
+			{
+				auto lines = GetLines(text_, arrangedRect_.Width, textWrapping_);
+				for (size_t i = 0; i < lines.size(); ++i)
+				{
+					if (cursorPosition_ >= lines[i].StartIndex && (i + 1 == lines.size() || cursorPosition_ < lines[i + 1].StartIndex))
+					{
+						if (i > 0)
+						{
+							size_t col = cursorPosition_ - lines[i].StartIndex;
+							size_t prevLen = lines[i - 1].Text.length();
+							if (!lines[i - 1].Text.empty() && lines[i - 1].Text.back() == L'\n')
+								prevLen--;
+							cursorPosition_ = lines[i - 1].StartIndex + std::min(col, prevLen);
+							handled = true;
+						}
+						else
+						{
+							FocusManager::Current().MoveNext(Direction::Up, input.Modifier);
+							return;
+						}
+						break;
+					}
+				}
+			}
+			else
+			{
+				FocusManager::Current().MoveNext(Direction::Up, input.Modifier);
+			}
 			return;
 		}
 
 		case InputKey::DOWN:
 		{
-			PopFocus(Direction::Down, input.Modifier);
+			if (acceptsReturn_ || textWrapping_ != TextWrapping::NoWrap)
+			{
+				auto lines = GetLines(text_, arrangedRect_.Width, textWrapping_);
+				for (size_t i = 0; i < lines.size(); ++i)
+				{
+					if (cursorPosition_ >= lines[i].StartIndex && (i + 1 == lines.size() || cursorPosition_ < lines[i + 1].StartIndex))
+					{
+						if (i + 1 < lines.size())
+						{
+							size_t col = cursorPosition_ - lines[i].StartIndex;
+							size_t nextLen = lines[i + 1].Text.length();
+							if (!lines[i + 1].Text.empty() && lines[i + 1].Text.back() == L'\n')
+								nextLen--;
+
+							cursorPosition_ = lines[i + 1].StartIndex + std::min(col, nextLen);
+							handled = true;
+						}
+						else
+						{
+							FocusManager::Current().MoveNext(Direction::Down, input.Modifier);
+							return;
+						}
+						break;
+					}
+				}
+			}
+			else
+			{
+				FocusManager::Current().MoveNext(Direction::Down, input.Modifier);
+			}
 			return;
 		}
 
@@ -120,7 +370,7 @@ void TextBox::OnKeyDown(InputEvent input)
 		{
 			if (terminality::hasFlag(input.Modifier, InputModifier::LeftAlt) || terminality::hasFlag(input.Modifier, InputModifier::RightAlt))
 			{
-				PopFocus(Direction::Left, input.Modifier);
+				FocusManager::Current().MoveNext(Direction::Left, input.Modifier);
 				return;
 			}
 
@@ -144,7 +394,7 @@ void TextBox::OnKeyDown(InputEvent input)
 		{
 			if (terminality::hasFlag(input.Modifier, InputModifier::LeftAlt) || terminality::hasFlag(input.Modifier, InputModifier::RightAlt))
 			{
-				PopFocus(Direction::Right, input.Modifier);
+				FocusManager::Current().MoveNext(Direction::Right, input.Modifier);
 				return;
 			}
 
@@ -216,7 +466,7 @@ void TextBox::OnKeyDown(InputEvent input)
 	{
 		InvalidateMeasure();
 		InvalidateVisual();
-		
+
 		if (textChanged)
 		{
 			TextChanged.Emit();
@@ -254,26 +504,10 @@ bool TextBox::MoveFocusNext(Direction direction, InputModifier modifiers)
 		return true;
 	}
 
-	/*
-	switch (direction)
+	if (modifiers == InputModifier::None && (direction == Direction::Left || direction == Direction::Right))
 	{
-		case NavigationDirection::Right:
-		{
-			if (hasFlag(modifiers, InputModifier::LeftAlt))
-				return false;
-
-			return true;
-		}
-
-		case NavigationDirection::Left:
-		{
-			if (hasFlag(modifiers, InputModifier::LeftAlt))
-				return false;
-
-			return true;
-		}
+		return true;
 	}
-	*/
 
 	OnLostFocus();
 	return false;

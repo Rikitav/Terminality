@@ -10,8 +10,23 @@ RenderContext::RenderContext(RenderBuffer& buffer, Rect targetRect)
 
 RenderContext RenderContext::CreateInner(Rect targetRect)
 {
+	int32_t x = rect_.X + targetRect.X;
+	int32_t y = rect_.Y + targetRect.Y;
+	
+	int32_t right = std::min(rect_.Right(), x + targetRect.Width);
+	int32_t bottom = std::min(rect_.Bottom(), y + targetRect.Height);
+
+	int32_t width = std::max(0, right - x);
+	int32_t height = std::max(0, bottom - y);
+
+	return RenderContext(buffer_, Rect(x, y, width, height));
+}
+
+#if 0
     return RenderContext(buffer_, Rect::Enclose(rect_, targetRect));
 }
+
+#endif
 
 Rect RenderContext::ContextRect()
 {

@@ -1,0 +1,58 @@
+Версия MSBuild 18.5.4+cb4e32d21 для .NET Framework
+Сборка начата 03.05.2026 5:39:34.
+
+Проект "C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality.sln" в узле 1 (целевые объекты Build).
+ValidateSolutionConfiguration:
+  Создание конфигурации решения "Debug|x64".
+Проект "C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality.sln" (1) выполняет сборку "C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality.TespApp\Terminality.TespApp.vcxproj" (2) в узле 1 (целевые объекты по умолчанию).
+Проект "C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality.TespApp\Terminality.TespApp.vcxproj" (2) выполняет сборку "C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj" (3) в узле 1 (целевые объекты по умолчанию).
+PrepareForBuild:
+  Структурированный вывод включен. Форматирование диагностики компилятора будет отражать иерархию ошибок. Подробнее см. https://aka.ms/cpp/structured-output.
+InitializeBuildStatus:
+  Создание "x64\Debug\Terminality.tlog\unsuccessfulbuild", так как было задано "AlwaysCreate".
+  Обращение к "x64\Debug\Terminality.tlog\unsuccessfulbuild".
+ComputeStdModulesCompileInputs:
+  Чтение файла манифеста библиотеки "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Tools\MSVC\14.50.35717\modules\modules.json", который предоставляет данные для библиотеки "microsoft/STL".
+  Добавление источника модуля "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Tools\MSVC\14.50.35717\modules\std.ixx" из библиотеки "microsoft/STL" для сборки с этим проектом.
+  Добавление источника модуля "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Tools\MSVC\14.50.35717\modules\std.compat.ixx" из библиотеки "microsoft/STL" для сборки с этим проектом.
+SetModuleDependencies:
+  Проверка источников на наличие зависимостей модуля…
+  Для всех выходных данных обновления не требуется.
+ClCompile:
+  Для всех выходных данных обновления не требуется.
+Lib:
+  Для всех выходных данных обновления не требуется.
+  Terminality.vcxproj -> C:\Users\gutii\source\repos\Rikitav\Terminality\x64\Debug\Terminality.lib
+BscMake:
+  Для всех выходных данных обновления не требуется.
+FinalizeBuildStatus:
+  Файл "x64\Debug\Terminality.tlog\unsuccessfulbuild" удаляется.
+  Обращение к "x64\Debug\Terminality.tlog\Terminality.lastbuildstate".
+Сборка проекта "C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj" завершена (целевые объекты по умолчанию).
+PrepareForBuild:
+  Структурированный вывод включен. Форматирование диагностики компилятора будет отражать иерархию ошибок. Подробнее см. https://aka.ms/cpp/structured-output.
+InitializeBuildStatus:
+  Создание "x64\Debug\Terminal.49dac1ab.tlog\unsuccessfulbuild", так как было задано "AlwaysCreate".
+  Обращение к "x64\Debug\Terminal.49dac1ab.tlog\unsuccessfulbuild".
+ComputeStdModulesCompileInputs:
+  Чтение файла манифеста библиотеки "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Tools\MSVC\14.50.35717\modules\modules.json", который предоставляет данные для библиотеки "microsoft/STL".
+  Добавление источника модуля "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Tools\MSVC\14.50.35717\modules\std.ixx" из библиотеки "microsoft/STL" для сборки с этим проектом.
+  Добавление источника модуля "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Tools\MSVC\14.50.35717\modules\std.compat.ixx" из библиотеки "microsoft/STL" для сборки с этим проектом.
+ClCompile:
+  Для всех выходных данных обновления не требуется.
+Link:
+  Для всех выходных данных обновления не требуется.
+  Terminality.TespApp.vcxproj -> C:\Users\gutii\source\repos\Rikitav\Terminality\x64\Debug\Terminality.TespApp.exe
+BscMake:
+  Для всех выходных данных обновления не требуется.
+FinalizeBuildStatus:
+  Файл "x64\Debug\Terminal.49dac1ab.tlog\unsuccessfulbuild" удаляется.
+  Обращение к "x64\Debug\Terminal.49dac1ab.tlog\Terminality.TespApp.lastbuildstate".
+Сборка проекта "C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality.TespApp\Terminality.TespApp.vcxproj" завершена (целевые объекты по умолчанию).
+Сборка проекта "C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality.sln" завершена (целевые объекты Build).
+
+Сборка успешно завершена.
+    Предупреждений: 0
+    Ошибок: 0
+
+Прошло времени 00:00:00.49

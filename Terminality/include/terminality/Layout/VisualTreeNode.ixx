@@ -56,14 +56,20 @@ export namespace terminality
 		virtual void OnKeyUp(InputEvent input);
 
 		// Layout
-		virtual void InvalidateMeasure();
-		virtual void InvalidateArrange();
-		virtual void InvalidateVisual();
+		void InvalidateMeasure();
+		void InvalidateArrange();
+		void InvalidateVisual();
 
 		virtual Size Measure(const Size& availableSize) = 0;
 		virtual void Arrange(const Rect& finalRect) = 0;
 		virtual void Render(RenderContext& context) = 0;
 
+	protected:
+		virtual Size MeasureOverride(const Size& availableSize) = 0;
+		virtual void ArrangeOverride(const Rect& finalRect) = 0;
+		virtual void RenderOverride(RenderContext& context) = 0;
+
+	public:
 		// Getters
 		bool IsAttached() const;
 		bool IsMeasureDirty() const;

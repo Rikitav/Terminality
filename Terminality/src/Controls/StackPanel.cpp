@@ -126,64 +126,38 @@ bool StackPanel::MoveFocusNext(Direction direction, InputModifier modifiers)
 	return false;
 }
 
-Size StackPanel::Measure(const Size& availableSize)
+Size StackPanel::MeasureOverride(const Size& availableSize)
 {
-	Size desiredSize = ControlBase::Measure(availableSize);
 	int32_t totalWidth = 0;
 	int32_t totalHeight = 0;
 	
 	for (const std::unique_ptr<ControlBase>& child : contents_)
 	{
-		const Size childSize = child->Measure(desiredSize);
-		totalWidth = std::max(childSize.Width, totalWidth);
-		totalHeight += childSize.Height;
+		const Size childAvailableSize = Size(availableSize.Width, availableSize.Height - totalHeight);
+		const Size childMeasured = child->Measure(childAvailableSize);
+
+		totalWidth = std::max(childMeasured.Width, totalWidth);
+		totalHeight += childMeasured.Height;
 	}
 
-	measureDirty_ = false;
 	return Size(totalWidth, totalHeight);
 }
 
-void StackPanel::Arrange(const Rect& contentRect)
+void StackPanel::ArrangeOverride(const Rect& contentRect)
 {
-	ControlBase::Arrange(contentRect);
-	Rect arrangedRect = GetArrangedRect();
 	int32_t currentY = 0;
 
 	for (const std::unique_ptr<ControlBase>& child : contents_)
 	{
-		// ���� ������� ��������� ����������: X=0, Y=currentY
-		// ������ ������������ ������� ������
 		const Size childSize = child->GetActualSize();
-		const Rect childRect(0, currentY, arrangedRect.Width, childSize.Height);
+		const Rect childRect(0, currentY, contentRect.Width, childSize.Height);
 
 		child->Arrange(childRect);
 		currentY += child->GetArrangedRect().Height;
 	}
-
-	// ��������� ���� ������������� � ������������ ��������
-	arrangedRect_ = arrangedRect;
-	arrangeDirty_ = false;
-	
-	/*
-	Rect arrangedRect = contentRect;
-	arrangedRect.Height = 0;
-
-	for (const std::unique_ptr<ControlBase>& child : contents_)
-	{
-		const Size childSize = child->GetActualSize();
-		const Rect childRect(arrangedRect.X, arrangedRect.Height, childSize.Width, contentRect.Height - arrangedRect.Height);
-
-		child->Arrange(childRect);
-		const Rect childArranged = child->GetArrangedRect();
-		arrangedRect.Height += childArranged.Height;
-	}
-
-	arrangedRect_ = arrangedRect;
-	arrangeDirty_ = false;
-	*/
 }
 
-void StackPanel::Render(RenderContext& context)
+void StackPanel::RenderOverride(RenderContext& context)
 {
 	for (const std::unique_ptr<ControlBase>& child : contents_)
 	{
@@ -191,6 +165,4 @@ void StackPanel::Render(RenderContext& context)
 		RenderContext childContext = context.CreateInner(childRect);
 		child->Render(childContext);
 	}
-
-	visualDirty_ = false;
 }

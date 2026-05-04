@@ -17,4 +17,19 @@ export namespace terminality
 		Bottom,
 		Stretch
 	};
+
+	enum class TextWrapping
+	{
+		NoWrap,
+		Wrap,
+		WrapWholeWords
+	};
+
+	enum class TextAlignment
+	{
+		Left,
+		Center,
+		Right,
+		Justify
+	};
 }

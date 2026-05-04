@@ -102,26 +102,38 @@ Size ControlBase::Measure(const Size& availableSize)
 	int32_t resultWidth = availableSize.Width;
 	int32_t resultHeight = availableSize.Height;
 
+	if (explicitSize_.Width > 0)
+		resultWidth = explicitSize_.Width;
+
+	if (explicitSize_.Height > 0)
+		resultHeight = explicitSize_.Height;
+
 	if (maxSize_.Width >= 0)
-		resultWidth = std::min(resultWidth, maxSize_.Width);
+		resultWidth = resultWidth < 0 ? maxSize_.Width : std::min(resultWidth, maxSize_.Width);
 
 	if (minSize_.Width >= 0)
 		resultWidth = std::max(resultWidth, minSize_.Width);
 	
 	if (maxSize_.Height >= 0)
-		resultHeight = std::min(resultHeight, maxSize_.Height);
+		resultHeight = resultHeight < 0 ? maxSize_.Height : std::min(resultHeight, maxSize_.Height);
 	
 	if (minSize_.Height >= 0)
 		resultHeight = std::max(resultHeight, minSize_.Height);
 	
+	// TODO: add margin
 	actualSize_ = Size(resultWidth, resultHeight);
+	if (actualSize_ == Size::Zero)
+		return actualSize_;
+
+	actualSize_ = MeasureOverride(actualSize_);
 	return actualSize_;
 }
 
 void ControlBase::Arrange(const Rect& finalRect)
 {
-	int32_t width = actualSize_.Width;
-	int32_t height = actualSize_.Height;
+	Size actualSize = actualSize_;
+	int32_t width = actualSize.Width;
+	int32_t height = actualSize.Height;
 
 	int32_t x = finalRect.X;
 	int32_t y = finalRect.Y;
@@ -130,27 +142,31 @@ void ControlBase::Arrange(const Rect& finalRect)
 	{
 		case HorizontalAlignment::Left:
 		{
-			width = std::min(width, finalRect.Width);
+			width = width < 0 ? finalRect.Width : std::min(width, finalRect.Width);
 			break;
 		}
 
 		case HorizontalAlignment::Center:
 		{
-			width = std::min(width, finalRect.Width);
+			width = width < 0 ? finalRect.Width : std::min(width, finalRect.Width);
 			x += (finalRect.Width - width) / 2;
 			break;
 		}
 
 		case HorizontalAlignment::Right:
 		{
-			width = std::min(width, finalRect.Width);
+			width = width < 0 ? finalRect.Width : std::min(width, finalRect.Width);
 			x += (finalRect.Width - width);
 			break;
 		}
 
 		case HorizontalAlignment::Stretch:
 		{
-			width = finalRect.Width;
+			width = std::clamp<uint32_t>(finalRect.Width,
+				minSize_.Width == -1 ? 0 : minSize_.Width,
+				maxSize_.Width == -1 ? -1 : maxSize_.Width);
+
+			x += (finalRect.Width - width) / 2;
 			break;
 		}
 	}
@@ -159,33 +175,38 @@ void ControlBase::Arrange(const Rect& finalRect)
 	{
 		case VerticalAlignment::Top:
 		{
-			height = std::min(height, finalRect.Height);
+			height = height < 0 ? finalRect.Height : std::min(height, finalRect.Height);
 			break;
 		}
 
 		case VerticalAlignment::Center:
 		{
-			height = std::min(height, finalRect.Height);
+			height = height < 0 ? finalRect.Height : std::min(height, finalRect.Height);
 			y += (finalRect.Height - height) / 2;
 			break;
 		}
 
 		case VerticalAlignment::Bottom:
 		{
-			height = std::min(height, finalRect.Height);
+			height = height < 0 ? finalRect.Height : std::min(height, finalRect.Height);
 			y += (finalRect.Height - height);
 			break;
 		}
 
 		case VerticalAlignment::Stretch:
 		{
-			height = finalRect.Height;
+			height = std::clamp<uint32_t>(finalRect.Height,
+				minSize_.Height == -1 ? 0 : minSize_.Height,
+				maxSize_.Height == -1 ? -1 : maxSize_.Height);
+
+			y += (finalRect.Height - height) / 2;
 			break;
 		}
 	}
 
-	arrangedRect_ = Rect(x, y, width, height);
 	arrangeDirty_ = false;
+	arrangedRect_ = Rect(x, y, width, height);
+	ArrangeOverride(arrangedRect_);
 }
 
 void ControlBase::Render(RenderContext& context)
@@ -197,16 +218,7 @@ void ControlBase::Render(RenderContext& context)
 		[](const Point& point, const Size& size) { return L' '; });
 
 	visualDirty_ = false;
-
-	/*
-	Rect rect = context.ContextRect();
-	context.RenderRectangle(
-		Point(rect.X, rect.Y),
-		Size(rect.Width, rect.Height),
-		[](const Point& point, const Size& size) { return L' '; });
-
-	visualDirty_ = false;
-	*/
+	RenderOverride(context);
 }
 
 const std::span<VisualTreeNode*> ControlBase::GetChildren() const

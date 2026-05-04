@@ -52,42 +52,36 @@ void Grid::EnsureGridDefinitions()
     if (colDefs_.empty()) colDefs_.push_back(ColumnDefinition{});
 }
 
-Size Grid::Measure(const Size& availableSize)
+Size Grid::MeasureOverride(const Size& availableSize)
 {
     EnsureGridDefinitions();
+    for (auto& row : rowDefs_)
+        row.ActualHeight = (row.Height.Type == GridUnitType::Pixel) ? static_cast<int32_t>(row.Height.Value) : 0;
+    
+    for (auto& col : colDefs_)
+        col.ActualWidth = (col.Width.Type == GridUnitType::Pixel) ? static_cast<int32_t>(col.Width.Value) : 0;
 
-    // �������� ����������� ������ Grid (MinSize/MaxSize)
-    Size constrainedSize = ControlBase::Measure(availableSize);
-
-    // 1. �������������� ������������� ������� (Pixel) � ���������� ���������
-    for (auto& row : rowDefs_) row.ActualHeight = (row.Height.Type == GridUnitType::Pixel) ? static_cast<int32_t>(row.Height.Value) : 0;
-    for (auto& col : colDefs_) col.ActualWidth = (col.Width.Type == GridUnitType::Pixel) ? static_cast<int32_t>(col.Width.Value) : 0;
-
-    // 2. ���� 1: ��������� ������� Auto-�����
-    // �������� ������ ��� �����, ��� ������� ������ �� �����
     for (auto& childWrapper : children_)
     {
-        int32_t r = std::clamp<int32_t>(childWrapper.Row, 0, static_cast<int32_t>(rowDefs_.size()) - 1);
-        int32_t c = std::clamp<int32_t>(childWrapper.Column, 0, static_cast<int32_t>(colDefs_.size()) - 1);
+        int32_t rowIndex = std::clamp<int32_t>(childWrapper.Row, 0, static_cast<int32_t>(rowDefs_.size()) - 1);
+        int32_t columnIndex = std::clamp<int32_t>(childWrapper.Column, 0, static_cast<int32_t>(colDefs_.size()) - 1);
 
-        bool isRowAuto = rowDefs_[r].Height.Type == GridUnitType::Auto;
-        bool isColAuto = colDefs_[c].Width.Type == GridUnitType::Auto;
+        bool isRowAuto = rowDefs_[rowIndex].Height.Type == GridUnitType::Auto;
+        bool isColAuto = colDefs_[columnIndex].Width.Type == GridUnitType::Auto;
 
         if (isRowAuto || isColAuto)
         {
             // �������� ���� ��������� ������, ����� ������ "�������" �������
-            Size childDesired = childWrapper.Control->Measure(constrainedSize);
+            Size childDesired = childWrapper.Control->Measure(availableSize);
 
-            if (isColAuto) {
-                colDefs_[c].ActualWidth = std::max(colDefs_[c].ActualWidth, childDesired.Width);
-            }
-            if (isRowAuto) {
-                rowDefs_[r].ActualHeight = std::max(rowDefs_[r].ActualHeight, childDesired.Height);
-            }
+            if (isColAuto)
+                colDefs_[columnIndex].ActualWidth = std::max(colDefs_[columnIndex].ActualWidth, childDesired.Width);
+
+            if (isRowAuto)
+                rowDefs_[rowIndex].ActualHeight = std::max(rowDefs_[rowIndex].ActualHeight, childDesired.Height);
         }
     }
 
-    // 3. �������, ������� ����� ������ Pixel � Auto, � ������� Star-����� � ��� ����
     int32_t fixedWidth = 0, fixedHeight = 0;
     float totalStarWidth = 0.0f, totalStarHeight = 0.0f;
 
@@ -103,9 +97,8 @@ Size Grid::Measure(const Size& availableSize)
         else fixedHeight += row.ActualHeight;
     }
 
-    // 4. ��������� ������� Star-�����, ����������� ������� ���������� �����
-    int32_t remainingWidth = std::max(0, constrainedSize.Width - fixedWidth);
-    int32_t remainingHeight = std::max(0, constrainedSize.Height - fixedHeight);
+    int32_t remainingWidth = std::max(0, availableSize.Width - fixedWidth);
+    int32_t remainingHeight = std::max(0, availableSize.Height - fixedHeight);
 
     if (totalStarWidth > 0)
     {
@@ -127,24 +120,21 @@ Size Grid::Measure(const Size& availableSize)
 
     for (auto& childWrapper : children_)
     {
-        int32_t r = std::clamp<int32_t>(childWrapper.Row, 0, static_cast<int32_t>(rowDefs_.size()) - 1);
-        int32_t c = std::clamp<int32_t>(childWrapper.Column, 0, static_cast<int32_t>(colDefs_.size()) - 1);
+        int32_t rowIndex = std::clamp<int32_t>(childWrapper.Row, 0, static_cast<int32_t>(rowDefs_.size()) - 1);
+        int32_t columnIndex = std::clamp<int32_t>(childWrapper.Column, 0, static_cast<int32_t>(colDefs_.size()) - 1);
 
         int32_t cellWidth = 0;
         int32_t cellHeight = 0;
 
-        // ��������� Span (����������� �����)
-        for (int32_t i = 0; i < childWrapper.ColumnSpan && (c + i) < colDefs_.size(); ++i)
-            cellWidth += colDefs_[c + i].ActualWidth;
+        for (int32_t i = 0; i < childWrapper.ColumnSpan && (columnIndex + i) < colDefs_.size(); ++i)
+            cellWidth += colDefs_[columnIndex + i].ActualWidth;
 
-        for (int32_t i = 0; i < childWrapper.RowSpan && (r + i) < rowDefs_.size(); ++i)
-            cellHeight += rowDefs_[r + i].ActualHeight;
+        for (int32_t i = 0; i < childWrapper.RowSpan && (rowIndex + i) < rowDefs_.size(); ++i)
+            cellHeight += rowDefs_[rowIndex + i].ActualHeight;
 
-        // ���������� �������� ������� "�������" ��������� ������ ������
         childWrapper.Control->Measure(Size(cellWidth, cellHeight));
     }
 
-    // 6. ������������ �������� ������, ������� Grid �������� � ������ ��������
     int32_t totalDesiredWidth = 0;
     int32_t totalDesiredHeight = 0;
 
@@ -154,60 +144,47 @@ Size Grid::Measure(const Size& availableSize)
     for (const auto& row : rowDefs_)
         totalDesiredHeight += row.ActualHeight;
 
-    measureDirty_ = false;
-
-    // ��������� actualSize_ ������ ����� � ���������� ���
-    actualSize_ = Size(totalDesiredWidth, totalDesiredHeight);
-    return actualSize_;
+    return Size(totalDesiredWidth, totalDesiredHeight);
 }
 
-void Grid::Arrange(const Rect& contentRect)
+void Grid::ArrangeOverride(const Rect& contentRect)
 {
-    ControlBase::Arrange(contentRect);
-	Rect arrangedRect = GetArrangedRect();
-
     EnsureGridDefinitions();
 
-    // 1. ��������� ���������� �������� (Offsets) ��� ������� � �����
-    int32_t currentX = arrangedRect.X;
+    int32_t currentX = contentRect.X;
     for (auto& col : colDefs_)
     {
         col.OffsetX = currentX;
         currentX += col.ActualWidth;
     }
 
-    int32_t currentY = arrangedRect.Y;
+    int32_t currentY = contentRect.Y;
     for (auto& row : rowDefs_)
     {
         row.OffsetY = currentY;
         currentY += row.ActualHeight;
     }
 
-    // 2. ����������� �������� �������� � �� �������
     for (auto& childWrapper : children_)
     {
-        int32_t r = std::clamp<int32_t>(childWrapper.Row, 0, static_cast<int32_t>(rowDefs_.size()) - 1);
-        int32_t c = std::clamp<int32_t>(childWrapper.Column, 0, static_cast<int32_t>(colDefs_.size()) - 1);
+        int32_t rowIndex = std::clamp<int32_t>(childWrapper.Row, 0, static_cast<int32_t>(rowDefs_.size()) - 1);
+        int32_t columnIndex = std::clamp<int32_t>(childWrapper.Column, 0, static_cast<int32_t>(colDefs_.size()) - 1);
 
-        // ��������� Span (������������ �� ��������� �����)
         int32_t cellWidth = 0;
         int32_t cellHeight = 0;
 
-        for (int32_t i = 0; i < childWrapper.ColumnSpan && (c + i) < colDefs_.size(); ++i)
-            cellWidth += colDefs_[c + i].ActualWidth;
+        for (int32_t i = 0; i < childWrapper.ColumnSpan && (columnIndex + i) < colDefs_.size(); ++i)
+            cellWidth += colDefs_[columnIndex + i].ActualWidth;
 
-        for (int32_t i = 0; i < childWrapper.RowSpan && (r + i) < rowDefs_.size(); ++i)
-            cellHeight += rowDefs_[r + i].ActualHeight;
+        for (int32_t i = 0; i < childWrapper.RowSpan && (rowIndex + i) < rowDefs_.size(); ++i)
+            cellHeight += rowDefs_[rowIndex + i].ActualHeight;
 
-        Rect cellRect(colDefs_[c].OffsetX, rowDefs_[r].OffsetY, cellWidth, cellHeight);
+        Rect cellRect(colDefs_[columnIndex].OffsetX, rowDefs_[rowIndex].OffsetY, cellWidth, cellHeight);
         childWrapper.Control->Arrange(cellRect);
     }
-
-    arrangedRect_ = arrangedRect;
-    arrangeDirty_ = false;
 }
 
-void Grid::Render(RenderContext& context)
+void Grid::RenderOverride(RenderContext& context)
 {
     for (const auto& childWrapper : children_)
     {
@@ -215,11 +192,8 @@ void Grid::Render(RenderContext& context)
         RenderContext childContext = context.CreateInner(childRect);
         childWrapper.Control->Render(childContext);
     }
-
-    visualDirty_ = false;
 }
 
-// ���������� ��������� ������ (�������� �� ������� ����������)
 void Grid::OnGotFocus()
 {
     if (children_.empty())

@@ -37,6 +37,9 @@ namespace
             auto textBox = std::make_unique<TextBox>();
             textBox->SetText(L"Type here...");
             textBox->SetMargin(Thickness(1));
+            textBox->SetMaxSize(Size(25, 3));
+            textBox->SetHorizontalAlignment(HorizontalAlignment::Stretch);
+            textBox->SetAcceptsReturn(true);
             leftPanel->AddChild(std::move(textBox));
 
             // Добавляем левую панель в первую колонку (0, 0)
