@@ -41,21 +41,6 @@ export namespace terminality
 		virtual void SetParent(VisualTreeNode* parent) = 0;
 		virtual const std::span<VisualTreeNode*> GetChildren() const = 0;
 
-		// Focus management
-		virtual bool MoveFocusNext(Direction direction, InputModifier modifiers = InputModifier::None);
-		virtual void OnGotFocus();
-		virtual void OnLostFocus();
-
-		// Tree invalidation
-		virtual void OnChildInvalidated(VisualTreeNode& child);
-		virtual void OnAttachedToTree();
-		virtual void OnDettachedFromTree();
-
-		// User input
-		virtual void OnKeyDown(InputEvent input);
-		virtual void OnKeyUp(InputEvent input);
-
-		// Layout
 		void InvalidateMeasure();
 		void InvalidateArrange();
 		void InvalidateVisual();
@@ -64,12 +49,6 @@ export namespace terminality
 		virtual void Arrange(const Rect& finalRect) = 0;
 		virtual void Render(RenderContext& context) = 0;
 
-	protected:
-		virtual Size MeasureOverride(const Size& availableSize) = 0;
-		virtual void ArrangeOverride(const Rect& finalRect) = 0;
-		virtual void RenderOverride(RenderContext& context) = 0;
-
-	public:
 		// Getters
 		bool IsAttached() const;
 		bool IsMeasureDirty() const;
@@ -84,5 +63,25 @@ export namespace terminality
 		virtual void SetFocusable(bool value) = 0;
 		virtual void SetTabStop(bool value) = 0;
 		virtual void SetTabIndex(int value) = 0;
+
+		// User input
+		virtual void OnKeyDown(InputEvent input);
+		virtual void OnKeyUp(InputEvent input);
+
+		// Focus management
+		virtual bool MoveFocusNext(Direction direction, InputModifier modifiers = InputModifier::None);
+		virtual void OnGotFocus();
+		virtual void OnLostFocus();
+
+		// Tree invalidation
+		virtual void OnChildInvalidated(VisualTreeNode& child);
+		virtual void OnAttachedToTree();
+		virtual void OnDettachedFromTree();
+
+	protected:
+		// Layout
+		virtual Size MeasureOverride(const Size& availableSize) = 0;
+		virtual void ArrangeOverride(const Rect& finalRect) = 0;
+		virtual void RenderOverride(RenderContext& context) = 0;
 	};
 }

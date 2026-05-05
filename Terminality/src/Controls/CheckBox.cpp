@@ -5,18 +5,27 @@ import std.compat;
 
 using namespace terminality;
 
-void Button::Click()
+void CheckBox::Toggle(std::optional<bool> value)
 {
-	Clicked.Emit();
+	isChecked_ = value;
+	Toggled.Emit(isChecked_);
 	InvalidateVisual();
+
+	if (isChecked_.has_value())
+	{
+		if (isChecked_.value())
+			Checked.Emit();
+		else
+			Unchecked.Emit();
+	}
 }
 
-void Button::OnPropertyChanged(const char* propertyName)
+void CheckBox::OnPropertyChanged(const char* propertyName)
 {
 	ControlBase::OnPropertyChanged(propertyName);
 }
 
-void Button::OnKeyDown(InputEvent input)
+void CheckBox::OnKeyDown(InputEvent input)
 {
 	switch (input.Key)
 	{
@@ -25,7 +34,6 @@ void Button::OnKeyDown(InputEvent input)
 		{
 			isPressed_ = true;
 			InvalidateVisual();
-			Clicked.Emit();
 			break;
 		}
 
@@ -37,7 +45,7 @@ void Button::OnKeyDown(InputEvent input)
 	}
 }
 
-void Button::OnKeyUp(InputEvent input)
+void CheckBox::OnKeyUp(InputEvent input)
 {
 	switch (input.Key)
 	{
@@ -45,6 +53,19 @@ void Button::OnKeyUp(InputEvent input)
 		case InputKey::SPACE:
 		{
 			isPressed_ = false;
+			if (!isChecked_.has_value())
+			{
+				isChecked_ = true;
+			}
+			else if (isChecked_.value())
+			{
+				isChecked_ = false;
+			}
+			else
+			{
+				isChecked_ = true;
+			}
+
 			InvalidateVisual();
 			break;
 		}
@@ -57,32 +78,46 @@ void Button::OnKeyUp(InputEvent input)
 	}
 }
 
-void Button::OnLostFocus()
+void CheckBox::OnLostFocus()
 {
 	focused_ = false;
 	isPressed_ = false;
 	InvalidateVisual();
 }
 
-Size Button::MeasureOverride(const Size& availableSize)
+Size CheckBox::MeasureOverride(const Size& availableSize)
 {
-	int32_t contentWidth = static_cast<int32_t>(Text->size()) + 6;
+	int32_t contentWidth = static_cast<int32_t>(Text->size()) + 7 + 3;
 	int32_t width = availableSize.Width >= 0 ? std::min(availableSize.Width, contentWidth) : contentWidth;
 	int32_t height = availableSize.Height >= 0 ? std::min(availableSize.Height, 1) : 1;
 	return Size(width, height);
 }
 
-void Button::ArrangeOverride(const Rect& contentRect)
+void CheckBox::ArrangeOverride(const Rect& contentRect)
 {
 	// bleh U_U
 	return;
 }
 
-void Button::RenderOverride(RenderContext& context)
+void CheckBox::RenderOverride(RenderContext& context)
 {
 	const Rect rect = context.ContextRect();
-	std::wstring line = L"[  " + Text.Get() + L"  ]";
+	std::wstring line = L"";
 
+	if (!isChecked_.has_value())
+	{
+		line += L"[?]";
+	}
+	else if (isChecked_.value())
+	{
+		line += L"[X]";
+	}
+	else
+	{
+		line += L"[ ]";
+	}
+
+	line += L" [  " + Text.Get() + L"  ]";
 	Color fore = ForegroundColor;
 	Color back = BackgroundColor;
 

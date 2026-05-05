@@ -13,28 +13,19 @@ export namespace terminality
 {
 	class TextBox : public ControlBase
 	{
-		std::wstring text_;
 		size_t cursorPosition_ = 0;
-		TextWrapping textWrapping_ = TextWrapping::NoWrap;
-		TextAlignment textAlignment_ = TextAlignment::Left;
-		bool acceptsReturn_ = false;
 
 	public:
-		TextBox();
+		PropertyDescriptor<TextBox, std::wstring> Text			 { this, "Text", L"", InvalidationKind::Measure };
+		PropertyDescriptor<TextBox, TextWrapping> TextWrapping	 { this, "TextWrapping", terminality::TextWrapping::NoWrap, InvalidationKind::Measure };
+		PropertyDescriptor<TextBox, TextAlignment> TextAlignment { this, "TextAlignment", terminality::TextAlignment::Left, InvalidationKind::Visual };
+		PropertyDescriptor<TextBox, bool> AcceptsReturn			 { this, "AcceptsReturn", false, InvalidationKind::Measure };
 
 		EventSignal<> TextChanged;
 
-		std::wstring GetText() const;
-		void SetText(std::wstring text);
+		TextBox();
 
-		TextWrapping GetTextWrapping() const;
-		void SetTextWrapping(TextWrapping textWrapping);
-
-		TextAlignment GetTextAlignment() const;
-		void SetTextAlignment(TextAlignment textAlignment);
-
-		bool GetAcceptsReturn() const;
-		void SetAcceptsReturn(bool acceptsReturn);
+		void OnPropertyChanged(const char* propertyName) override;
 
 		void OnKeyDown(InputEvent input) override;
 		void OnKeyUp(InputEvent input) override;

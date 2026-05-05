@@ -5,6 +5,8 @@ import std.compat;
 
 using namespace terminality;
 
+const Point Point::Zero = { 0, 0 };
+
 bool Point::operator==(const Point& other) const
 {
 	return X == other.X && Y == other.Y;
@@ -37,6 +39,9 @@ bool Size::operator!=(const Size& other) const
 {
 	return !(*this == other);
 }
+
+const Thickness Thickness::Zero = { 0, 0, 0, 0 };
+const Thickness Thickness::Single = { 1, 1, 1, 1 };
 
 bool Thickness::operator==(const Thickness& other) const
 {

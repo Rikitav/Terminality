@@ -7,10 +7,10 @@ export import :Layout;
 
 export import :VisualTree;
 export import :VisualTreeNode;
-export import :UIElement;
-export import :DependencyObject;
+export import :PropertyDescriptor;
 export import :ControlBase;
 
+export import :CheckBox;
 export import :Border;
 export import :Button;
 export import :Grid;

@@ -7,6 +7,7 @@ export namespace terminality
 {
 	enum class Color
 	{
+		TRANSPARENT = -1,
 		BLACK = 0,
 		DARK_BLUE = 1,
 		DARK_GREEN = 2,
@@ -22,17 +23,18 @@ export namespace terminality
 		RED = 12,
 		MAGENTA = 13,
 		YELLOW = 14,
-		WHITE = 15
+		WHITE = 15,
 	};
 
 	struct Point
 	{
+		static const Point Zero;
+
 		int32_t X;
 		int32_t Y;
 
 		Point(int32_t x = 0, int32_t y = 0)
-			: X(x), Y(y) {
-		}
+			: X(x), Y(y) { }
 
 		bool operator==(const Point& other) const;
 		bool operator!=(const Point& other) const;
@@ -73,6 +75,9 @@ export namespace terminality
 
 	struct Thickness
 	{
+		static const Thickness Zero;
+		static const Thickness Single;
+
 		int32_t Left;
 		int32_t Top;
 		int32_t Right;

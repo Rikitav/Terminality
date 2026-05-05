@@ -2,8 +2,6 @@ export module terminality:Focus;
 
 export namespace terminality
 {
-	class VisualTreeNode;
-
 	enum class Direction
 	{
 		Up,

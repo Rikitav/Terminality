@@ -1,5 +1,5 @@
 Версия MSBuild 18.5.4+cb4e32d21 для .NET Framework
-Сборка начата 03.05.2026 5:39:34.
+Сборка начата 05.05.2026 23:24:27.
 
 Проект "C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality.sln" в узле 1 (целевые объекты Build).
 ValidateSolutionConfiguration:
@@ -9,7 +9,6 @@ ValidateSolutionConfiguration:
 PrepareForBuild:
   Структурированный вывод включен. Форматирование диагностики компилятора будет отражать иерархию ошибок. Подробнее см. https://aka.ms/cpp/structured-output.
 InitializeBuildStatus:
-  Создание "x64\Debug\Terminality.tlog\unsuccessfulbuild", так как было задано "AlwaysCreate".
   Обращение к "x64\Debug\Terminality.tlog\unsuccessfulbuild".
 ComputeStdModulesCompileInputs:
   Чтение файла манифеста библиотеки "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Tools\MSVC\14.50.35717\modules\modules.json", который предоставляет данные для библиотеки "microsoft/STL".
@@ -20,39 +19,51 @@ SetModuleDependencies:
   Для всех выходных данных обновления не требуется.
 ClCompile:
   Для всех выходных данных обновления не требуется.
-Lib:
-  Для всех выходных данных обновления не требуется.
-  Terminality.vcxproj -> C:\Users\gutii\source\repos\Rikitav\Terminality\x64\Debug\Terminality.lib
-BscMake:
-  Для всех выходных данных обновления не требуется.
-FinalizeBuildStatus:
-  Файл "x64\Debug\Terminality.tlog\unsuccessfulbuild" удаляется.
-  Обращение к "x64\Debug\Terminality.tlog\Terminality.lastbuildstate".
-Сборка проекта "C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj" завершена (целевые объекты по умолчанию).
-PrepareForBuild:
-  Структурированный вывод включен. Форматирование диагностики компилятора будет отражать иерархию ошибок. Подробнее см. https://aka.ms/cpp/structured-output.
-InitializeBuildStatus:
-  Создание "x64\Debug\Terminal.49dac1ab.tlog\unsuccessfulbuild", так как было задано "AlwaysCreate".
-  Обращение к "x64\Debug\Terminal.49dac1ab.tlog\unsuccessfulbuild".
-ComputeStdModulesCompileInputs:
-  Чтение файла манифеста библиотеки "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Tools\MSVC\14.50.35717\modules\modules.json", который предоставляет данные для библиотеки "microsoft/STL".
-  Добавление источника модуля "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Tools\MSVC\14.50.35717\modules\std.ixx" из библиотеки "microsoft/STL" для сборки с этим проектом.
-  Добавление источника модуля "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Tools\MSVC\14.50.35717\modules\std.compat.ixx" из библиотеки "microsoft/STL" для сборки с этим проектом.
-ClCompile:
-  Для всех выходных данных обновления не требуется.
-Link:
-  Для всех выходных данных обновления не требуется.
-  Terminality.TespApp.vcxproj -> C:\Users\gutii\source\repos\Rikitav\Terminality\x64\Debug\Terminality.TespApp.exe
-BscMake:
-  Для всех выходных данных обновления не требуется.
-FinalizeBuildStatus:
-  Файл "x64\Debug\Terminal.49dac1ab.tlog\unsuccessfulbuild" удаляется.
-  Обращение к "x64\Debug\Terminal.49dac1ab.tlog\Terminality.TespApp.lastbuildstate".
-Сборка проекта "C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality.TespApp\Terminality.TespApp.vcxproj" завершена (целевые объекты по умолчанию).
-Сборка проекта "C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality.sln" завершена (целевые объекты Build).
+  Компиляция…
+  C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Tools\MSVC\14.50.35717\bin\HostX86\x64\CL.exe /c /reference terminality=C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\x64\Debug\Terminality.ixx.ifc /reference std=C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\x64\Debug\microsoft\STL\std.ixx.ifc /reference std.compat=C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\x64\Debug\microsoft\STL\std.compat.ixx.ifc /reference terminality:FocusManager=C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\x64\Debug\FocusManager.ixx.ifc /reference terminality:Focus=C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\x64\Debug\Focus.ixx.ifc /reference terminality:Geometry=C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\x64\Debug\Geometry.ixx.ifc /reference terminality:InputEvent=C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\x64\Debug\InputEvent.ixx.ifc /reference terminality:Layout=C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\x64\Debug\Layout.ixx.ifc /reference terminality:VisualTree=C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\x64\Debug\VisualTree.ixx.ifc /reference terminality:VisualTreeNode=C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\x64\Debug\VisualTreeNode.ixx.ifc /reference terminality:UIElement=C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\x64\Debug\UIElement.ixx.ifc /reference terminality:DependencyObject=C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\x64\Debug\DependencyObject.ixx.ifc /reference terminality:ControlBase=C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\x64\Debug\ControlBase.ixx.ifc /reference terminality:Border=C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\x64\Debug\Border.ixx.ifc /reference terminality:Button=C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\x64\Debug\Button.ixx.ifc /reference terminality:Grid=C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\x64\Debug\Grid.ixx.ifc /reference terminality:StackPanel=C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\x64\Debug\StackPanel.ixx.ifc /reference terminality:TextBox=C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\x64\Debug\TextBox.ixx.ifc /reference terminality:EventSignal=C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\x64\Debug\EventSignal.ixx.ifc /reference terminality:RenderBuffer=C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\x64\Debug\RenderBuffer.ixx.ifc /reference terminality:RenderContext=C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\x64\Debug\RenderContext.ixx.ifc /reference terminality:Host=C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\x64\Debug\HostApplication.ixx.ifc /ZI /JMC /nologo /W3 /WX- /diagnostics:column /sdl /FS /Od /D _DEBUG /D _LIB /D _UNICODE /D UNICODE /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++23preview /permissive- /ifcOutput "x64\Debug\\" /Fo"x64\Debug\\" /Fd"C:\Users\gutii\source\repos\Rikitav\Terminality\x64\Debug\Terminality.pdb" /sourceDependencies "x64\Debug\.d.json" /FR"x64\Debug\\" /external:W3 /Gd /TP /FC /errorReport:queue src\Controls\TextBox.cpp
+  TextBox.cpp
+C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(98,15): error C2061: синтаксическая ошибка: идентификатор "MeasureOverride" [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(99,1): error C2143: синтаксическая ошибка: отсутствие ";" перед "{" [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(99,1): error C2447: {: отсутствует заголовок функции (возможно, используется формальный список старого типа) [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(270,41): error C2653: NavigationDirection: не является именем класса или пространства имен [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(270,62): error C2065: Up: необъявленный идентификатор [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(279,38): error C2653: NavigationDirection: не является именем класса или пространства имен [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(279,59): error C2065: Up: необъявленный идентификатор [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(305,41): error C2653: NavigationDirection: не является именем класса или пространства имен [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(305,62): error C2065: Down: необъявленный идентификатор [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(314,38): error C2653: NavigationDirection: не является именем класса или пространства имен [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(314,59): error C2065: Down: необъявленный идентификатор [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(323,38): error C2653: NavigationDirection: не является именем класса или пространства имен [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(323,59): error C2065: Left: необъявленный идентификатор [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(340,38): error C2653: NavigationDirection: не является именем класса или пространства имен [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(340,59): error C2065: Right: необъявленный идентификатор [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+Сборка проекта "C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj" завершена (целевые объекты по умолчанию) с ошибкой.
+Сборка проекта "C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality.TespApp\Terminality.TespApp.vcxproj" завершена (целевые объекты по умолчанию) с ошибкой.
+Сборка проекта "C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality.sln" завершена (целевые объекты Build) с ошибкой.
 
-Сборка успешно завершена.
+Ошибка сборки.
+
+"C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality.sln" (целевой объект Build ) (1) ->
+"C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality.TespApp\Terminality.TespApp.vcxproj" (целевой объект по умолчанию) (2) ->
+"C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj" (целевой объект по умолчанию) (3) ->
+(Целевой объект ClCompile) -> 
+  C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(98,15): error C2061: синтаксическая ошибка: идентификатор "MeasureOverride" [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+  C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(99,1): error C2143: синтаксическая ошибка: отсутствие ";" перед "{" [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+  C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(99,1): error C2447: {: отсутствует заголовок функции (возможно, используется формальный список старого типа) [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+  C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(270,41): error C2653: NavigationDirection: не является именем класса или пространства имен [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+  C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(270,62): error C2065: Up: необъявленный идентификатор [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+  C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(279,38): error C2653: NavigationDirection: не является именем класса или пространства имен [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+  C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(279,59): error C2065: Up: необъявленный идентификатор [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+  C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(305,41): error C2653: NavigationDirection: не является именем класса или пространства имен [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+  C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(305,62): error C2065: Down: необъявленный идентификатор [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+  C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(314,38): error C2653: NavigationDirection: не является именем класса или пространства имен [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+  C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(314,59): error C2065: Down: необъявленный идентификатор [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+  C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(323,38): error C2653: NavigationDirection: не является именем класса или пространства имен [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+  C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(323,59): error C2065: Left: необъявленный идентификатор [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+  C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(340,38): error C2653: NavigationDirection: не является именем класса или пространства имен [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+  C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\src\Controls\TextBox.cpp(340,59): error C2065: Right: необъявленный идентификатор [C:\Users\gutii\source\repos\Rikitav\Terminality\Terminality\Terminality.vcxproj]
+
     Предупреждений: 0
-    Ошибок: 0
+    Ошибок: 15
 
-Прошло времени 00:00:00.49
+Прошло времени 00:00:00.70

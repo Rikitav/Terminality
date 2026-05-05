@@ -15,64 +15,103 @@ export namespace terminality
 	class EventSignalConnection
 	{
 		friend class EventSignal<Args...>;
+
 		EventSignal<Args...>* owner_ = nullptr;
 		size_t id_ = 0;
 
-		EventSignalConnection(EventSignal<Args...>* owner, size_t id)
-			: owner_(owner), id_(id) { }
+		EventSignalConnection(EventSignal<Args...>* owner, size_t id);
 
 	public:
-		EventSignalConnection(const EventSignalConnection<Args...>&)
-			= delete;
+		EventSignalConnection(EventSignalConnection&& other);
+		EventSignalConnection(const EventSignalConnection<Args...>&) = delete;
+		~EventSignalConnection();
 
-		EventSignalConnection(EventSignalConnection&& other)
-		{
-			other.owner_ = nullptr;
-		}
-
-		~EventSignalConnection()
-		{
-			Disconnect();
-		}
-
-		void Disconnect()
-		{
-			if (owner_)
-			{
-				owner_->Disconnect(id_);
-				owner_ = nullptr;
-			}
-		}
+		void Detach();
+		void Disconnect();
 	};
 
 	template<typename... Args>
 	class EventSignal
 	{
 		friend class EventSignalConnection<Args...>;
+		//static std::vector<EventSignalConnection<Args...>> detachedConnections;
+
 		std::unordered_map<size_t, Handler<Args...>> handlers_;
 		size_t nextId_ = 1;
 
 	public:
-		EventSignalConnection<Args...> Connect(Handler<Args...> handler)
-		{
-			const size_t id = nextId_++;
-			handlers_.emplace(id, std::move(handler));
-			return EventSignalConnection<Args...>(this, id);
-		}
-
-		void Emit(Args... args)
-		{
-			const std::unordered_map<size_t, Handler<Args...>> snapshot = handlers_;
-			for (const auto& entry : snapshot)
-			{
-				entry.second(args...);
-			}
-		}
-
+		void operator+=(Handler<Args...> handler);
+		[[nodiscard]] EventSignalConnection<Args...> Connect(Handler<Args...> handler);
+		void Emit(Args... args);
+		
 	private:
-		void Disconnect(size_t id)
-		{
-			handlers_.erase(id);
-		}
+		void Disconnect(size_t id);
 	};
+}
+
+template<typename... Args>
+terminality::EventSignalConnection<Args...>::EventSignalConnection(EventSignal<Args...>* owner, size_t id)
+	: owner_(owner), id_(id) {}
+
+template<typename... Args>
+terminality::EventSignalConnection<Args...>::EventSignalConnection(EventSignalConnection&& other)
+{
+	other.owner_ = nullptr;
+}
+
+template<typename... Args>
+terminality::EventSignalConnection<Args...>::~EventSignalConnection()
+{
+	Disconnect();
+}
+
+template<typename... Args>
+void terminality::EventSignalConnection<Args...>::Disconnect()
+{
+	if (owner_ != nullptr)
+	{
+		owner_->Disconnect(id_);
+		owner_ = nullptr;
+	}
+}
+
+/*
+template<typename ...Args>
+void terminality::EventSignalConnection<Args...>::Detach()
+{
+	detachedConnections.push_back(*this);
+	detached = true;
+}
+*/
+
+template<typename ...Args>
+void terminality::EventSignal<Args...>::operator+=(terminality::Handler<Args...> handler)
+{
+	const size_t id = nextId_++;
+	handlers_.emplace(id, std::move(handler));
+	//detachedConnections.emplace_back(this, id);
+}
+
+template<typename... Args>
+terminality::EventSignalConnection<Args...> terminality::EventSignal<Args...>::Connect(terminality::Handler<Args...> handler)
+{
+	const size_t id = nextId_++;
+	handlers_.emplace(id, std::move(handler));
+	return EventSignalConnection<Args...>(this, id);
+}
+
+template<typename... Args>
+void terminality::EventSignal<Args...>::Emit(Args... args)
+{
+	const std::unordered_map<size_t, Handler<Args...>> snapshot = handlers_;
+	for (const auto& entry : snapshot)
+	{
+		entry.second(args...);
+	}
+}
+
+template<typename... Args>
+void terminality::EventSignal<Args...>::Disconnect(size_t id)
+{
+	handlers_.erase(id);
 }

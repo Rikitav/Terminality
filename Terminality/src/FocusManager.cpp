@@ -29,9 +29,11 @@ bool FocusManager::SetFocused(VisualTreeNode* node)
 		if (focusStack.back() == node)
 			return false;
 		
+		/*
 		old = focusStack.back();
 		if (old != nullptr)
 			old->OnLostFocus();
+		*/
 	}
 
 	focusStack.push_back(node);
@@ -53,6 +55,7 @@ bool FocusManager::MoveNext(Direction direction, InputModifier modifiers)
 		if (node->MoveFocusNext(direction, modifiers))
 			return true;
 
+		node->OnLostFocus();
 		focusStack.pop_back();
 		continue;
 	}

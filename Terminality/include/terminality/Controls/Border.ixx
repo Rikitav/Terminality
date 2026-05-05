@@ -10,18 +10,14 @@ export namespace terminality
 {
 	class Border : public ControlBase
 	{
-		std::unique_ptr<ControlBase> content_ = nullptr;
-		Color borderColor_ = Color::DARK_GRAY;
-		Thickness borderThickness_ = Thickness(1, 1, 1, 1);
-
 	public:
-		Color GetBorderColor() const;
-		//Thickness GetBorderThickness() const;
-		ControlBase* GetContent() const;
+		PropertyDescriptor<Border, Color> BorderColor					 { this, "BorderColor", Color::DARK_GRAY, InvalidationKind::Visual};
+		PropertyDescriptor<Border, Thickness> BorderThickness			 { this, "BorderThickness", Thickness::Single, InvalidationKind::Visual };
+		PropertyDescriptor<Border, std::unique_ptr<ControlBase>> Content { this, "Content", nullptr, InvalidationKind::Visual };
+		
+		Border();
 
-		void SetBorderColor(Color color);
-		//void SetBorderThickness(Thickness thickness);
-		void SetContent(std::unique_ptr<ControlBase> child);
+		void OnPropertyChanged(const char* propertyName) override;
 
 		bool MoveFocusNext(Direction direction, InputModifier modifiers = InputModifier::None) override;
 		void OnGotFocus() override;

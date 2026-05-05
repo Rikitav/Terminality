@@ -67,6 +67,20 @@ void StackPanel::OnLostFocus()
 	InvalidateVisual();
 }
 
+void StackPanel::OnPropertyChanged(const char* propertyName)
+{
+	/*
+	if (std::strcmp(propertyName, "Content") == 0)
+	{
+		InvalidateMeasure();
+		InvalidateVisual();
+		return;
+	}
+	*/
+
+	ControlBase::OnPropertyChanged(propertyName);
+}
+
 bool StackPanel::MoveFocusNext(Direction direction, InputModifier modifiers)
 {
 	if (contents_.empty())

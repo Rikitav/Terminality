@@ -83,80 +83,28 @@ TextBox::TextBox()
 	isTabStop_ = true;
 }
 
-void TextBox::SetText(std::wstring text)
+void TextBox::OnPropertyChanged(const char* propertyName)
 {
-	if (text_ == text)
-		return;
+	if (std::strcmp(propertyName, "Text") == 0)
+	{
+		cursorPosition_ = std::min(cursorPosition_, Text.Get().length());
+		TextChanged.Emit();
+	}
 
-	text_ = std::move(text);
-	cursorPosition_ = std::min(cursorPosition_, text_.length());
-	InvalidateMeasure();
-	InvalidateVisual();
-	TextChanged.Emit();
-}
-
-std::wstring TextBox::GetText() const
-{
-	return text_;
-}
-
-TextWrapping TextBox::GetTextWrapping() const
-{
-	return textWrapping_;
-}
-
-void TextBox::SetTextWrapping(TextWrapping textWrapping)
-{
-	if (textWrapping_ == textWrapping)
-		return;
-
-	textWrapping_ = textWrapping;
-	InvalidateMeasure();
-	InvalidateVisual();
-}
-
-TextAlignment TextBox::GetTextAlignment() const
-{
-	return textAlignment_;
-}
-
-void TextBox::SetTextAlignment(TextAlignment textAlignment)
-{
-	if (textAlignment_ == textAlignment)
-		return;
-
-	textAlignment_ = textAlignment;
-	InvalidateVisual();
-}
-
-bool TextBox::GetAcceptsReturn() const
-{
-	return acceptsReturn_;
-}
-
-void TextBox::SetAcceptsReturn(bool acceptsReturn)
-{
-	if (acceptsReturn_ == acceptsReturn)
-		return;
-
-	acceptsReturn_ = acceptsReturn;
-	InvalidateMeasure();
-	InvalidateVisual();
+	ControlBase::OnPropertyChanged(propertyName);
 }
 
 Size TextBox::MeasureOverride(const Size& availableSize)
 {
-	std::vector<LineInfo> lines = GetLines(text_, availableSize.Width, textWrapping_);
+	std::vector<LineInfo> lines = GetLines(Text, availableSize.Width, TextWrapping);
 
-	int32_t maxWidth = availableSize.Width;
+	int32_t maxWidth = 0;
 	for (const auto& line : lines)
-		maxWidth = std::clamp(static_cast<int32_t>(line.Text.length()), 0, availableSize.Width);
+		maxWidth = std::max(maxWidth, static_cast<int32_t>(line.Text.length()));
 
 	int32_t width = std::clamp(maxWidth + 1, 0, availableSize.Width);
-	int32_t height = availableSize.Height;
-
-	if (textWrapping_ != TextWrapping::NoWrap && availableSize.Width > 0)
-		width = std::min(width, availableSize.Width);
+	int32_t desiredHeight = std::max<int32_t>(1, static_cast<int32_t>(lines.size()));
+	int32_t height = std::min(desiredHeight, availableSize.Height);
 
 	return Size(width, height);
 }
@@ -181,7 +129,7 @@ void TextBox::RenderOverride(RenderContext& context)
 		}
 	}
 
-	std::vector<LineInfo> lines = GetLines(text_, rect.Width, textWrapping_);
+	std::vector<LineInfo> lines = GetLines(Text.Get(), rect.Width, TextWrapping.Get());
 
 	int32_t cursorY = 0;
 	int32_t cursorX = 0;
@@ -203,7 +151,7 @@ void TextBox::RenderOverride(RenderContext& context)
 	int32_t viewWidth = rect.Width;
 	int32_t offset = 0;
 
-	if (textWrapping_ == TextWrapping::NoWrap)
+	if (TextWrapping == TextWrapping::NoWrap)
 	{
 		if (cursorX >= viewWidth)
 		{
@@ -226,11 +174,11 @@ void TextBox::RenderOverride(RenderContext& context)
 			visibleText = L"";
 
 		int32_t textLen = static_cast<int32_t>(visibleText.length());
-		if (textAlignment_ == TextAlignment::Center)
+		if (TextAlignment.Get() == terminality::TextAlignment::Center)
 		{
 			xOffset = std::max(0, (rect.Width - textLen) / 2);
 		}
-		else if (textAlignment_ == TextAlignment::Right)
+		else if (TextAlignment.Get() == terminality::TextAlignment::Right)
 		{
 			xOffset = std::max(0, rect.Width - textLen);
 		}
@@ -249,7 +197,7 @@ void TextBox::RenderOverride(RenderContext& context)
 
 	if (focused_ && cursorY < rect.Height && cursorX < rect.Width && cursorX >= 0)
 	{
-		wchar_t cursorChar = (cursorPosition_ < text_.length() && text_[cursorPosition_] != L'\n') ? text_[cursorPosition_] : L' ';
+		wchar_t cursorChar = (cursorPosition_ < Text.Get().length() && Text.Get()[cursorPosition_] != L'\n') ? Text.Get()[cursorPosition_] : L' ';
 		context.SetCell(cursorX, cursorY, cursorChar, back, fore);
 	}
 
@@ -260,6 +208,7 @@ void TextBox::OnKeyDown(InputEvent input)
 {
 	bool handled = false;
 	bool textChanged = false;
+	std::wstring currentText = Text.Get();
 
 	switch (input.Key)
 	{
@@ -267,7 +216,7 @@ void TextBox::OnKeyDown(InputEvent input)
 		{
 			if (input.Char != L'\0' && input.Char >= 32)
 			{
-				text_.insert(cursorPosition_, 1, input.Char);
+				currentText.insert(cursorPosition_, 1, input.Char);
 				cursorPosition_++;
 				handled = true;
 				textChanged = true;
@@ -278,7 +227,7 @@ void TextBox::OnKeyDown(InputEvent input)
 
 		case InputKey::SPACE:
 		{
-			text_.insert(cursorPosition_, 1, L' ');
+			currentText.insert(cursorPosition_, 1, L' ');
 			cursorPosition_++;
 			handled = true;
 			textChanged = true;
@@ -287,21 +236,22 @@ void TextBox::OnKeyDown(InputEvent input)
 
 		case InputKey::RETURN:
 		{
-			if (acceptsReturn_)
+			if (AcceptsReturn.Get())
 			{
-				text_.insert(cursorPosition_, 1, L'\n');
+				currentText.insert(cursorPosition_, 1, L'\n');
 				cursorPosition_++;
 				handled = true;
 				textChanged = true;
 			}
+
 			break;
 		}
 
 		case InputKey::UP:
 		{
-			if (acceptsReturn_ || textWrapping_ != TextWrapping::NoWrap)
+			if (AcceptsReturn.Get() || TextWrapping.Get() != terminality::TextWrapping::NoWrap)
 			{
-				auto lines = GetLines(text_, arrangedRect_.Width, textWrapping_);
+				auto lines = GetLines(currentText, arrangedRect_.Width, TextWrapping.Get());
 				for (size_t i = 0; i < lines.size(); ++i)
 				{
 					if (cursorPosition_ >= lines[i].StartIndex && (i + 1 == lines.size() || cursorPosition_ < lines[i + 1].StartIndex))
@@ -312,30 +262,33 @@ void TextBox::OnKeyDown(InputEvent input)
 							size_t prevLen = lines[i - 1].Text.length();
 							if (!lines[i - 1].Text.empty() && lines[i - 1].Text.back() == L'\n')
 								prevLen--;
+
 							cursorPosition_ = lines[i - 1].StartIndex + std::min(col, prevLen);
-							handled = true;
 						}
 						else
 						{
-							FocusManager::Current().MoveNext(Direction::Up, input.Modifier);
+							PopFocus(Direction::Up, input.Modifier);
 							return;
 						}
+
+						handled = true;
 						break;
 					}
 				}
 			}
 			else
 			{
-				FocusManager::Current().MoveNext(Direction::Up, input.Modifier);
+				PopFocus(Direction::Up, input.Modifier);
 			}
+
 			return;
 		}
 
 		case InputKey::DOWN:
 		{
-			if (acceptsReturn_ || textWrapping_ != TextWrapping::NoWrap)
+			if (AcceptsReturn.Get() || TextWrapping.Get() != terminality::TextWrapping::NoWrap)
 			{
-				auto lines = GetLines(text_, arrangedRect_.Width, textWrapping_);
+				auto lines = GetLines(currentText, arrangedRect_.Width, TextWrapping.Get());
 				for (size_t i = 0; i < lines.size(); ++i)
 				{
 					if (cursorPosition_ >= lines[i].StartIndex && (i + 1 == lines.size() || cursorPosition_ < lines[i + 1].StartIndex))
@@ -348,21 +301,23 @@ void TextBox::OnKeyDown(InputEvent input)
 								nextLen--;
 
 							cursorPosition_ = lines[i + 1].StartIndex + std::min(col, nextLen);
-							handled = true;
 						}
 						else
 						{
-							FocusManager::Current().MoveNext(Direction::Down, input.Modifier);
+							PopFocus(Direction::Down, input.Modifier);
 							return;
 						}
+
+						handled = true;
 						break;
 					}
 				}
 			}
 			else
 			{
-				FocusManager::Current().MoveNext(Direction::Down, input.Modifier);
+				PopFocus(Direction::Down, input.Modifier);
 			}
+
 			return;
 		}
 
@@ -370,7 +325,7 @@ void TextBox::OnKeyDown(InputEvent input)
 		{
 			if (terminality::hasFlag(input.Modifier, InputModifier::LeftAlt) || terminality::hasFlag(input.Modifier, InputModifier::RightAlt))
 			{
-				FocusManager::Current().MoveNext(Direction::Left, input.Modifier);
+				PopFocus(Direction::Left, input.Modifier);
 				return;
 			}
 
@@ -379,13 +334,6 @@ void TextBox::OnKeyDown(InputEvent input)
 				cursorPosition_--;
 				handled = true;
 			}
-			/*
-			else
-			{
-				PopFocus(Direction::Right, input.Modifier);
-				return;
-			}
-			*/
 
 			break;
 		}
@@ -394,22 +342,15 @@ void TextBox::OnKeyDown(InputEvent input)
 		{
 			if (terminality::hasFlag(input.Modifier, InputModifier::LeftAlt) || terminality::hasFlag(input.Modifier, InputModifier::RightAlt))
 			{
-				FocusManager::Current().MoveNext(Direction::Right, input.Modifier);
+				PopFocus(Direction::Right, input.Modifier);
 				return;
 			}
 
-			if (cursorPosition_ < text_.length())
+			if (cursorPosition_ < currentText.length())
 			{
 				cursorPosition_++;
 				handled = true;
 			}
-			/*
-			else
-			{
-				PopFocus(Direction::Right, input.Modifier);
-				return;
-			}
-			*/
 
 			break;
 		}
@@ -418,7 +359,7 @@ void TextBox::OnKeyDown(InputEvent input)
 		{
 			if (cursorPosition_ > 0)
 			{
-				text_.erase(cursorPosition_ - 1, 1);
+				currentText.erase(cursorPosition_ - 1, 1);
 				cursorPosition_--;
 				handled = true;
 				textChanged = true;
@@ -429,9 +370,9 @@ void TextBox::OnKeyDown(InputEvent input)
 
 		case InputKey::DELETE:
 		{
-			if (cursorPosition_ < text_.length())
+			if (cursorPosition_ < currentText.length())
 			{
-				text_.erase(cursorPosition_, 1);
+				currentText.erase(cursorPosition_, 1);
 				handled = true;
 				textChanged = true;
 			}
@@ -452,9 +393,9 @@ void TextBox::OnKeyDown(InputEvent input)
 
 		case InputKey::END:
 		{
-			if (cursorPosition_ < text_.length())
+			if (cursorPosition_ < currentText.length())
 			{
-				cursorPosition_ = text_.length();
+				cursorPosition_ = currentText.length();
 				handled = true;
 			}
 
@@ -462,15 +403,15 @@ void TextBox::OnKeyDown(InputEvent input)
 		}
 	}
 
+	if (textChanged)
+	{
+		Text = currentText;
+	}
+
 	if (handled)
 	{
 		InvalidateMeasure();
 		InvalidateVisual();
-
-		if (textChanged)
-		{
-			TextChanged.Emit();
-		}
 	}
 }
 

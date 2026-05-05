@@ -36,15 +36,12 @@ void VisualTree::CollectDirtyNodeRect(const VisualTreeNode& node)
 
 void VisualTree::RunLayout(const Size& viewportSize)
 {
-	if (!rootNode_)
+	if (rootNode_ == nullptr)
 	{
 		return;
 	}
 
 	Size desiredSize = rootNode_->Measure(viewportSize);
-	//int32_t width = std::min(desiredSize.Width, viewportSize.Width);
-	//int32_t height = std::min(desiredSize.Height, viewportSize.Height);
-
 	rootNode_->Arrange(Rect(0, 0, viewportSize.Width, viewportSize.Height));
 	CollectDirtyNodeRect(*rootNode_);
 }

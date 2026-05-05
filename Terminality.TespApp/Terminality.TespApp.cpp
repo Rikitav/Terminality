@@ -2,6 +2,8 @@
 import std.compat;
 import terminality;
 
+#include <Windows.h>
+
 using namespace terminality;
 
 namespace
@@ -14,8 +16,8 @@ namespace
 		DemoRoot()
 		{
             // Настраиваем Grid на весь экран
-            SetHorizontalAlignment(HorizontalAlignment::Stretch);
-            SetVerticalAlignment(VerticalAlignment::Stretch);
+            HorizontalAlignment = HorizontalAlignment::Stretch;
+            VerticalAlignment = VerticalAlignment::Stretch;
 
             // 1. Делим гриду пополам вертикально (две колонки с весом Star)
             AddColumn(ColumnDefinition{ GridLength::Star(1.0f) });
@@ -23,47 +25,55 @@ namespace
 
             // 2. Создаем левую панель
             auto leftPanel = std::make_unique<StackPanel>();
-            leftPanel->SetHorizontalAlignment(HorizontalAlignment::Stretch);
+            leftPanel->HorizontalAlignment = HorizontalAlignment::Stretch;
 
             for (int i = 1; i <= 3; ++i)
             {
                 auto btn = std::make_unique<Button>();
-                btn->SetText(L"Left Panel Button " + std::to_wstring(i));
-                btn->SetHorizontalAlignment(HorizontalAlignment::Center);
-                btn->SetMargin(Thickness(1));
+                btn->Text = (L"Left Panel Button " + std::to_wstring(i));
+                btn->HorizontalAlignment = HorizontalAlignment::Center;
+                btn->Margin = Thickness::Single;
+
                 leftPanel->AddChild(std::move(btn));
             }
 
             auto textBox = std::make_unique<TextBox>();
-            textBox->SetText(L"Type here...");
-            textBox->SetMargin(Thickness(1));
-            textBox->SetMaxSize(Size(25, 3));
-            textBox->SetHorizontalAlignment(HorizontalAlignment::Stretch);
-            textBox->SetAcceptsReturn(true);
+            textBox->Text = L"Type here...";
+            textBox->Margin = Thickness::Single;
+            textBox->MaxSize = Size(25, -1);
+            textBox->HorizontalAlignment = HorizontalAlignment::Stretch;
+            textBox->VerticalAlignment = VerticalAlignment::Center;
+            textBox->AcceptsReturn = true;
             leftPanel->AddChild(std::move(textBox));
 
-            // Добавляем левую панель в первую колонку (0, 0)
-			auto leftBorder = std::make_unique<Border>();
-			leftBorder->SetBorderColor(Color::YELLOW);
-			leftBorder->SetContent(std::move(leftPanel));
-            leftBorder->SetHorizontalAlignment(HorizontalAlignment::Center);
+            auto leftBorder = std::make_unique<Border>();
+			leftBorder->BorderColor = Color::YELLOW;
+			leftBorder->Content = std::move(leftPanel);
+            leftBorder->HorizontalAlignment = HorizontalAlignment::Center;
             AddChild(std::move(leftBorder), 0, 0);
 
             // 3. Создаем правую панель
             auto rightPanel = std::make_unique<StackPanel>();
-            rightPanel->SetHorizontalAlignment(HorizontalAlignment::Stretch);
+            rightPanel->HorizontalAlignment = HorizontalAlignment::Stretch;
 
             for (int i = 1; i <= 3; ++i)
             {
                 auto btn = std::make_unique<Button>();
-                btn->SetText(L"Right Panel Button " + std::to_wstring(i));
-                btn->SetHorizontalAlignment(HorizontalAlignment::Center);
+                btn->Text = L"Right Panel Button " + std::to_wstring(i);
+                btn->HorizontalAlignment = HorizontalAlignment::Center;
+                btn->Clicked += []() { MessageBoxA(nullptr, "Test", nullptr, 0); };
+
                 rightPanel->AddChild(std::move(btn));
             }
 
+            auto checkBox = std::make_unique<CheckBox>();
+            checkBox->Text = L"Check box";
+            checkBox->HorizontalAlignment = HorizontalAlignment::Center;
+            rightPanel->AddChild(std::move(checkBox));
+
             auto rightBorder = std::make_unique<Border>();
-            rightBorder->SetBorderColor(Color::YELLOW);
-            rightBorder->SetContent(std::move(rightPanel));
+            rightBorder->BorderColor = Color::YELLOW;
+            rightBorder->Content = std::move(rightPanel);
             AddChild(std::move(rightBorder), 0, 1);
 		}
 	};

@@ -73,11 +73,11 @@ export namespace terminality
         void AddColumn(const ColumnDefinition& def);
         void AddChild(std::unique_ptr<ControlBase> child, int32_t row = 0, int32_t column = 0, int32_t rowSpan = 1, int32_t colSpan = 1);
 
+    protected:
         bool MoveFocusNext(Direction direction, InputModifier modifiers) override;
         void OnGotFocus() override;
         void OnLostFocus() override;
 
-    protected:
         Size MeasureOverride(const Size& availableSize) override;
         void ArrangeOverride(const Rect& contentRect) override;
         void RenderOverride(RenderContext& context) override;
