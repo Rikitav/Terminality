@@ -6,11 +6,15 @@ import terminality;
 
 using namespace terminality;
 
+#define WITH(type, name, ...) \
+    auto name = std::make_unique<type>(); \
+    { auto& _ = *name; __VA_ARGS__; }
+
 namespace
 {
 	class DemoRoot : public Grid
 	{
-		EventSignalConnection<>* buttonClicked_ = nullptr;
+		ObservableCollection<std::wstring> items_;
 
 	public:
 		DemoRoot()
@@ -29,10 +33,12 @@ namespace
 
             for (int i = 1; i <= 3; ++i)
             {
-                auto btn = std::make_unique<Button>();
-                btn->Text = (L"Left Panel Button " + std::to_wstring(i));
-                btn->HorizontalAlignment = HorizontalAlignment::Center;
-                btn->Margin = Thickness::Single;
+                auto btn = ctor<Button>([&](Button* btn)
+                {
+                    btn->Text = (L"Left Panel Button " + std::to_wstring(i));
+                    btn->HorizontalAlignment = HorizontalAlignment::Center;
+                    btn->Margin = Thickness::Single;
+                });
 
                 leftPanel->AddChild(std::move(btn));
             }
@@ -40,7 +46,7 @@ namespace
             auto textBox = std::make_unique<TextBox>();
             textBox->Text = L"Type here...";
             textBox->Margin = Thickness::Single;
-            textBox->MaxSize = Size(25, -1);
+            textBox->MaxSize = Size(30, -1);
             textBox->HorizontalAlignment = HorizontalAlignment::Stretch;
             textBox->VerticalAlignment = VerticalAlignment::Center;
             textBox->AcceptsReturn = true;
@@ -56,20 +62,37 @@ namespace
             auto rightPanel = std::make_unique<StackPanel>();
             rightPanel->HorizontalAlignment = HorizontalAlignment::Stretch;
 
-            for (int i = 1; i <= 3; ++i)
-            {
+            items_.push_back(L"Dynamic Item 1");
+            items_.push_back(L"Dynamic Item 2");
+            items_.push_back(L"Dynamic Item 3");
+
+            auto itemsControl = std::make_unique<ItemsControl<std::wstring>>();
+            itemsControl->SetItemsSource(&items_);
+            itemsControl->SetItemTemplate([](const std::wstring& item) -> std::unique_ptr<ControlBase> {
                 auto btn = std::make_unique<Button>();
-                btn->Text = L"Right Panel Button " + std::to_wstring(i);
+                btn->Text = item;
                 btn->HorizontalAlignment = HorizontalAlignment::Center;
-                btn->Clicked += []() { MessageBoxA(nullptr, "Test", nullptr, 0); };
+                return btn;
+            });
+            rightPanel->AddChild(std::move(itemsControl));
 
-                rightPanel->AddChild(std::move(btn));
-            }
+            auto addBtn = std::make_unique<Button>();
+            addBtn->Text = L"Add new item";
+            addBtn->HorizontalAlignment = HorizontalAlignment::Center;
+            addBtn->Margin = Thickness::Single;
+            addBtn->Clicked += [this]() {
+                items_.push_back(L"New Dynamic Item " + std::to_wstring(items_.size() + 1));
+            };
+            rightPanel->AddChild(std::move(addBtn));
 
-            auto checkBox = std::make_unique<CheckBox>();
-            checkBox->Text = L"Check box";
-            checkBox->HorizontalAlignment = HorizontalAlignment::Center;
-            rightPanel->AddChild(std::move(checkBox));
+            auto removeBtn = std::make_unique<Button>();
+            removeBtn->Text = L"Remove last item";
+            removeBtn->HorizontalAlignment = HorizontalAlignment::Center;
+            removeBtn->Clicked += [this]() {
+                if (!items_.empty())
+                    items_.pop_back();
+            };
+            rightPanel->AddChild(std::move(removeBtn));
 
             auto rightBorder = std::make_unique<Border>();
             rightBorder->BorderColor = Color::YELLOW;

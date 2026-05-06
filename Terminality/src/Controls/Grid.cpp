@@ -228,11 +228,9 @@ bool Grid::MoveFocusNext(Direction direction, InputModifier modifiers)
         case Direction::Previous:
         {
             if (focusedIndex_ == 0)
-                focusedIndex_ = children_.size() - 1;
-            else
-                focusedIndex_ -= 1;
+                return false;
 
-            for (size_t i = focusedIndex_; i >= 0; i--)
+            for (size_t i = focusedIndex_ - 1; i < children_.size(); i--)
             {
                 ControlBase* control = children_[i].Control.get();
                 if (control->IsFocusable() && control->IsTabStop())
@@ -250,12 +248,10 @@ bool Grid::MoveFocusNext(Direction direction, InputModifier modifiers)
         case Direction::Right:
         case Direction::Next:
         {
-            if (children_.size() - 1 == focusedIndex_)
-                focusedIndex_ = 0;
-            else
-                focusedIndex_ += 1;
+            if (focusedIndex_ + 1 >= children_.size())
+                return false;
 
-            for (size_t i = focusedIndex_; i < children_.size(); i++)
+            for (size_t i = focusedIndex_ + 1; i < children_.size(); i++)
             {
                 ControlBase* control = children_[i].Control.get();
                 if (control->IsFocusable() && control->IsTabStop())

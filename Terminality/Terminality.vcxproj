@@ -162,6 +162,7 @@
     <ClCompile Include="include\terminality\Controls\Border.ixx" />
     <ClCompile Include="include\terminality\Controls\Button.ixx" />
     <ClCompile Include="include\terminality\Controls\TextBox.ixx" />
+    <ClCompile Include="include\terminality\Controls\ItemsControl.ixx" />
     <ClCompile Include="include\terminality\EventSignal.ixx" />
     <ClCompile Include="include\terminality\Layout\PropertyDescriptor.ixx" />
     <ClCompile Include="include\terminality\HostApplication.ixx" />
@@ -170,6 +171,8 @@
     <ClCompile Include="include\terminality\Layout\VisualTree.ixx" />
     <ClCompile Include="include\terminality\Terminality.ixx" />
     <ClCompile Include="include\terminality\RenderBuffer.ixx" />
+    <ClCompile Include="include\terminality\Collections\ObservableCollection.ixx" />
+    <ClCompile Include="include\terminality\Collections\Queries.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Controls\CheckBox.cpp" />

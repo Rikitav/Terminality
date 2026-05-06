@@ -18,7 +18,10 @@ export namespace terminality
 		StackPanel() = default;
 
 		void AddChild(std::unique_ptr<ControlBase> child);
+		void Insert(size_t index, std::unique_ptr<ControlBase> child);
 		std::unique_ptr<ControlBase> RemoveChild(ControlPredicate predicate);
+		std::unique_ptr<ControlBase> RemoveAt(size_t index);
+		void Clear();
 
 		void OnPropertyChanged(const char* propertyName) override;
 

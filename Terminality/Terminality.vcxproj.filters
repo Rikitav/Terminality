@@ -42,6 +42,9 @@
     <ClCompile Include="include\terminality\Controls\TextBox.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="include\terminality\Controls\ItemsControl.ixx">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
     <ClCompile Include="include\terminality\EventSignal.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
@@ -76,6 +79,12 @@
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="src\PlatformSpecific\HostApplication.Linux.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="include\terminality\Collections\ObservableCollection.ixx">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="include\terminality\Collections\Queries.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="include\terminality\Controls\CheckBox.ixx">

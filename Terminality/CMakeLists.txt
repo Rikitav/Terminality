@@ -4,9 +4,12 @@ target_include_directories(terminality PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/includ
 target_sources(terminality
     PUBLIC
     FILE_SET cxx_modules TYPE CXX_MODULES FILES
+        include/terminality/Collections/ObservableCollection.ixx
+        include/terminality/Collections/Queries.ixx
         include/terminality/Controls/Border.ixx
         include/terminality/Controls/Button.ixx
         include/terminality/Controls/Grid.ixx
+        include/terminality/Controls/ItemsControl.ixx
         include/terminality/Controls/StackPanel.ixx
         include/terminality/Controls/TextBox.ixx
         include/terminality/EventSignal.ixx

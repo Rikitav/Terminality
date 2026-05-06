@@ -52,5 +52,13 @@ export namespace terminality
 		Rect GetArrangedRect() const;
 	};
 
+	template <typename T>
+	static std::unique_ptr<T> ctor(std::function<void(T*)> init)
+	{
+		std::unique_ptr<T> widget = std::make_unique<T>();
+		init(widget.get());
+		return std::move(widget);
+	}
+
 	typedef std::function<bool(const ControlBase*)> ControlPredicate;
 }

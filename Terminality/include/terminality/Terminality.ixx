@@ -16,9 +16,13 @@ export import :Button;
 export import :Grid;
 export import :StackPanel;
 export import :TextBox;
+export import :ItemsControl;
 
 export import :EventSignal;
 export import :RenderBuffer;
 export import :RenderContext;
 export import :FocusManager;
 export import :Host;
+
+export import :ObservableCollection;
+export import :Queries;

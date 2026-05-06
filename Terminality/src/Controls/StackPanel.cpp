@@ -42,6 +42,63 @@ std::unique_ptr<ControlBase> StackPanel::RemoveChild(ControlPredicate predicate)
 	return removed;
 }
 
+void StackPanel::Insert(size_t index, std::unique_ptr<ControlBase> child)
+{
+	if (!child)
+		return;
+
+	if (index > contents_.size())
+		index = contents_.size();
+
+	child->SetParent(this);
+	if (!child->IsAttached())
+		child->OnAttachedToTree();
+
+	contents_.insert(contents_.begin() + index, std::move(child));
+
+	if (focusedIndex_ >= index && focusedIndex_ < contents_.size() - 1)
+		focusedIndex_++;
+
+	InvalidateMeasure();
+}
+
+std::unique_ptr<ControlBase> StackPanel::RemoveAt(size_t index)
+{
+	if (index >= contents_.size())
+		return nullptr;
+
+	std::unique_ptr<ControlBase> removed = std::move(contents_[index]);
+	contents_.erase(contents_.begin() + index);
+
+	if (removed)
+	{
+		removed->SetParent(nullptr);
+		removed->OnDettachedFromTree();
+	}
+
+	if (focusedIndex_ >= contents_.size())
+		focusedIndex_ = contents_.empty() ? 0 : contents_.size() - 1;
+
+	InvalidateMeasure();
+	return removed;
+}
+
+void StackPanel::Clear()
+{
+	for (auto& child : contents_)
+	{
+		if (child)
+		{
+			child->SetParent(nullptr);
+			child->OnDettachedFromTree();
+		}
+	}
+	
+	contents_.clear();
+	focusedIndex_ = 0;
+	InvalidateMeasure();
+}
+
 void StackPanel::OnGotFocus()
 {
 	if (contents_.empty())
@@ -96,19 +153,19 @@ bool StackPanel::MoveFocusNext(Direction direction, InputModifier modifiers)
 		case Direction::Previous:
 		{
 			if (focusedIndex_ == 0)
-				focusedIndex_ = contents_.size() - 1;
-			else
-				focusedIndex_ -= 1;
+				return false;
 
-			for (size_t i = focusedIndex_; i < contents_.size(); i++)
+			size_t nextIndex = focusedIndex_ - 1;
+			while (nextIndex < contents_.size())
 			{
-				ControlBase* control = contents_[i].get();
+				ControlBase* control = contents_[nextIndex].get();
 				if (control->IsFocusable() && control->IsTabStop())
 				{
-					focusedIndex_ = i;
+					focusedIndex_ = nextIndex;
 					PushFocus(control);
 					return true;
 				}
+				nextIndex--;
 			}
 
 			break;
@@ -117,12 +174,10 @@ bool StackPanel::MoveFocusNext(Direction direction, InputModifier modifiers)
 		case Direction::Down:
 		case Direction::Next:
 		{
-			if (contents_.size() - 1 == focusedIndex_)
-				focusedIndex_ = 0;
-			else
-				focusedIndex_ += 1;
+			if (focusedIndex_ >= contents_.size() - 1)
+				return false;
 
-			for (size_t i = focusedIndex_; i >= 0; i--)
+			for (size_t i = focusedIndex_ + 1; i < contents_.size(); i++)
 			{
 				ControlBase* control = contents_[i].get();
 				if (control->IsFocusable() && control->IsTabStop())
