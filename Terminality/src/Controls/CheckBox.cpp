@@ -25,7 +25,7 @@ void CheckBox::OnPropertyChanged(const char* propertyName)
 	ControlBase::OnPropertyChanged(propertyName);
 }
 
-void CheckBox::OnKeyDown(InputEvent input)
+bool CheckBox::OnKeyDown(InputEvent input)
 {
 	switch (input.Key)
 	{
@@ -34,18 +34,14 @@ void CheckBox::OnKeyDown(InputEvent input)
 		{
 			isPressed_ = true;
 			InvalidateVisual();
-			break;
-		}
-
-		default:
-		{
-			VisualTreeNode::OnKeyDown(input);
-			break;
+			return true;
 		}
 	}
+
+	return ControlBase::OnKeyDown(input);
 }
 
-void CheckBox::OnKeyUp(InputEvent input)
+bool CheckBox::OnKeyUp(InputEvent input)
 {
 	switch (input.Key)
 	{
@@ -67,15 +63,11 @@ void CheckBox::OnKeyUp(InputEvent input)
 			}
 
 			InvalidateVisual();
-			break;
-		}
-
-		default:
-		{
-			VisualTreeNode::OnKeyUp(input);
-			break;
+			return true;
 		}
 	}
+
+	return ControlBase::OnKeyUp(input);
 }
 
 void CheckBox::OnLostFocus()

@@ -64,12 +64,17 @@ void HostApplication::RunUILoop()
 			}
 
 			VisualTreeNode* focused = focus.GetFocused();
-			if (focused != nullptr)
+			bool success = false;
+			while (!success)
 			{
-				if (evt.Pressed)
-					focused->OnKeyDown(evt);
-				else
-					focused->OnKeyUp(evt);
+				if (focused == nullptr)
+					break;
+
+				success = evt.Pressed
+					? focused->OnKeyDown(evt)
+					: focused->OnKeyUp(evt);
+
+				focused = focused->GetParent();
 			}
 		}
 

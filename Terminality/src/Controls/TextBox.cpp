@@ -204,10 +204,8 @@ void TextBox::RenderOverride(RenderContext& context)
 	visualDirty_ = false;
 }
 
-void TextBox::OnKeyDown(InputEvent input)
+bool TextBox::OnKeyDown(InputEvent input)
 {
-	bool handled = false;
-	bool textChanged = false;
 	std::wstring currentText = Text.Get();
 
 	switch (input.Key)
@@ -218,20 +216,24 @@ void TextBox::OnKeyDown(InputEvent input)
 			{
 				currentText.insert(cursorPosition_, 1, input.Char);
 				cursorPosition_++;
-				handled = true;
-				textChanged = true;
+
+				Text = currentText;
+				InvalidateMeasure();
+				InvalidateVisual();
 			}
 
-			break;
+			return true;
 		}
 
 		case InputKey::SPACE:
 		{
 			currentText.insert(cursorPosition_, 1, L' ');
 			cursorPosition_++;
-			handled = true;
-			textChanged = true;
-			break;
+
+			Text = currentText;
+			InvalidateMeasure();
+			InvalidateVisual();
+			return true;
 		}
 
 		case InputKey::RETURN:
@@ -240,11 +242,13 @@ void TextBox::OnKeyDown(InputEvent input)
 			{
 				currentText.insert(cursorPosition_, 1, L'\n');
 				cursorPosition_++;
-				handled = true;
-				textChanged = true;
+
+				Text = currentText;
+				InvalidateMeasure();
+				InvalidateVisual();
 			}
 
-			break;
+			return true;
 		}
 
 		case InputKey::UP:
@@ -268,11 +272,12 @@ void TextBox::OnKeyDown(InputEvent input)
 						else
 						{
 							PopFocus(Direction::Up, input.Modifier);
-							return;
+							return true;
 						}
 
-						handled = true;
-						break;
+						InvalidateMeasure();
+						InvalidateVisual();
+						return true;
 					}
 				}
 			}
@@ -281,7 +286,7 @@ void TextBox::OnKeyDown(InputEvent input)
 				PopFocus(Direction::Up, input.Modifier);
 			}
 
-			return;
+			return true;
 		}
 
 		case InputKey::DOWN:
@@ -305,11 +310,12 @@ void TextBox::OnKeyDown(InputEvent input)
 						else
 						{
 							PopFocus(Direction::Down, input.Modifier);
-							return;
+							return true;
 						}
 
-						handled = true;
-						break;
+						InvalidateMeasure();
+						InvalidateVisual();
+						return true;
 					}
 				}
 			}
@@ -318,7 +324,7 @@ void TextBox::OnKeyDown(InputEvent input)
 				PopFocus(Direction::Down, input.Modifier);
 			}
 
-			return;
+			return true;
 		}
 
 		case InputKey::LEFT:
@@ -326,16 +332,18 @@ void TextBox::OnKeyDown(InputEvent input)
 			if (terminality::hasFlag(input.Modifier, InputModifier::LeftAlt) || terminality::hasFlag(input.Modifier, InputModifier::RightAlt))
 			{
 				PopFocus(Direction::Left, input.Modifier);
-				return;
+				return true;
 			}
 
 			if (cursorPosition_ > 0)
 			{
 				cursorPosition_--;
-				handled = true;
+
+				InvalidateMeasure();
+				InvalidateVisual();
 			}
 
-			break;
+			return true;
 		}
 
 		case InputKey::RIGHT:
@@ -343,16 +351,18 @@ void TextBox::OnKeyDown(InputEvent input)
 			if (terminality::hasFlag(input.Modifier, InputModifier::LeftAlt) || terminality::hasFlag(input.Modifier, InputModifier::RightAlt))
 			{
 				PopFocus(Direction::Right, input.Modifier);
-				return;
+				return true;
 			}
 
 			if (cursorPosition_ < currentText.length())
 			{
 				cursorPosition_++;
-				handled = true;
+
+				InvalidateMeasure();
+				InvalidateVisual();
 			}
 
-			break;
+			return true;
 		}
 
 		case InputKey::BACK:
@@ -361,11 +371,13 @@ void TextBox::OnKeyDown(InputEvent input)
 			{
 				currentText.erase(cursorPosition_ - 1, 1);
 				cursorPosition_--;
-				handled = true;
-				textChanged = true;
+
+				Text = currentText;
+				InvalidateMeasure();
+				InvalidateVisual();
 			}
 
-			break;
+			return true;
 		}
 
 		case InputKey::DELETE:
@@ -373,11 +385,13 @@ void TextBox::OnKeyDown(InputEvent input)
 			if (cursorPosition_ < currentText.length())
 			{
 				currentText.erase(cursorPosition_, 1);
-				handled = true;
-				textChanged = true;
+				
+				Text = currentText;
+				InvalidateMeasure();
+				InvalidateVisual();
 			}
 
-			break;
+			return true;
 		}
 
 		case InputKey::HOME:
@@ -385,10 +399,12 @@ void TextBox::OnKeyDown(InputEvent input)
 			if (cursorPosition_ > 0)
 			{
 				cursorPosition_ = 0;
-				handled = true;
+				
+				InvalidateMeasure();
+				InvalidateVisual();
 			}
 
-			break;
+			return true;
 		}
 
 		case InputKey::END:
@@ -396,28 +412,19 @@ void TextBox::OnKeyDown(InputEvent input)
 			if (cursorPosition_ < currentText.length())
 			{
 				cursorPosition_ = currentText.length();
-				handled = true;
+				
+				InvalidateMeasure();
+				InvalidateVisual();
 			}
 
-			break;
+			return true;
 		}
-	}
-
-	if (textChanged)
-	{
-		Text = currentText;
-	}
-
-	if (handled)
-	{
-		InvalidateMeasure();
-		InvalidateVisual();
 	}
 }
 
-void TextBox::OnKeyUp(InputEvent input)
+bool TextBox::OnKeyUp(InputEvent input)
 {
-	return;
+	return false;
 }
 
 void TextBox::OnGotFocus()

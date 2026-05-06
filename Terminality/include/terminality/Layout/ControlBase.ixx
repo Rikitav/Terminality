@@ -1,8 +1,9 @@
 export module terminality:ControlBase;
 
 import std;
-import :Geometry;
 import :Layout;
+import :Geometry;
+import :InputEvent;
 import :RenderContext;
 import :EventSignal;
 import :PropertyDescriptor;
@@ -10,10 +11,19 @@ import :VisualTreeNode;
 
 export namespace terminality
 {
+	class ControlBase;
+
+	typedef std::function<bool(const ControlBase*)> ControlPredicate;
+	typedef std::function<void()> KeyCombinationCallback;
+
 	class ControlBase : public VisualTreeNode
 	{
+		std::unordered_map<InputEvent, KeyCombinationCallback, InputEventHasher> keyCombs_;
+
 	public:
 		EventSignal<const char*> PropertyChanged;
+		EventSignal<InputEvent> KeyDown;
+		EventSignal<InputEvent> KeyUp;
 
 		PropertyDescriptor<ControlBase, Size> MinSize { this, "MinSize", Size::Auto, InvalidationKind::Measure };
 		PropertyDescriptor<ControlBase, Size> MaxSize { this, "MaxSize", Size::Auto, InvalidationKind::Measure };
@@ -44,6 +54,11 @@ export namespace terminality
 		void ApplyInvalidation(InvalidationKind invalidation);
 		virtual void OnPropertyChanged(const char* propertyName);
 
+		// User input
+		bool OnKeyDown(InputEvent input) override;
+		bool OnKeyUp(InputEvent input) override;
+		void RegisterCombination(InputModifier modifier, InputKey key, KeyCombinationCallback callback);
+
 		// Ownership
 		virtual const std::span<VisualTreeNode*> GetChildren() const;
 	
@@ -53,12 +68,10 @@ export namespace terminality
 	};
 
 	template <typename T>
-	static std::unique_ptr<T> ctor(std::function<void(T*)> init)
+	std::unique_ptr<T> ctor(std::function<void(T*)> init)
 	{
 		std::unique_ptr<T> widget = std::make_unique<T>();
 		init(widget.get());
 		return std::move(widget);
 	}
-
-	typedef std::function<bool(const ControlBase*)> ControlPredicate;
 }

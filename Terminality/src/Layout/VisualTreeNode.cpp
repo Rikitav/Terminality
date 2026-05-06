@@ -91,6 +91,16 @@ int VisualTreeNode::GetTabIndex() const
 	return tabIndex_;
 }
 
+bool VisualTreeNode::OnKeyDown(InputEvent input)
+{
+	return false;
+}
+
+bool VisualTreeNode::OnKeyUp(InputEvent input)
+{
+	return false;
+}
+
 bool VisualTreeNode::MoveFocusNext(Direction direction, InputModifier modifiers)
 {
 	if (!focusable_)
@@ -126,59 +136,6 @@ void VisualTreeNode::OnDettachedFromTree()
 	attached_ = false;
 	InvalidateMeasure();
 	InvalidateVisual();
-}
-
-void VisualTreeNode::OnKeyDown(InputEvent input)
-{
-	switch (input.Key)
-	{
-		case InputKey::None:
-		{
-			break;
-		}
-
-		case InputKey::UP:
-		{
-			PopFocus(Direction::Up, input.Modifier);
-			break;
-		}
-
-		case InputKey::DOWN:
-		{
-			PopFocus(Direction::Down, input.Modifier);
-			break;
-		}
-
-		case InputKey::LEFT:
-		{
-			PopFocus(Direction::Left, input.Modifier);
-			break;
-		}
-
-		case InputKey::RIGHT:
-		{
-			PopFocus(Direction::Right, input.Modifier);
-			break;
-		}
-
-		case InputKey::TAB:
-		{
-			PopFocus(hasFlag(input.Modifier, InputModifier::Shift)
-				? Direction::Previous : Direction::Next, input.Modifier);
-			break;
-		}
-
-		default:
-		{
-			// TODO: Emit input event to focused control
-			break;
-		}
-	}
-}
-
-void VisualTreeNode::OnKeyUp(InputEvent input)
-{
-	return;
 }
 
 void VisualTreeNode::OnGotFocus()

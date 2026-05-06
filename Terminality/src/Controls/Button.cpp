@@ -16,7 +16,7 @@ void Button::OnPropertyChanged(const char* propertyName)
 	ControlBase::OnPropertyChanged(propertyName);
 }
 
-void Button::OnKeyDown(InputEvent input)
+bool Button::OnKeyDown(InputEvent input)
 {
 	switch (input.Key)
 	{
@@ -26,18 +26,14 @@ void Button::OnKeyDown(InputEvent input)
 			isPressed_ = true;
 			InvalidateVisual();
 			Clicked.Emit();
-			break;
-		}
-
-		default:
-		{
-			VisualTreeNode::OnKeyDown(input);
-			break;
+			return true;
 		}
 	}
+
+	return ControlBase::OnKeyDown(input);
 }
 
-void Button::OnKeyUp(InputEvent input)
+bool Button::OnKeyUp(InputEvent input)
 {
 	switch (input.Key)
 	{
@@ -46,15 +42,11 @@ void Button::OnKeyUp(InputEvent input)
 		{
 			isPressed_ = false;
 			InvalidateVisual();
-			break;
-		}
-
-		default:
-		{
-			VisualTreeNode::OnKeyUp(input);
-			break;
+			return true;
 		}
 	}
+
+	return ControlBase::OnKeyUp(input);
 }
 
 void Button::OnLostFocus()

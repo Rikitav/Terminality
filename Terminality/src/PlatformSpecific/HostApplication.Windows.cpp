@@ -111,7 +111,7 @@ InputEvent HostBackend::PollInput(std::chrono::milliseconds timeout)
     }
 
     if (unicodeChar >= 32)
-        return InputEvent(unicodeChar, record.Event.KeyEvent.bKeyDown);
+        return InputEvent(modifiers, keyCode, unicodeChar, record.Event.KeyEvent.bKeyDown);
 
     return InputEvent(InputModifier::None, InputKey::None, record.Event.KeyEvent.bKeyDown);
 }

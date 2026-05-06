@@ -26,8 +26,8 @@ export namespace terminality
 
 		void OnLostFocus() override;
 
-		void OnKeyDown(InputEvent input) override;
-		void OnKeyUp(InputEvent input) override;
+		bool OnKeyDown(InputEvent input) override;
+		bool OnKeyUp(InputEvent input) override;
 
 	protected:
 		Size MeasureOverride(const Size& availableSize) override;

@@ -204,6 +204,77 @@ void ControlBase::ApplyInvalidation(InvalidationKind invalidation)
 	}
 }
 
+bool ControlBase::OnKeyDown(InputEvent input)
+{
+	KeyDown.Emit(input);
+	
+	for (const auto& pair : keyCombs_)
+	{
+		const InputEvent event = pair.first;
+		if (input.Modifier == event.Modifier && input.Key == event.Key)
+		{
+			KeyCombinationCallback callback = pair.second;
+			callback();
+			return true;
+		}
+	}
+
+	switch (input.Key)
+	{
+		case InputKey::None:
+		{
+			break;
+		}
+
+		case InputKey::UP:
+		{
+			PopFocus(Direction::Up, input.Modifier);
+			return true;
+		}
+
+		case InputKey::DOWN:
+		{
+			PopFocus(Direction::Down, input.Modifier);
+			return true;
+		}
+
+		case InputKey::LEFT:
+		{
+			PopFocus(Direction::Left, input.Modifier);
+			return true;
+		}
+
+		case InputKey::RIGHT:
+		{
+			PopFocus(Direction::Right, input.Modifier);
+			return true;
+		}
+
+		case InputKey::TAB:
+		{
+			PopFocus(hasFlag(input.Modifier, InputModifier::Shift) ? Direction::Previous : Direction::Next, input.Modifier);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool ControlBase::OnKeyUp(InputEvent input)
+{
+	KeyUp.Emit(input);
+	return false;
+}
+
+void ControlBase::RegisterCombination(InputModifier modifier, InputKey key, KeyCombinationCallback callback)
+{
+	InputEvent event(modifier, key, true);
+	if (keyCombs_.find(event) != keyCombs_.end())
+		throw std::runtime_error("Combination is already registered.");
+
+	keyCombs_[event] = std::move(callback);
+}
+
 void ControlBase::OnPropertyChanged(const char* propertyName)
 {
 	return;

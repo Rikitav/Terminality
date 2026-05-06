@@ -1,5 +1,7 @@
 export module terminality:InputEvent;
 
+import std;
+
 export namespace terminality
 {
     enum class InputKey
@@ -207,8 +209,25 @@ export namespace terminality
     
     	InputEvent(InputModifier modifier, InputKey key, bool pressed)
             : Modifier(modifier), Key(key), Pressed(pressed) { }
+        
+    	InputEvent(InputModifier modifier, InputKey key, wchar_t ch, bool pressed)
+            : Modifier(modifier), Key(key), Char(ch), Pressed(pressed) { }
+
+        bool operator==(const InputEvent& other) const = default;
     };
     
+    struct InputEventHasher
+    {
+        size_t operator()(const InputEvent& e) const
+        {
+            return
+                (std::hash<int>()(static_cast<int>(e.Modifier)) << 0) ^
+                (std::hash<int>()(static_cast<int>(e.Key)) << 1) ^
+                (std::hash<wchar_t>()(e.Char) << 2) ^
+                (std::hash<bool>()(e.Pressed) << 3);
+        }
+    };
+
     bool hasFlag(InputModifier value, InputModifier flag)
     {
     	return (static_cast<int>(value) & static_cast<int>(flag)) == static_cast<int>(flag);

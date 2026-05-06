@@ -27,8 +27,8 @@ export namespace terminality
 
 		void OnPropertyChanged(const char* propertyName) override;
 
-		void OnKeyDown(InputEvent input) override;
-		void OnKeyUp(InputEvent input) override;
+		bool OnKeyDown(InputEvent input) override;
+		bool OnKeyUp(InputEvent input) override;
 
 		bool MoveFocusNext(Direction direction, InputModifier modifiers = InputModifier::None) override;
 		void OnGotFocus() override;

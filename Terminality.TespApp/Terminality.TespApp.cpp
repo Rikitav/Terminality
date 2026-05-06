@@ -26,6 +26,7 @@ namespace
             // 1. Делим гриду пополам вертикально (две колонки с весом Star)
             AddColumn(ColumnDefinition{ GridLength::Star(1.0f) });
             AddColumn(ColumnDefinition{ GridLength::Star(1.0f) });
+            RegisterCombination(InputModifier::None, InputKey::ADD, []() { MessageBoxA(nullptr, "Test", nullptr, 0); });
 
             // 2. Создаем левую панель
             auto leftPanel = std::make_unique<StackPanel>();

@@ -65,8 +65,8 @@ export namespace terminality
 		virtual void SetTabIndex(int value) = 0;
 
 		// User input
-		virtual void OnKeyDown(InputEvent input);
-		virtual void OnKeyUp(InputEvent input);
+		virtual bool OnKeyDown(InputEvent input) = 0;
+		virtual bool OnKeyUp(InputEvent input) = 0;
 
 		// Focus management
 		virtual bool MoveFocusNext(Direction direction, InputModifier modifiers = InputModifier::None);
