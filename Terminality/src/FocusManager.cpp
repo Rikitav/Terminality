@@ -15,6 +15,9 @@ FocusManager& FocusManager::Current()
 
 VisualTreeNode* FocusManager::GetFocused() const
 {
+	if (focusStack.empty())
+		return nullptr;
+
 	return focusStack.back();
 }
 
@@ -26,20 +29,28 @@ bool FocusManager::SetFocused(VisualTreeNode* node)
 	VisualTreeNode* old = nullptr;
 	if (!focusStack.empty())
 	{
-		if (focusStack.back() == node)
-			return false;
-		
-		/*
 		old = focusStack.back();
-		if (old != nullptr)
-			old->OnLostFocus();
-		*/
+		if (old == node)
+			return false;
 	}
 
-	focusStack.push_back(node);
-	node->OnGotFocus();
-	
+	VisualTreeNode* parent = node->GetParent();
+	if (old == parent)
+	{
+		focusStack.push_back(node);
+	}
+	else
+	{
+		focusStack.clear();
+		while (parent != nullptr)
+		{
+			parent->OnGotFocus();
+			parent = parent->GetParent();
+		}
+	}
+
 	FocusChanged.Emit(old, node);
+	node->OnGotFocus();
 	return true;
 }
 

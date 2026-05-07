@@ -41,6 +41,7 @@ export namespace terminality
 		virtual void SetParent(VisualTreeNode* parent) = 0;
 		virtual const std::span<VisualTreeNode*> GetChildren() const = 0;
 
+		// Layout
 		void InvalidateMeasure();
 		void InvalidateArrange();
 		void InvalidateVisual();
@@ -55,9 +56,9 @@ export namespace terminality
 		bool IsArrangeDirty() const;
 		bool IsVisualDirty() const;
 
-		bool IsFocusable() const;
-		bool IsTabStop() const;
-		int GetTabIndex() const;
+		virtual bool IsFocusable() const;
+		virtual bool IsTabStop() const;
+		virtual int GetTabIndex() const;
 
 		// Setters
 		virtual void SetFocusable(bool value) = 0;
@@ -77,11 +78,5 @@ export namespace terminality
 		virtual void OnChildInvalidated(VisualTreeNode& child);
 		virtual void OnAttachedToTree();
 		virtual void OnDettachedFromTree();
-
-	protected:
-		// Layout
-		virtual Size MeasureOverride(const Size& availableSize) = 0;
-		virtual void ArrangeOverride(const Rect& finalRect) = 0;
-		virtual void RenderOverride(RenderContext& context) = 0;
 	};
 }

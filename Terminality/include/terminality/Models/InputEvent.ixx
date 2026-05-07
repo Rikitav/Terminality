@@ -228,7 +228,8 @@ export namespace terminality
         }
     };
 
-    bool hasFlag(InputModifier value, InputModifier flag)
+    template <typename T>
+    bool hasFlag(T value, T flag)
     {
     	return (static_cast<int>(value) & static_cast<int>(flag)) == static_cast<int>(flag);
     }

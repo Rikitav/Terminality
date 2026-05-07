@@ -151,6 +151,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="include\terminality\Controls\CheckBox.ixx" />
+    <ClCompile Include="include\terminality\Controls\Label.ixx" />
+    <ClCompile Include="include\terminality\Layout\TextHelper.ixx" />
     <ClCompile Include="include\terminality\Models\Geometry.ixx" />
     <ClCompile Include="include\terminality\Controls\Grid.ixx" />
     <ClCompile Include="include\terminality\Controls\StackPanel.ixx" />
@@ -169,13 +171,17 @@
     <ClCompile Include="include\terminality\FocusManager.ixx" />
     <ClCompile Include="include\terminality\Layout\VisualTreeNode.ixx" />
     <ClCompile Include="include\terminality\Layout\VisualTree.ixx" />
+    <ClCompile Include="include\terminality\RenderStream.ixx" />
     <ClCompile Include="include\terminality\Terminality.ixx" />
     <ClCompile Include="include\terminality\RenderBuffer.ixx" />
     <ClCompile Include="include\terminality\Collections\ObservableCollection.ixx" />
     <ClCompile Include="include\terminality\Collections\Queries.ixx" />
+    <ClCompile Include="src\RenderStream.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Controls\CheckBox.cpp" />
+    <ClCompile Include="src\Controls\Label.cpp" />
+    <ClCompile Include="src\Layout\TextHelper.cpp" />
     <ClCompile Include="src\Models\Geometry.cpp" />
     <ClCompile Include="src\Controls\Grid.cpp" />
     <ClCompile Include="src\Controls\StackPanel.cpp" />

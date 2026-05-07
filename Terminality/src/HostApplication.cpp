@@ -39,7 +39,8 @@ void HostApplication::RunUILoop()
 	FocusManager& focus = FocusManager::Current();
 
 	tree.SetRoot(std::move(rootNode));
-	focus.SetFocused(tree.Root());
+	if (focus.GetFocused() == nullptr)
+		focus.SetFocused(tree.Root());
 
 	const Size initViewport = HostBackend::QueryViewportSize();
 	renderBuffer_.Resize(static_cast<uint32_t>(initViewport.Width), static_cast<uint32_t>(initViewport.Height));

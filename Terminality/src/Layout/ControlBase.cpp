@@ -176,39 +176,21 @@ const std::span<VisualTreeNode*> ControlBase::GetChildren() const
 
 void ControlBase::ApplyInvalidation(InvalidationKind invalidation)
 {
-	switch (invalidation)
-	{
-		case InvalidationKind::Visual:
-		{
-			InvalidateVisual();
-			break;
-		}
+	if (hasFlag(invalidation, InvalidationKind::Visual))
+		InvalidateVisual();
 
-		case InvalidationKind::Arrange:
-		{
-			InvalidateArrange();
-			break;
-		}
+	if (hasFlag(invalidation, InvalidationKind::Arrange))
+		InvalidateArrange();
 
-		case InvalidationKind::Measure:
-		{
-			InvalidateMeasure();
-			break;
-		}
-
-		default:
-		case InvalidationKind::None:
-		{
-			break;
-		}
-	}
+	if (hasFlag(invalidation, InvalidationKind::Measure))
+		InvalidateMeasure();
 }
 
 bool ControlBase::OnKeyDown(InputEvent input)
 {
 	KeyDown.Emit(input);
 	
-	for (const auto& pair : keyCombs_)
+	for (const auto& pair : hotkeys_)
 	{
 		const InputEvent event = pair.first;
 		if (input.Modifier == event.Modifier && input.Key == event.Key)
@@ -266,18 +248,23 @@ bool ControlBase::OnKeyUp(InputEvent input)
 	return false;
 }
 
-void ControlBase::RegisterCombination(InputModifier modifier, InputKey key, KeyCombinationCallback callback)
+void ControlBase::OnHotkey(InputModifier modifier, InputKey key, KeyCombinationCallback callback)
 {
 	InputEvent event(modifier, key, true);
-	if (keyCombs_.find(event) != keyCombs_.end())
+	if (hotkeys_.find(event) != hotkeys_.end())
 		throw std::runtime_error("Combination is already registered.");
 
-	keyCombs_[event] = std::move(callback);
+	hotkeys_[event] = std::move(callback);
 }
 
 void ControlBase::OnPropertyChanged(const char* propertyName)
 {
-	return;
+	if (std::strcmp(propertyName, "ExpSize") == 0)
+	{
+		Size newSize = ExpSize.Get();
+		MinSize.Set(std::move(newSize));
+		MaxSize.Set(std::move(newSize));
+	}
 }
 
 Size ControlBase::GetActualSize() const

@@ -103,7 +103,7 @@ bool VisualTreeNode::OnKeyUp(InputEvent input)
 
 bool VisualTreeNode::MoveFocusNext(Direction direction, InputModifier modifiers)
 {
-	if (!focusable_)
+	if (!IsFocusable())
 	{
 		return false;
 	}

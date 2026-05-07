@@ -219,18 +219,18 @@ void Grid::RenderOverride(RenderContext& context)
 
 void Grid::OnGotFocus()
 {
-    if (children_.empty())
+    for (const auto& wrapper : children_)
     {
-        InvalidateVisual();
-        return;
+        VisualTreeNode* focusedControl = wrapper.Control.get();
+        if (focusedControl->IsFocusable())
+        {
+            PushFocus(focusedControl);
+            break;
+        }
     }
 
-    if (focusedIndex_ >= children_.size())
-        focusedIndex_ = 0;
-
-    VisualTreeNode* focusedControl = children_[focusedIndex_].Control.get();
-    PushFocus(focusedControl);
     InvalidateVisual();
+    return;
 }
 
 void Grid::OnLostFocus()

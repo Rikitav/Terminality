@@ -51,7 +51,7 @@ export namespace terminality
 				return *this;
 
 			value_ = std::move(value);
-			if (owner_)
+			if (owner_ != nullptr)
 			{
 				owner_->ApplyInvalidation(invalidation_);
 				owner_->OnPropertyChanged(name_);
@@ -72,7 +72,16 @@ export namespace terminality
 		
 		TOwner& Set(T&& value)
 		{
-			*this = std::forward<T>(value);
+			if (value_ == value)
+				return *owner_;
+
+			value_ = std::move(value);
+			if (owner_ != nullptr)
+			{
+				owner_->ApplyInvalidation(invalidation_);
+				owner_->OnPropertyChanged(name_);
+			}
+
 			return *owner_;
 		}
 

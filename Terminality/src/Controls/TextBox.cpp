@@ -2,85 +2,14 @@ module terminality;
 
 import std;
 import std.compat;
-import :FocusManager;
-import :Focus;
 
 using namespace terminality;
-
-namespace
-{
-	struct LineInfo
-	{
-		std::wstring Text;
-		size_t StartIndex;
-	};
-
-	std::vector<LineInfo> GetLines(const std::wstring& text, int32_t availableWidth, TextWrapping wrapping)
-	{
-		std::vector<LineInfo> lines;
-		if (text.empty())
-		{
-			lines.push_back({ L"", 0 });
-			return lines;
-		}
-
-		size_t start = 0;
-		while (start < text.length())
-		{
-			size_t end = start;
-			int32_t width = 0;
-
-			if (wrapping == TextWrapping::NoWrap || availableWidth <= 0)
-			{
-				while (end < text.length() && text[end] != L'\n')
-					end++;
-			}
-			else if (wrapping == TextWrapping::Wrap)
-			{
-				while (end < text.length() && text[end] != L'\n' && width < availableWidth)
-				{
-					end++;
-					width++;
-				}
-			}
-			else // WrapWholeWords
-			{
-				size_t lastSpace = std::wstring::npos;
-				while (end < text.length() && text[end] != L'\n' && width < availableWidth)
-				{
-					if (text[end] == L' ')
-						lastSpace = end;
-					end++;
-					width++;
-				}
-
-				if (end < text.length() && text[end] != L'\n' && text[end] != L' ' && lastSpace != std::wstring::npos && lastSpace > start)
-				{
-					end = lastSpace; // Break at last space
-				}
-			}
-
-			lines.push_back({ text.substr(start, end - start), start });
-			start = end;
-
-			if (start < text.length() && text[start] == L'\n')
-				start++;
-			else if (wrapping == TextWrapping::WrapWholeWords && start < text.length() && text[start] == L' ')
-				start++; // Skip space at beginning of next line
-		}
-
-		if (!text.empty() && text.back() == L'\n')
-		{
-			lines.push_back({ L"", text.length() });
-		}
-
-		return lines;
-	}
-}
 
 TextBox::TextBox()
 {
 	isTabStop_ = true;
+	FocusedBackgroundColor = BackgroundColor;
+	FocusedForegroundColor = ForegroundColor;
 }
 
 void TextBox::OnPropertyChanged(const char* propertyName)
@@ -96,11 +25,11 @@ void TextBox::OnPropertyChanged(const char* propertyName)
 
 Size TextBox::MeasureOverride(const Size& availableSize)
 {
-	std::vector<LineInfo> lines = GetLines(Text, availableSize.Width, TextWrapping);
+	std::vector<int32_t> lines = TextHelper::MeasureLines(Text, availableSize.Width, TextWrapping);
 
 	int32_t maxWidth = 0;
 	for (const auto& line : lines)
-		maxWidth = std::max(maxWidth, static_cast<int32_t>(line.Text.length()));
+		maxWidth = std::max(maxWidth, line);
 
 	int32_t width = std::clamp(maxWidth + 1, 0, availableSize.Width);
 	int32_t desiredHeight = std::max<int32_t>(1, static_cast<int32_t>(lines.size()));
@@ -129,7 +58,7 @@ void TextBox::RenderOverride(RenderContext& context)
 		}
 	}
 
-	std::vector<LineInfo> lines = GetLines(Text.Get(), rect.Width, TextWrapping.Get());
+	std::vector<LineInfo> lines = TextHelper::GetLines(Text.Get(), rect.Width, TextWrapping.Get());
 
 	int32_t cursorY = 0;
 	int32_t cursorX = 0;
@@ -208,220 +137,191 @@ bool TextBox::OnKeyDown(InputEvent input)
 		return true;
 
 	std::wstring currentText = Text.Get();
+	static auto applyTextChange = [&]()
+	{
+		Text = currentText;
+		InvalidateMeasure();
+		InvalidateVisual();
+	};
+
+	static auto applyCursorMove = [&]()
+	{
+		InvalidateMeasure();
+		InvalidateVisual();
+	};
+
+	static auto getLineIndex = [&](const std::vector<LineInfo>& lines) -> size_t
+	{
+		for (size_t i = 0; i < lines.size(); ++i)
+		{
+			if (cursorPosition_ >= lines[i].StartIndex && (i + 1 == lines.size() || cursorPosition_ < lines[i + 1].StartIndex))
+				return i;
+		}
+
+		return 0;
+	};
+
 	switch (input.Key)
 	{
 		default:
 		{
-			if (input.Char != L'\0' && input.Char >= 32)
-			{
-				currentText.insert(cursorPosition_, 1, input.Char);
-				cursorPosition_++;
+			if (input.Char == L'\0' || input.Char < 32)
+				return false;
 
-				Text = currentText;
-				InvalidateMeasure();
-				InvalidateVisual();
-			}
-			
+			currentText.insert(cursorPosition_++, 1, input.Char);
+			applyTextChange();
 			return true;
 		}
 
 		case InputKey::SPACE:
 		{
-			currentText.insert(cursorPosition_, 1, L' ');
-			cursorPosition_++;
-
-			Text = currentText;
-			InvalidateMeasure();
-			InvalidateVisual();
+			currentText.insert(cursorPosition_++, 1, L' ');
+			applyTextChange();
 			return true;
 		}
 
 		case InputKey::RETURN:
 		{
-			if (AcceptsReturn.Get())
-			{
-				currentText.insert(cursorPosition_, 1, L'\n');
-				cursorPosition_++;
+			if (!AcceptsReturn.Get())
+				return true;
 
-				Text = currentText;
-				InvalidateMeasure();
-				InvalidateVisual();
-			}
-
+			currentText.insert(cursorPosition_++, 1, L'\n');
+			applyTextChange();
 			return true;
 		}
 
 		case InputKey::UP:
 		{
-			if (AcceptsReturn.Get() || TextWrapping.Get() != terminality::TextWrapping::NoWrap)
-			{
-				auto lines = GetLines(currentText, arrangedRect_.Width, TextWrapping.Get());
-				for (size_t i = 0; i < lines.size(); ++i)
-				{
-					if (cursorPosition_ >= lines[i].StartIndex && (i + 1 == lines.size() || cursorPosition_ < lines[i + 1].StartIndex))
-					{
-						if (i > 0)
-						{
-							size_t col = cursorPosition_ - lines[i].StartIndex;
-							size_t prevLen = lines[i - 1].Text.length();
-							if (!lines[i - 1].Text.empty() && lines[i - 1].Text.back() == L'\n')
-								prevLen--;
-
-							cursorPosition_ = lines[i - 1].StartIndex + std::min(col, prevLen);
-						}
-						else
-						{
-							PopFocus(Direction::Up, input.Modifier);
-							return true;
-						}
-
-						InvalidateMeasure();
-						InvalidateVisual();
-						return true;
-					}
-				}
-			}
-			else
+			if (!AcceptsReturn.Get() && TextWrapping.Get() == terminality::TextWrapping::NoWrap)
 			{
 				PopFocus(Direction::Up, input.Modifier);
+				return true;
 			}
 
+			auto lines = TextHelper::GetLines(currentText, arrangedRect_.Width, TextWrapping.Get());
+			size_t lineIdx = getLineIndex(lines);
+
+			if (lineIdx == 0)
+			{
+				PopFocus(Direction::Up, input.Modifier);
+				return true;
+			}
+
+			size_t col = cursorPosition_ - lines[lineIdx].StartIndex;
+			size_t prevLen = lines[lineIdx - 1].Text.length();
+
+			if (prevLen > 0 && lines[lineIdx - 1].Text.back() == L'\n')
+				prevLen--;
+
+			cursorPosition_ = lines[lineIdx - 1].StartIndex + std::min(col, prevLen);
+			applyCursorMove();
 			return true;
 		}
 
 		case InputKey::DOWN:
 		{
-			if (AcceptsReturn.Get() || TextWrapping.Get() != terminality::TextWrapping::NoWrap)
-			{
-				auto lines = GetLines(currentText, arrangedRect_.Width, TextWrapping.Get());
-				for (size_t i = 0; i < lines.size(); ++i)
-				{
-					if (cursorPosition_ >= lines[i].StartIndex && (i + 1 == lines.size() || cursorPosition_ < lines[i + 1].StartIndex))
-					{
-						if (i + 1 < lines.size())
-						{
-							size_t col = cursorPosition_ - lines[i].StartIndex;
-							size_t nextLen = lines[i + 1].Text.length();
-							if (!lines[i + 1].Text.empty() && lines[i + 1].Text.back() == L'\n')
-								nextLen--;
-
-							cursorPosition_ = lines[i + 1].StartIndex + std::min(col, nextLen);
-						}
-						else
-						{
-							PopFocus(Direction::Down, input.Modifier);
-							return true;
-						}
-
-						InvalidateMeasure();
-						InvalidateVisual();
-						return true;
-					}
-				}
-			}
-			else
+			if (!AcceptsReturn.Get() && TextWrapping.Get() == terminality::TextWrapping::NoWrap)
 			{
 				PopFocus(Direction::Down, input.Modifier);
+				return true;
 			}
 
+			auto lines = TextHelper::GetLines(currentText, arrangedRect_.Width, TextWrapping.Get());
+			size_t lineIdx = getLineIndex(lines);
+
+			if (lineIdx + 1 >= lines.size())
+			{
+				PopFocus(Direction::Down, input.Modifier);
+				return true;
+			}
+
+			size_t col = cursorPosition_ - lines[lineIdx].StartIndex;
+			size_t nextLen = lines[lineIdx + 1].Text.length();
+
+			if (nextLen > 0 && lines[lineIdx + 1].Text.back() == L'\n')
+				nextLen--;
+
+			cursorPosition_ = lines[lineIdx + 1].StartIndex + std::min(col, nextLen);
+			applyCursorMove();
 			return true;
 		}
 
 		case InputKey::LEFT:
 		{
-			if (terminality::hasFlag(input.Modifier, InputModifier::LeftAlt) || terminality::hasFlag(input.Modifier, InputModifier::RightAlt))
+			if (terminality::hasFlag(input.Modifier, InputModifier::LeftAlt) ||
+				terminality::hasFlag(input.Modifier, InputModifier::RightAlt))
 			{
 				PopFocus(Direction::Left, input.Modifier);
 				return true;
 			}
 
-			if (cursorPosition_ > 0)
-			{
-				cursorPosition_--;
+			if (cursorPosition_ == 0)
+				return true;
 
-				InvalidateMeasure();
-				InvalidateVisual();
-			}
-
+			cursorPosition_--;
+			applyCursorMove();
 			return true;
 		}
 
 		case InputKey::RIGHT:
 		{
-			if (terminality::hasFlag(input.Modifier, InputModifier::LeftAlt) || terminality::hasFlag(input.Modifier, InputModifier::RightAlt))
+			if (terminality::hasFlag(input.Modifier, InputModifier::LeftAlt) ||
+				terminality::hasFlag(input.Modifier, InputModifier::RightAlt))
 			{
 				PopFocus(Direction::Right, input.Modifier);
 				return true;
 			}
 
-			if (cursorPosition_ < currentText.length())
-			{
-				cursorPosition_++;
+			if (cursorPosition_ >= currentText.length())
+				return true;
 
-				InvalidateMeasure();
-				InvalidateVisual();
-			}
-
+			cursorPosition_++;
+			applyCursorMove();
 			return true;
 		}
 
 		case InputKey::BACK:
 		{
-			if (cursorPosition_ > 0)
-			{
-				currentText.erase(cursorPosition_ - 1, 1);
-				cursorPosition_--;
+			if (cursorPosition_ == 0)
+				return true;
 
-				Text = currentText;
-				InvalidateMeasure();
-				InvalidateVisual();
-			}
-
+			currentText.erase(--cursorPosition_, 1);
+			applyTextChange();
 			return true;
 		}
 
 		case InputKey::DELETE:
 		{
-			if (cursorPosition_ < currentText.length())
-			{
-				currentText.erase(cursorPosition_, 1);
-				
-				Text = currentText;
-				InvalidateMeasure();
-				InvalidateVisual();
-			}
+			if (cursorPosition_ >= currentText.length())
+				return true;
 
+			currentText.erase(cursorPosition_, 1);
+			applyTextChange();
 			return true;
 		}
 
 		case InputKey::HOME:
 		{
-			if (cursorPosition_ > 0)
-			{
-				cursorPosition_ = 0;
-				
-				InvalidateMeasure();
-				InvalidateVisual();
-			}
+			if (cursorPosition_ == 0)
+				return true;
 
+			cursorPosition_ = 0;
+			applyCursorMove();
 			return true;
 		}
 
 		case InputKey::END:
 		{
-			if (cursorPosition_ < currentText.length())
-			{
-				cursorPosition_ = currentText.length();
-				
-				InvalidateMeasure();
-				InvalidateVisual();
-			}
+			if (cursorPosition_ >= currentText.length())
+				return true;
 
+			cursorPosition_ = currentText.length();
+			applyCursorMove();
 			return true;
 		}
 	}
 
-	return ControlBase::OnKeyUp(input);
+	return false;
 }
 
 bool TextBox::OnKeyUp(InputEvent input)

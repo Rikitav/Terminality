@@ -18,7 +18,7 @@ export namespace terminality
 
 	class ControlBase : public VisualTreeNode
 	{
-		std::unordered_map<InputEvent, KeyCombinationCallback, InputEventHasher> keyCombs_;
+		std::unordered_map<InputEvent, KeyCombinationCallback, InputEventHasher> hotkeys_;
 
 	public:
 		EventSignal<const char*> PropertyChanged;
@@ -27,6 +27,7 @@ export namespace terminality
 
 		PropertyDescriptor<ControlBase, Size> MinSize { this, "MinSize", Size::Auto, InvalidationKind::Measure };
 		PropertyDescriptor<ControlBase, Size> MaxSize { this, "MaxSize", Size::Auto, InvalidationKind::Measure };
+		PropertyDescriptor<ControlBase, Size> ExpSize { this, "ExpSize", Size::Auto, InvalidationKind::Measure };
 
 		PropertyDescriptor<ControlBase, Thickness> Margin                        { this, "Margin", Thickness::Zero, InvalidationKind::Measure };
 		PropertyDescriptor<ControlBase, HorizontalAlignment> HorizontalAlignment { this, "HorizontalAlignment", HorizontalAlignment::Stretch, InvalidationKind::Measure };
@@ -57,7 +58,7 @@ export namespace terminality
 		// User input
 		bool OnKeyDown(InputEvent input) override;
 		bool OnKeyUp(InputEvent input) override;
-		void RegisterCombination(InputModifier modifier, InputKey key, KeyCombinationCallback callback);
+		void OnHotkey(InputModifier modifier, InputKey key, KeyCombinationCallback callback);
 
 		// Ownership
 		virtual const std::span<VisualTreeNode*> GetChildren() const;
@@ -65,6 +66,12 @@ export namespace terminality
 	//protected:
 		Size GetActualSize() const;
 		Rect GetArrangedRect() const;
+
+	protected:
+		// Layout
+		virtual Size MeasureOverride(const Size& availableSize) = 0;
+		virtual void ArrangeOverride(const Rect& finalRect) = 0;
+		virtual void RenderOverride(RenderContext& context) = 0;
 	};
 
 	template <typename T>

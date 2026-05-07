@@ -94,6 +94,11 @@ void RenderContext::RenderRaw(const Point& point, const std::string& rawData)
     }
 }
 
+RenderStream RenderContext::BeginText(Point startPos)
+{
+    return RenderStream(*this, startPos);
+}
+
 void RenderContext::RenderText(const Point& point, const std::wstring& text, Color fg, Color bg, bool wrap)
 {
     if (text.empty() || point.Y >= rect_.Height || point.X >= rect_.Width) return;

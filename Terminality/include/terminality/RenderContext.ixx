@@ -4,6 +4,7 @@ import std;
 import std.compat;
 import :Geometry;
 import :RenderBuffer;
+import :RenderStream;
 
 export namespace terminality
 {
@@ -26,6 +27,7 @@ export namespace terminality
 		const CellInfo& GetCell(uint32_t x, uint32_t y) const;
 
 		void RenderRaw(const Point& point, const std::string& rawData);
+		RenderStream BeginText(Point startPos = Point(0, 0));
 
 		void RenderText(const Point& point, const std::string& text, Color fg = Color::WHITE, Color bg = Color::BLACK, bool wrap = false);
 		void RenderText(const Point& point, const std::wstring& text, Color fg = Color::WHITE, Color bg = Color::BLACK, bool wrap = false);

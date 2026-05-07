@@ -6,9 +6,56 @@ using namespace terminality;
 
 namespace
 {
+    struct MessageModel
+    {
+        bool isAuthor;
+        std::wstring Timestamp;
+        std::wstring Text;
+    };
+
+    class MessageBubble : public ControlBase
+    {
+    public:
+        MessageModel message_;
+
+        MessageBubble()
+        {
+
+        }
+
+        Size MeasureOverride(const Size& availableSize) override
+        {
+            static const int timeStampLength = 10;
+            return Size(timeStampLength + message_.Text.size() + 1, 1);
+        }
+
+        void ArrangeOverride(const Rect& finalRect) override
+        {
+            return;
+        }
+        
+        void RenderOverride(RenderContext& context) override
+        {
+            auto rin = context.BeginText();
+            if (focused_)
+            {
+                rin << SetBack(Color::WHITE);
+                rin << SetFore(Color::BLACK) << message_.Timestamp;
+            }
+            else
+            {
+                rin << SetBack(Color::BLACK);
+                rin << SetFore(Color::WHITE) << message_.Timestamp;
+            }
+
+            rin << SetFore(message_.isAuthor ? Color::CYAN : Color::YELLOW);
+            rin << " " << message_.Text;
+        }
+    };
+
     class MessangerTest : public Grid
     {
-        ObservableCollection<std::wstring> chatHistory_;
+        ObservableCollection<MessageModel> chatHistory_;
 
     public:
         MessangerTest()
@@ -17,31 +64,29 @@ namespace
             HorizontalAlignment = HorizontalAlignment::Stretch;
             VerticalAlignment = VerticalAlignment::Stretch;
 
-            // Определяем 3 строки (предполагается, что методы AddRow и Auto() существуют по аналогии с колонками)
-            AddRow(RowDefinition{ GridLength::Star(1.0f) }); // Строка 0: Основной чат
+            AddRow(RowDefinition{ GridLength::Star(1.0f) });   // Строка 0: Основной чат
             AddRow(RowDefinition{ GridLength::Pixel(3) });     // Строка 1: Поле ввода
-            AddRow(RowDefinition{ GridLength::Pixel(2) });   // Строка 2: Футер (подсказки)
+            AddRow(RowDefinition{ GridLength::Pixel(2) });     // Строка 2: Футер (подсказки)
 
             // ==========================================
             // 1. ИСТОРИЯ ЧАТА (Строка 0)
             // ==========================================
-            chatHistory_.push_back(L"[04:12:04] 123");
-            chatHistory_.push_back(L"[04:00:00] : Переключено в чат: Tamerlan");
-            chatHistory_.push_back(L"[04:13:42] Привет!");
-            chatHistory_.push_back(L"[04:13:51] Tamerlan: Hello, World!");
+            chatHistory_.push_back(MessageModel { true, L"[04:12:04]", L"123" });
+            chatHistory_.push_back(MessageModel { false, L"[04:13:42]", L"Привет!" });
+            chatHistory_.push_back(MessageModel { true, L"[04:13:51]", L"Tamerlan: Hello, World!" });
 
             AddChild(0, 0, ctor<Border>([&](Border* chatBorder)
             {
                 chatBorder->HeaderText = L"Чат: Tamerlan";
-                chatBorder->Content = ctor<ItemsControl<std::wstring>>([&](ItemsControl<std::wstring>*chatList)
+                chatBorder->Content = ctor<ItemsControl<MessageModel>>([&](ItemsControl<MessageModel>*chatList)
                 {
                     chatList->SetItemsSource(&chatHistory_);
-                    chatList->SetItemTemplate([](const std::wstring& item) -> std::unique_ptr<ControlBase>
+                    chatList->SetItemTemplate([](const MessageModel& item) -> std::unique_ptr<ControlBase>
                     {
-                        auto msg = std::make_unique<TextBox>();
-                        msg->HorizontalAlignment = HorizontalAlignment::Stretch;
-                        msg->Text = item;
-                        return msg;
+                        return ctor<MessageBubble>([&](MessageBubble* msg)
+                        {
+                            msg->message_ = item;
+                        });
                     });
                 });
             }));
@@ -52,14 +97,13 @@ namespace
             AddChild(1, 0, std::make_unique<Border>(ctor<Grid>([&](Grid* inputGrid)
             {
                 inputGrid->HorizontalAlignment = HorizontalAlignment::Stretch;
-                inputGrid->AddColumn(ColumnDefinition{ GridLength::Auto() });     // Для префикса "Rikitav@Tamerlan>"
-                inputGrid->AddColumn(ColumnDefinition{ GridLength::Star(1.0f) }); // Для поля ввода сообщения
+                inputGrid->AddColumn(ColumnDefinition{ GridLength::Auto() }); 
+                inputGrid->AddColumn(ColumnDefinition{ GridLength::Star(1.0f) });
 
-                // Префикс командной строки
-                inputGrid->AddChild(0, 0, ctor<Button>([&](Button* promptLabel)
+                // Префикс текст бокса
+                inputGrid->AddChild(0, 0, ctor<Label>([&](Label* promptLabel)
                 {
                     promptLabel->Text = L"Rikitav@Tamerlan> ";
-                    promptLabel->MaxSize = Size(-1, 1);
                     promptLabel->HorizontalAlignment = HorizontalAlignment::Left;
                 }));
 
@@ -70,13 +114,11 @@ namespace
                     inputBox->MaxSize = Size(-1, 1);
                     inputBox->HorizontalAlignment = HorizontalAlignment::Stretch;
                     inputBox->AcceptsReturn = false;
-                    inputBox->FocusedBackgroundColor = Color::BLACK;
-                    inputBox->FocusedForegroundColor = Color::WHITE;
 
-                    inputBox->RegisterCombination(InputModifier::None, InputKey::ADD, [&](ControlBase* self)
+                    inputBox->OnHotkey(InputModifier::None, InputKey::RETURN, [&](ControlBase* self)
                     {
                         TextBox* selfTextBox = static_cast<TextBox*>(self);
-                        this->chatHistory_.push_back(selfTextBox->Text);
+                        this->chatHistory_.push_back(MessageModel{ true, L"[69:69:69]", selfTextBox->Text });
                         selfTextBox->Text = L"";
                     });
                 }));
@@ -94,7 +136,7 @@ namespace
             // ==========================================
             // ГОРЯЧИЕ КЛАВИШИ
             // ==========================================
-            RegisterCombination(InputModifier::None, InputKey::ESCAPE, [](ControlBase* self)
+            OnHotkey(InputModifier::None, InputKey::ESCAPE, [](ControlBase* self)
             {
                 HostApplication::Current().RequestStop();
             });
@@ -107,6 +149,8 @@ int main()
 	HostApplication& app = HostApplication::Current();
 	app.EnterTerminal();
     app.SetRoot(std::make_unique<MessangerTest>());
+    //FocusManager::Current().MoveNext(Direction::Next);
+
     app.RunUILoop();
 	app.ExitTerminal();
 	return 0;
