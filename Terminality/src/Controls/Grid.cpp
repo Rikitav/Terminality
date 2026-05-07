@@ -32,7 +32,7 @@ void Grid::AddColumn(const ColumnDefinition& def)
     InvalidateMeasure();
 }
 
-void Grid::AddChild(std::unique_ptr<ControlBase> child, int32_t row, int32_t column, int32_t rowSpan, int32_t colSpan)
+void Grid::AddChild(int32_t row, int32_t column, int32_t rowSpan, int32_t colSpan, std::unique_ptr<ControlBase> child)
 {
     if (!child)
         return;
@@ -45,11 +45,26 @@ void Grid::AddChild(std::unique_ptr<ControlBase> child, int32_t row, int32_t col
     InvalidateMeasure();
 }
 
+void Grid::AddChild(int32_t row, int32_t column, std::unique_ptr<ControlBase> child)
+{
+    if (!child)
+        return;
+
+    child->SetParent(this);
+    if (!child->IsAttached())
+        child->OnAttachedToTree();
+
+    children_.push_back({ std::move(child), row, column, 1, 1 });
+    InvalidateMeasure();
+}
+
 void Grid::EnsureGridDefinitions()
 {
-    // ������� �������� 1x1 �����, ���� ����������� �� ������
-    if (rowDefs_.empty()) rowDefs_.push_back(RowDefinition{});
-    if (colDefs_.empty()) colDefs_.push_back(ColumnDefinition{});
+    if (rowDefs_.empty()) 
+        rowDefs_.push_back(RowDefinition{});
+    
+    if (colDefs_.empty())
+        colDefs_.push_back(ColumnDefinition{});
 }
 
 Size Grid::MeasureOverride(const Size& availableSize)
@@ -71,7 +86,6 @@ Size Grid::MeasureOverride(const Size& availableSize)
 
         if (isRowAuto || isColAuto)
         {
-            // �������� ���� ��������� ������, ����� ������ "�������" �������
             Size childDesired = childWrapper.Control->Measure(availableSize);
 
             if (isColAuto)
@@ -87,14 +101,18 @@ Size Grid::MeasureOverride(const Size& availableSize)
 
     for (const auto& col : colDefs_)
     {
-        if (col.Width.Type == GridUnitType::Star) totalStarWidth += col.Width.Value;
-        else fixedWidth += col.ActualWidth;
+        if (col.Width.Type == GridUnitType::Star)
+            totalStarWidth += col.Width.Value;
+        else
+            fixedWidth += col.ActualWidth;
     }
     
     for (const auto& row : rowDefs_)
     {
-        if (row.Height.Type == GridUnitType::Star) totalStarHeight += row.Height.Value;
-        else fixedHeight += row.ActualHeight;
+        if (row.Height.Type == GridUnitType::Star)
+            totalStarHeight += row.Height.Value;
+        else
+            fixedHeight += row.ActualHeight;
     }
 
     int32_t remainingWidth = std::max(0, availableSize.Width - fixedWidth);
@@ -151,14 +169,14 @@ void Grid::ArrangeOverride(const Rect& contentRect)
 {
     EnsureGridDefinitions();
 
-    int32_t currentX = contentRect.X;
+    int32_t currentX = 0;
     for (auto& col : colDefs_)
     {
         col.OffsetX = currentX;
         currentX += col.ActualWidth;
     }
 
-    int32_t currentY = contentRect.Y;
+    int32_t currentY = 0;
     for (auto& row : rowDefs_)
     {
         row.OffsetY = currentY;
@@ -179,7 +197,12 @@ void Grid::ArrangeOverride(const Rect& contentRect)
         for (int32_t i = 0; i < childWrapper.RowSpan && (rowIndex + i) < rowDefs_.size(); ++i)
             cellHeight += rowDefs_[rowIndex + i].ActualHeight;
 
-        Rect cellRect(colDefs_[columnIndex].OffsetX, rowDefs_[rowIndex].OffsetY, cellWidth, cellHeight);
+        Rect cellRect(
+            contentRect.X + colDefs_[columnIndex].OffsetX,
+            contentRect.Y + rowDefs_[rowIndex].OffsetY,
+            cellWidth,
+            cellHeight);
+
         childWrapper.Control->Arrange(cellRect);
     }
 }

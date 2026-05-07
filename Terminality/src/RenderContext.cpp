@@ -10,11 +10,11 @@ RenderContext::RenderContext(RenderBuffer& buffer, Rect targetRect)
 
 RenderContext RenderContext::CreateInner(Rect targetRect)
 {
-	int32_t x = rect_.X + targetRect.X;
-	int32_t y = rect_.Y + targetRect.Y;
+	int32_t x = targetRect.X;
+	int32_t y = targetRect.Y;
 	
-	int32_t right = std::min(rect_.Right(), x + targetRect.Width);
-	int32_t bottom = std::min(rect_.Bottom(), y + targetRect.Height);
+	int32_t right = std::clamp<int32_t>(x + targetRect.Width, rect_.X, rect_.Right());
+    int32_t bottom = std::clamp<int32_t>(y + targetRect.Height, rect_.Y, rect_.Bottom());
 
 	int32_t width = std::max(0, right - x);
 	int32_t height = std::max(0, bottom - y);

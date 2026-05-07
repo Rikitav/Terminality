@@ -214,7 +214,7 @@ bool ControlBase::OnKeyDown(InputEvent input)
 		if (input.Modifier == event.Modifier && input.Key == event.Key)
 		{
 			KeyCombinationCallback callback = pair.second;
-			callback();
+			callback(this);
 			return true;
 		}
 	}

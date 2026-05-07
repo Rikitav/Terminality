@@ -118,8 +118,8 @@ void TextBox::RenderOverride(RenderContext& context)
 {
 	const Rect rect = context.ContextRect();
 
-	Color fore = focused_ ? Color::BLACK : Color::WHITE;
-	Color back = focused_ ? Color::WHITE : Color::DARK_GRAY;
+	Color fore = FocusedForegroundColor;
+	Color back = FocusedBackgroundColor;
 
 	for (int32_t y = 0; y < rect.Height; ++y)
 	{
@@ -200,14 +200,14 @@ void TextBox::RenderOverride(RenderContext& context)
 		wchar_t cursorChar = (cursorPosition_ < Text.Get().length() && Text.Get()[cursorPosition_] != L'\n') ? Text.Get()[cursorPosition_] : L' ';
 		context.SetCell(cursorX, cursorY, cursorChar, back, fore);
 	}
-
-	visualDirty_ = false;
 }
 
 bool TextBox::OnKeyDown(InputEvent input)
 {
-	std::wstring currentText = Text.Get();
+	if (ControlBase::OnKeyDown(input))
+		return true;
 
+	std::wstring currentText = Text.Get();
 	switch (input.Key)
 	{
 		default:
@@ -221,7 +221,7 @@ bool TextBox::OnKeyDown(InputEvent input)
 				InvalidateMeasure();
 				InvalidateVisual();
 			}
-
+			
 			return true;
 		}
 
@@ -420,6 +420,8 @@ bool TextBox::OnKeyDown(InputEvent input)
 			return true;
 		}
 	}
+
+	return ControlBase::OnKeyUp(input);
 }
 
 bool TextBox::OnKeyUp(InputEvent input)

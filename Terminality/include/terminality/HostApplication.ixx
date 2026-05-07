@@ -5,6 +5,7 @@ import std.compat;
 import :Geometry;
 import :InputEvent;
 import :VisualTree;
+import :VisualTreeNode;
 import :RenderBuffer;
 import :FocusManager;
 

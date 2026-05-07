@@ -2,112 +2,111 @@
 import std.compat;
 import terminality;
 
-#include <Windows.h>
-
 using namespace terminality;
-
-#define WITH(type, name, ...) \
-    auto name = std::make_unique<type>(); \
-    { auto& _ = *name; __VA_ARGS__; }
 
 namespace
 {
-	class DemoRoot : public Grid
-	{
-		ObservableCollection<std::wstring> items_;
+    class MessangerTest : public Grid
+    {
+        ObservableCollection<std::wstring> chatHistory_;
 
-	public:
-		DemoRoot()
-		{
-            // Настраиваем Grid на весь экран
+    public:
+        MessangerTest()
+        {
+            // Растягиваем корневую сетку на весь экран
             HorizontalAlignment = HorizontalAlignment::Stretch;
             VerticalAlignment = VerticalAlignment::Stretch;
 
-            // 1. Делим гриду пополам вертикально (две колонки с весом Star)
-            AddColumn(ColumnDefinition{ GridLength::Star(1.0f) });
-            AddColumn(ColumnDefinition{ GridLength::Star(1.0f) });
-            RegisterCombination(InputModifier::None, InputKey::ADD, []() { MessageBoxA(nullptr, "Test", nullptr, 0); });
+            // Определяем 3 строки (предполагается, что методы AddRow и Auto() существуют по аналогии с колонками)
+            AddRow(RowDefinition{ GridLength::Star(1.0f) }); // Строка 0: Основной чат
+            AddRow(RowDefinition{ GridLength::Pixel(3) });     // Строка 1: Поле ввода
+            AddRow(RowDefinition{ GridLength::Pixel(2) });   // Строка 2: Футер (подсказки)
 
-            // 2. Создаем левую панель
-            auto leftPanel = std::make_unique<StackPanel>();
-            leftPanel->HorizontalAlignment = HorizontalAlignment::Stretch;
+            // ==========================================
+            // 1. ИСТОРИЯ ЧАТА (Строка 0)
+            // ==========================================
+            chatHistory_.push_back(L"[04:12:04] 123");
+            chatHistory_.push_back(L"[04:00:00] : Переключено в чат: Tamerlan");
+            chatHistory_.push_back(L"[04:13:42] Привет!");
+            chatHistory_.push_back(L"[04:13:51] Tamerlan: Hello, World!");
 
-            for (int i = 1; i <= 3; ++i)
+            AddChild(0, 0, ctor<Border>([&](Border* chatBorder)
             {
-                auto btn = ctor<Button>([&](Button* btn)
+                chatBorder->HeaderText = L"Чат: Tamerlan";
+                chatBorder->Content = ctor<ItemsControl<std::wstring>>([&](ItemsControl<std::wstring>*chatList)
                 {
-                    btn->Text = (L"Left Panel Button " + std::to_wstring(i));
-                    btn->HorizontalAlignment = HorizontalAlignment::Center;
-                    btn->Margin = Thickness::Single;
+                    chatList->SetItemsSource(&chatHistory_);
+                    chatList->SetItemTemplate([](const std::wstring& item) -> std::unique_ptr<ControlBase>
+                    {
+                        auto msg = std::make_unique<TextBox>();
+                        msg->HorizontalAlignment = HorizontalAlignment::Stretch;
+                        msg->Text = item;
+                        return msg;
+                    });
                 });
+            }));
 
-                leftPanel->AddChild(std::move(btn));
-            }
+            // ==========================================
+            // 2. ПАНЕЛЬ ВВОДА (Строка 1)
+            // ==========================================
+            AddChild(1, 0, std::make_unique<Border>(ctor<Grid>([&](Grid* inputGrid)
+            {
+                inputGrid->HorizontalAlignment = HorizontalAlignment::Stretch;
+                inputGrid->AddColumn(ColumnDefinition{ GridLength::Auto() });     // Для префикса "Rikitav@Tamerlan>"
+                inputGrid->AddColumn(ColumnDefinition{ GridLength::Star(1.0f) }); // Для поля ввода сообщения
 
-            auto textBox = std::make_unique<TextBox>();
-            textBox->Text = L"Type here...";
-            textBox->Margin = Thickness::Single;
-            textBox->MaxSize = Size(30, -1);
-            textBox->HorizontalAlignment = HorizontalAlignment::Stretch;
-            textBox->VerticalAlignment = VerticalAlignment::Center;
-            textBox->AcceptsReturn = true;
-            leftPanel->AddChild(std::move(textBox));
+                // Префикс командной строки
+                inputGrid->AddChild(0, 0, ctor<Button>([&](Button* promptLabel)
+                {
+                    promptLabel->Text = L"Rikitav@Tamerlan> ";
+                    promptLabel->MaxSize = Size(-1, 1);
+                    promptLabel->HorizontalAlignment = HorizontalAlignment::Left;
+                }));
 
-            auto leftBorder = std::make_unique<Border>();
-			leftBorder->BorderColor = Color::YELLOW;
-			leftBorder->Content = std::move(leftPanel);
-            leftBorder->HorizontalAlignment = HorizontalAlignment::Center;
-            AddChild(std::move(leftBorder), 0, 0);
+                // Поле для ввода текста
+                inputGrid->AddChild(0, 1, ctor<TextBox>([&](TextBox* inputBox)
+                {
+                    inputBox->Text = L"";
+                    inputBox->MaxSize = Size(-1, 1);
+                    inputBox->HorizontalAlignment = HorizontalAlignment::Stretch;
+                    inputBox->AcceptsReturn = false;
+                    inputBox->FocusedBackgroundColor = Color::BLACK;
+                    inputBox->FocusedForegroundColor = Color::WHITE;
 
-            // 3. Создаем правую панель
-            auto rightPanel = std::make_unique<StackPanel>();
-            rightPanel->HorizontalAlignment = HorizontalAlignment::Stretch;
+                    inputBox->RegisterCombination(InputModifier::None, InputKey::ADD, [&](ControlBase* self)
+                    {
+                        TextBox* selfTextBox = static_cast<TextBox*>(self);
+                        this->chatHistory_.push_back(selfTextBox->Text);
+                        selfTextBox->Text = L"";
+                    });
+                }));
+            })));
+            
+            // ==========================================
+            // 3. СТАТУС-БАР (Строка 2)
+            // ==========================================
+            AddChild(2, 0, ctor<Button>([&](Button* statusBar)
+            {
+                statusBar->Text = L"ESC - выход | /help | Чат: Tamerlan";
+                statusBar->HorizontalAlignment = HorizontalAlignment::Stretch;
+            }));
 
-            items_.push_back(L"Dynamic Item 1");
-            items_.push_back(L"Dynamic Item 2");
-            items_.push_back(L"Dynamic Item 3");
-
-            auto itemsControl = std::make_unique<ItemsControl<std::wstring>>();
-            itemsControl->SetItemsSource(&items_);
-            itemsControl->SetItemTemplate([](const std::wstring& item) -> std::unique_ptr<ControlBase> {
-                auto btn = std::make_unique<Button>();
-                btn->Text = item;
-                btn->HorizontalAlignment = HorizontalAlignment::Center;
-                return btn;
+            // ==========================================
+            // ГОРЯЧИЕ КЛАВИШИ
+            // ==========================================
+            RegisterCombination(InputModifier::None, InputKey::ESCAPE, [](ControlBase* self)
+            {
+                HostApplication::Current().RequestStop();
             });
-            rightPanel->AddChild(std::move(itemsControl));
-
-            auto addBtn = std::make_unique<Button>();
-            addBtn->Text = L"Add new item";
-            addBtn->HorizontalAlignment = HorizontalAlignment::Center;
-            addBtn->Margin = Thickness::Single;
-            addBtn->Clicked += [this]() {
-                items_.push_back(L"New Dynamic Item " + std::to_wstring(items_.size() + 1));
-            };
-            rightPanel->AddChild(std::move(addBtn));
-
-            auto removeBtn = std::make_unique<Button>();
-            removeBtn->Text = L"Remove last item";
-            removeBtn->HorizontalAlignment = HorizontalAlignment::Center;
-            removeBtn->Clicked += [this]() {
-                if (!items_.empty())
-                    items_.pop_back();
-            };
-            rightPanel->AddChild(std::move(removeBtn));
-
-            auto rightBorder = std::make_unique<Border>();
-            rightBorder->BorderColor = Color::YELLOW;
-            rightBorder->Content = std::move(rightPanel);
-            AddChild(std::move(rightBorder), 0, 1);
-		}
-	};
+        }
+    };
 }
 
 int main()
 {
 	HostApplication& app = HostApplication::Current();
 	app.EnterTerminal();
-    app.SetRoot(std::make_unique<DemoRoot>());
+    app.SetRoot(std::make_unique<MessangerTest>());
     app.RunUILoop();
 	app.ExitTerminal();
 	return 0;

@@ -11,6 +11,13 @@ Border::Border()
 	FocusedBackgroundColor = Color::CYAN;
 }
 
+Border::Border(std::unique_ptr<ControlBase> content)
+{
+	FocusedForegroundColor = Color::CYAN;
+	FocusedBackgroundColor = Color::CYAN;
+	Content = std::move(content);
+}
+
 void Border::OnPropertyChanged(const char* propertyName)
 {
 	if (std::strcmp(propertyName, "Content") == 0)
@@ -83,7 +90,9 @@ void Border::ArrangeOverride(const Rect& contentRect)
 		return;
 
 	Rect arrangedRect = GetArrangedRect();
-	const Rect innerRect(1, 1,
+	const Rect innerRect(
+		contentRect.X + 1,
+		contentRect.Y + 1,
 		std::max(0, arrangedRect.Width - 2),
 		std::max(0, arrangedRect.Height - 2));
 
@@ -112,13 +121,13 @@ void Border::RenderOverride(RenderContext& context)
 	context.SetCell(0, rect.Height - 1,				 L'\x2570', renderColor, Color::BLACK);
 	context.SetCell(rect.Width - 1, rect.Height - 1, L'\x256F', renderColor, Color::BLACK);
 
+	if (HeaderText->size() != 0)
+	{
+		context.RenderText(Point(2, 0), HeaderText, FocusedForegroundColor, BackgroundColor);
+	}
+
 	if (rect.Width > 2 || rect.Height > 2)
 	{
-		/*
-		context.RenderRectangle(Point(1, 1), Size(rect.Width - 2, rect.Height - 2),
-			[](const Point& point, const Size& size) { return L' '; });
-		*/
-
 		if (Content != nullptr)
 		{
 			Rect childRect = Content.Get()->GetArrangedRect();

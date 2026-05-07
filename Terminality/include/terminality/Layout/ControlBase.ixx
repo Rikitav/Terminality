@@ -14,7 +14,7 @@ export namespace terminality
 	class ControlBase;
 
 	typedef std::function<bool(const ControlBase*)> ControlPredicate;
-	typedef std::function<void()> KeyCombinationCallback;
+	typedef std::function<void(ControlBase*)> KeyCombinationCallback;
 
 	class ControlBase : public VisualTreeNode
 	{

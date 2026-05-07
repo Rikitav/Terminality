@@ -219,7 +219,11 @@ void StackPanel::ArrangeOverride(const Rect& contentRect)
 	for (const std::unique_ptr<ControlBase>& child : contents_)
 	{
 		const Size childSize = child->GetActualSize();
-		const Rect childRect(0, currentY, contentRect.Width, childSize.Height);
+		const Rect childRect(
+			contentRect.X,
+			contentRect.Y + currentY,
+			contentRect.Width,
+			childSize.Height);
 
 		child->Arrange(childRect);
 		currentY += child->GetArrangedRect().Height;
