@@ -158,11 +158,15 @@ void ControlBase::Arrange(const Rect& finalRect)
 	ArrangeOverride(arrangedRect_);
 }
 
+static wchar_t EmptyRectangleStyle(const Point& point, const Size& size)
+{
+	return L' ';
+}
+
 void ControlBase::Render(RenderContext& context)
 {
 	Rect rect = context.ContextRect();
-	context.RenderRectangle(Point::Zero, rect.Size(), ForegroundColor, BackgroundColor,
-		[](const Point& point, const Size& size) { return L' '; });
+	context.RenderRectangle(Point::Zero, rect.Size(), ForegroundColor, BackgroundColor, EmptyRectangleStyle);
 
 	visualDirty_ = false;
 	RenderOverride(context);

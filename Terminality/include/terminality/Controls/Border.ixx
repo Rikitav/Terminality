@@ -8,6 +8,23 @@ import :ControlBase;
 
 export namespace terminality
 {
+	enum class RectanglePos
+	{
+		LeftTopCorner,
+		LeftBottomCorner,
+		
+		RightTopCorner,
+		RightBottomCorner,
+		
+		LeftVerticalLine,
+		RightVerticalLine,
+		
+		TopHorizontalLine,
+		BottomHorizontalLine
+	};
+
+	typedef wchar_t (*BorderStyle)(const RectanglePos pos);
+
 	class Border : public ControlBase
 	{
 	public:
@@ -16,6 +33,7 @@ export namespace terminality
 		PropertyDescriptor<Border, Thickness> BorderThickness			 { this, "BorderThickness", Thickness::Single, InvalidationKind::Visual };
 		PropertyDescriptor<Border, std::wstring> HeaderText			     { this, "HeaderText", L"", InvalidationKind::Visual };
 		PropertyDescriptor<Border, std::unique_ptr<ControlBase>> Content { this, "Content", nullptr, InvalidationKind::Visual };
+		PropertyDescriptor<Border, BorderStyle> Style				     { this, "BorderStyle", nullptr, InvalidationKind::Visual };
 
 		Border();
 		Border(std::unique_ptr<ControlBase> content);

@@ -12,6 +12,11 @@ export namespace terminality
 		Color Fore = Color::WHITE;
 		Color Back = Color::BLACK;
 
+		CellInfo() = default;
+
+		CellInfo(wchar_t symbol, Color fore = Color::WHITE, Color back = Color::BLACK)
+			: Symbol(symbol), Fore(fore), Back(back) { }
+
 		bool operator==(const CellInfo& other) const
 		{
 			return Symbol == other.Symbol && Fore == other.Fore && Back == other.Back;

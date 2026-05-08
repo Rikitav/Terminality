@@ -147,9 +147,9 @@ void RenderContext::RenderRectangle(const Point& point, const Size& size, Rectan
     {
         for (int32_t x = 0; x < size.Width; ++x)
         {
-            wchar_t symbol = style({ x, y }, size);
+            wchar_t symbol = style(Point(x, y), size);
             if (symbol != L'\0')
-                SetCell(point.X + x, point.Y + y, CellInfo{ symbol });
+                SetCell(point.X + x, point.Y + y, CellInfo(symbol));
         }
     }
 }
@@ -162,21 +162,26 @@ void RenderContext::RenderRectangle(const Point& point, const Size& size, Color 
     {
         for (int32_t x = 0; x < size.Width; ++x)
         {
-            wchar_t symbol = style({ x, y }, size);
+            wchar_t symbol = style(Point(x, y), size);
             if (symbol != L'\0')
-                SetCell(point.X + x, point.Y + y, CellInfo{ symbol, fg, bg });
+                SetCell(point.X + x, point.Y + y, CellInfo(symbol, fg, bg));
         }
     }
 }
 
+static wchar_t DefaultRectangleStyle(const Point& point, const Size& size)
+{
+    return L'#';
+}
+
 void RenderContext::RenderRectangle(const Point& point, const Size& size)
 {
-    RenderRectangle(point, size, [](const Point&, const Size&) { return L'#'; });
+    RenderRectangle(point, size, DefaultRectangleStyle);
 }
 
 void RenderContext::RenderRectangle(const Point& point, const Size& size, Color fg, Color bg)
 {
-    RenderRectangle(point, size, fg, bg, [](const Point&, const Size&) { return L'#'; });
+    RenderRectangle(point, size, fg, bg, DefaultRectangleStyle);
 }
 
 void RenderContext::RenderRectangle(const Point& point, const int32_t width, const int32_t height)
