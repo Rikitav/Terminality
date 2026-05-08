@@ -2,6 +2,7 @@ module terminality;
 
 import std;
 import std.compat;
+import :ContextMenu;
 
 using namespace terminality;
 
@@ -34,76 +35,87 @@ void ControlBase::SetTabIndex(int value)
 
 Size ControlBase::Measure(const Size& availableSize)
 {
-	int32_t resultWidth = availableSize.Width;
-	int32_t resultHeight = availableSize.Height;
-
-	/*
-	if (explicitSize_.Width > 0)
-		resultWidth = explicitSize_.Width;
-
-	if (explicitSize_.Height > 0)
-		resultHeight = explicitSize_.Height;
-	*/
+	int32_t innerWidth  = availableSize.Width;
+	int32_t innerHeight = availableSize.Height;
 
 	if (MaxSize->Width >= 0)
-		resultWidth = resultWidth < 0 ? MaxSize->Width : std::min(resultWidth, MaxSize->Width);
+		innerWidth  = innerWidth  < 0 ? MaxSize->Width  : std::min(innerWidth,  MaxSize->Width);
 
-	if (MinSize->Width >= 0)
-		resultWidth = std::max(resultWidth, MinSize->Width);
-	
 	if (MaxSize->Height >= 0)
-		resultHeight = resultHeight < 0 ? MaxSize->Height : std::min(resultHeight, MaxSize->Height);
-	
-	if (MinSize->Height >= 0)
-		resultHeight = std::max(resultHeight, MinSize->Height);
-	
-	// TODO: add margin
-	actualSize_ = Size(resultWidth, resultHeight);
-	if (actualSize_ == Size::Zero)
-		return actualSize_;
+		innerHeight = innerHeight < 0 ? MaxSize->Height : std::min(innerHeight, MaxSize->Height);
 
-	actualSize_ = MeasureOverride(actualSize_);
+	if (innerWidth >= 0)
+		innerWidth  = std::max(0, innerWidth  - Margin->Left - Margin->Right);
+
+	if (innerHeight >= 0)
+		innerHeight = std::max(0, innerHeight - Margin->Top  - Margin->Bottom);
+
+	if (MinSize->Width  >= 0 && innerWidth  >= 0)
+		innerWidth  = std::max(innerWidth,  MinSize->Width);
+
+	if (MinSize->Height >= 0 && innerHeight >= 0)
+		innerHeight = std::max(innerHeight, MinSize->Height);
+
+	Size innerSize(innerWidth, innerHeight);
+	if (innerSize == Size::Zero)
+	{
+		actualSize_ = Size(Margin->Left + Margin->Right, Margin->Top + Margin->Bottom);
+		return actualSize_;
+	}
+
+	Size contentSize = MeasureOverride(innerSize);
+	actualSize_ = Size(
+		contentSize.Width  >= 0 ? contentSize.Width  + Margin->Left + Margin->Right  : -1,
+		contentSize.Height >= 0 ? contentSize.Height + Margin->Top  + Margin->Bottom : -1
+	);
+
 	return actualSize_;
 }
 
 void ControlBase::Arrange(const Rect& finalRect)
 {
-	Size actualSize = actualSize_;
-	int32_t width = actualSize.Width;
-	int32_t height = actualSize.Height;
+	int32_t slotX      = finalRect.X + Margin->Left;
+	int32_t slotY      = finalRect.Y + Margin->Top;
+	int32_t slotWidth  = std::max(0, finalRect.Width  - Margin->Left - Margin->Right);
+	int32_t slotHeight = std::max(0, finalRect.Height - Margin->Top  - Margin->Bottom);
 
-	int32_t x = finalRect.X;
-	int32_t y = finalRect.Y;
+	int32_t contentWidth  = actualSize_.Width  >= 0 ? std::max(0, actualSize_.Width  - Margin->Left - Margin->Right)  : -1;
+	int32_t contentHeight = actualSize_.Height >= 0 ? std::max(0, actualSize_.Height - Margin->Top  - Margin->Bottom) : -1;
+
+	int32_t x      = slotX;
+	int32_t y      = slotY;
+	int32_t width  = contentWidth;
+	int32_t height = contentHeight;
 
 	switch (HorizontalAlignment)
 	{
 		case HorizontalAlignment::Left:
 		{
-			width = width < 0 ? finalRect.Width : std::min(width, finalRect.Width);
+			width = width < 0 ? slotWidth : std::min(width, slotWidth);
 			break;
 		}
 
 		case HorizontalAlignment::Center:
 		{
-			width = width < 0 ? finalRect.Width : std::min(width, finalRect.Width);
-			x += (finalRect.Width - width) / 2;
+			width = width < 0 ? slotWidth : std::min(width, slotWidth);
+			x += (slotWidth - width) / 2;
 			break;
 		}
 
 		case HorizontalAlignment::Right:
 		{
-			width = width < 0 ? finalRect.Width : std::min(width, finalRect.Width);
-			x += (finalRect.Width - width);
+			width = width < 0 ? slotWidth : std::min(width, slotWidth);
+			x += slotWidth - width;
 			break;
 		}
 
 		case HorizontalAlignment::Stretch:
 		{
-			width = std::clamp<uint32_t>(finalRect.Width,
-				MinSize->Width == -1 ? 0 : MinSize->Width,
-				MaxSize->Width == -1 ? -1 : MaxSize->Width);
+			width = std::clamp<int32_t>(slotWidth,
+				MinSize->Width  < 0 ? 0         : MinSize->Width,
+				MaxSize->Width  < 0 ? slotWidth : MaxSize->Width);
 
-			x += (finalRect.Width - width) / 2;
+			x += (slotWidth - width) / 2;
 			break;
 		}
 	}
@@ -112,34 +124,31 @@ void ControlBase::Arrange(const Rect& finalRect)
 	{
 		case VerticalAlignment::Top:
 		{
-			height = height < 0 ? finalRect.Height : std::min(height, finalRect.Height);
+			height = height < 0 ? slotHeight : std::min(height, slotHeight);
 			break;
 		}
 
 		case VerticalAlignment::Center:
 		{
-			height = height < 0
-				? finalRect.Height
-				: std::min(height, finalRect.Height);
-			
-			y += (finalRect.Height - height) / 2;
+			height = height < 0 ? slotHeight : std::min(height, slotHeight);
+			y += (slotHeight - height) / 2;
 			break;
 		}
 
 		case VerticalAlignment::Bottom:
 		{
-			height = height < 0 ? finalRect.Height : std::min(height, finalRect.Height);
-			y += (finalRect.Height - height);
+			height = height < 0 ? slotHeight : std::min(height, slotHeight);
+			y += slotHeight - height;
 			break;
 		}
 
 		case VerticalAlignment::Stretch:
 		{
-			height = std::clamp<uint32_t>(finalRect.Height,
-				MinSize->Height == -1 ? 0 : MinSize->Height,
-				MaxSize->Height == -1 ? -1 : MaxSize->Height);
+			height = std::clamp<int32_t>(slotHeight,
+				MinSize->Height < 0 ? 0          : MinSize->Height,
+				MaxSize->Height < 0 ? slotHeight : MaxSize->Height);
 
-			y += (finalRect.Height - height) / 2;
+			y += (slotHeight - height) / 2;
 			break;
 		}
 	}
@@ -152,19 +161,28 @@ void ControlBase::Arrange(const Rect& finalRect)
 void ControlBase::Render(RenderContext& context)
 {
 	Rect rect = context.ContextRect();
-	context.RenderRectangle(Point::Zero, Size(rect.Width, rect.Height),
+	context.RenderRectangle(Point::Zero, rect.Size(), ForegroundColor, BackgroundColor,
 		[](const Point& point, const Size& size) { return L' '; });
 
 	visualDirty_ = false;
 	RenderOverride(context);
 }
 
-void ControlBase::SetParent(VisualTreeNode* parent)
+void ControlBase::SetParent(VisualTreeNode* parent, UILayer* layer)
 {
 	if (parent_ == parent)
 		return;
 
+	if (parent == nullptr)
+	{
+		OnDettachedFromTree();
+		parent_ = nullptr;
+		layer_ = nullptr;
+		return;
+	}
+
 	parent_ = parent;
+	layer_ = layer;
 	OnPropertyChanged("Parent");
 }
 
@@ -172,6 +190,15 @@ const std::span<VisualTreeNode*> ControlBase::GetChildren() const
 {
 	static std::span<VisualTreeNode*> dummy;
 	return dummy;
+}
+
+void ControlBase::OpenContextMenu()
+{
+	if (CtxMenu.Get() != nullptr)
+	{
+		Rect rect = GetArrangedRect();
+		CtxMenu.Get()->Open(Point(rect.X, rect.Y + rect.Height));
+	}
 }
 
 void ControlBase::ApplyInvalidation(InvalidationKind invalidation)
@@ -265,14 +292,4 @@ void ControlBase::OnPropertyChanged(const char* propertyName)
 		MinSize.Set(std::move(newSize));
 		MaxSize.Set(std::move(newSize));
 	}
-}
-
-Size ControlBase::GetActualSize() const
-{
-	return actualSize_;
-}
-
-Rect ControlBase::GetArrangedRect() const
-{
-	return arrangedRect_;
 }

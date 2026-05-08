@@ -31,9 +31,9 @@ Size TextBox::MeasureOverride(const Size& availableSize)
 	for (const auto& line : lines)
 		maxWidth = std::max(maxWidth, line);
 
-	int32_t width = std::clamp(maxWidth + 1, 0, availableSize.Width);
+	int32_t width = availableSize.Width >= 0 ? std::clamp(maxWidth + 1, 0, availableSize.Width) : maxWidth + 1;
 	int32_t desiredHeight = std::max<int32_t>(1, static_cast<int32_t>(lines.size()));
-	int32_t height = std::min(desiredHeight, availableSize.Height);
+	int32_t height = availableSize.Height >= 0 ? std::min(desiredHeight, availableSize.Height) : desiredHeight;
 
 	return Size(width, height);
 }
@@ -137,20 +137,20 @@ bool TextBox::OnKeyDown(InputEvent input)
 		return true;
 
 	std::wstring currentText = Text.Get();
-	static auto applyTextChange = [&]()
+	auto applyTextChange = [&]()
 	{
 		Text = currentText;
 		InvalidateMeasure();
 		InvalidateVisual();
 	};
 
-	static auto applyCursorMove = [&]()
+	auto applyCursorMove = [&]()
 	{
 		InvalidateMeasure();
 		InvalidateVisual();
 	};
 
-	static auto getLineIndex = [&](const std::vector<LineInfo>& lines) -> size_t
+	auto getLineIndex = [&](const std::vector<LineInfo>& lines) -> size_t
 	{
 		for (size_t i = 0; i < lines.size(); ++i)
 		{
@@ -344,21 +344,13 @@ void TextBox::OnLostFocus()
 bool TextBox::MoveFocusNext(Direction direction, InputModifier modifiers)
 {
 	if (!focusable_)
-	{
 		return false;
-	}
 
 	if (!focused_)
-	{
-		OnGotFocus();
 		return true;
-	}
 
 	if (modifiers == InputModifier::None && (direction == Direction::Left || direction == Direction::Right))
-	{
 		return true;
-	}
 
-	OnLostFocus();
 	return false;
 }

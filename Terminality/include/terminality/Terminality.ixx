@@ -5,19 +5,25 @@ export import :Geometry;
 export import :InputEvent;
 export import :Layout;
 export import :TextHelper;
+
 export import :VisualTree;
 export import :VisualTreeNode;
 export import :PropertyDescriptor;
 export import :ControlBase;
 
-export import :CheckBox;
-export import :Border;
-export import :Button;
-export import :Grid;
-export import :StackPanel;
-export import :TextBox;
-export import :ItemsControl;
 export import :Label;
+export import :CheckBox;
+export import :Button;
+export import :TextBox;
+
+export import :Border;
+export import :StackPanel;
+export import :Grid;
+export import :ItemsControl;
+
+export import :ContextMenu;
+export import :MessageBox;
+export import :OpenFileDialog;
 
 export import :EventSignal;
 export import :RenderBuffer;

@@ -35,9 +35,13 @@ export namespace terminality
 		void RenderText(const Point& point, const wchar_t* text, Color fg = Color::WHITE, Color bg = Color::BLACK, bool wrap = false);
 
 		void RenderRectangle(const Point& point, const Size& size);
+		void RenderRectangle(const Point& point, const Size& size, Color fg, Color bg);
 		void RenderRectangle(const Point& point, const Size& size, RectangleStyle style);
+		void RenderRectangle(const Point& point, const Size& size, Color fg, Color bg, RectangleStyle style);
 		void RenderRectangle(const Point& point, const int32_t width, const int32_t height);
+		void RenderRectangle(const Point& point, const int32_t width, const int32_t height, Color fg, Color bg);
 		void RenderRectangle(const Point& point, const int32_t width, const int32_t height, RectangleStyle style);
+		void RenderRectangle(const Point& point, const int32_t width, const int32_t height, Color fg, Color bg, RectangleStyle style);
 
 		void RenderLine(const Point& point, const int32_t length, short direction = 0);
 		void RenderLine(const Point& point, const int32_t length, VectorStyle style);

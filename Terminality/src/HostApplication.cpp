@@ -36,17 +36,19 @@ void HostApplication::RunUILoop()
 		return;
 
 	VisualTree& tree = VisualTree::Current();
-	FocusManager& focus = FocusManager::Current();
+	tree.PushLayer(std::move(rootNode));
+	RunUILoop(Running);
+}
 
-	tree.SetRoot(std::move(rootNode));
-	if (focus.GetFocused() == nullptr)
-		focus.SetFocused(tree.Root());
-
+void HostApplication::RunUILoop(std::atomic<bool>& running)
+{
+	VisualTree& tree = VisualTree::Current();
+	
 	const Size initViewport = HostBackend::QueryViewportSize();
 	renderBuffer_.Resize(static_cast<uint32_t>(initViewport.Width), static_cast<uint32_t>(initViewport.Height));
 
-	Running.store(true);
-	while (Running.load())
+	running.store(true);
+	while (running.load())
 	{
 		const Size viewport = HostBackend::QueryViewportSize();
 		if (viewport.Height != renderBuffer_.Height() || viewport.Width != renderBuffer_.Width())
@@ -60,11 +62,13 @@ void HostApplication::RunUILoop()
 		{
 			if (evt.Key == InputKey::ESCAPE)
 			{
-				Running.store(false);
+				running.store(false);
 				break;
 			}
 
+			FocusManager& focus = tree.GetFocusManager();
 			VisualTreeNode* focused = focus.GetFocused();
+			
 			bool success = false;
 			while (!success)
 			{

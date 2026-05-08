@@ -2,6 +2,10 @@
 import std.compat;
 import terminality;
 
+#include <Windows.h>
+
+#undef MessageBox
+
 using namespace terminality;
 
 namespace
@@ -20,13 +24,13 @@ namespace
 
         MessageBubble()
         {
-
+            HorizontalAlignment = HorizontalAlignment::Left;
         }
 
         Size MeasureOverride(const Size& availableSize) override
         {
             static const int timeStampLength = 10;
-            return Size(timeStampLength + message_.Text.size() + 1, 1);
+            return Size(timeStampLength + static_cast<int>(message_.Text.size()) + 1, 1);
         }
 
         void ArrangeOverride(const Rect& finalRect) override
@@ -65,8 +69,8 @@ namespace
             VerticalAlignment = VerticalAlignment::Stretch;
 
             AddRow(RowDefinition{ GridLength::Star(1.0f) });   // Строка 0: Основной чат
-            AddRow(RowDefinition{ GridLength::Pixel(3) });     // Строка 1: Поле ввода
-            AddRow(RowDefinition{ GridLength::Pixel(2) });     // Строка 2: Футер (подсказки)
+            AddRow(RowDefinition{ GridLength::Cell(3) });      // Строка 1: Поле ввода
+            AddRow(RowDefinition{ GridLength::Cell(2) });      // Строка 2: Футер (подсказки)
 
             // ==========================================
             // 1. ИСТОРИЯ ЧАТА (Строка 0)
@@ -75,17 +79,30 @@ namespace
             chatHistory_.push_back(MessageModel { false, L"[04:13:42]", L"Привет!" });
             chatHistory_.push_back(MessageModel { true, L"[04:13:51]", L"Tamerlan: Hello, World!" });
 
-            AddChild(0, 0, ctor<Border>([&](Border* chatBorder)
+            AddChild(0, 0, init<Border>([&](Border* chatBorder)
             {
                 chatBorder->HeaderText = L"Чат: Tamerlan";
-                chatBorder->Content = ctor<ItemsControl<MessageModel>>([&](ItemsControl<MessageModel>*chatList)
+                chatBorder->Content = init<ItemsControl<MessageModel>>([&](ItemsControl<MessageModel>*chatList)
                 {
+                    //chatList->ContentOrientation = Orientation::Horizontal;
                     chatList->SetItemsSource(&chatHistory_);
+
                     chatList->SetItemTemplate([](const MessageModel& item) -> std::unique_ptr<ControlBase>
                     {
-                        return ctor<MessageBubble>([&](MessageBubble* msg)
+                        return init<MessageBubble>([&](MessageBubble* bubble)
                         {
-                            msg->message_ = item;
+                            bubble->message_ = item;
+                            bubble->CtxMenu = init<ContextMenu>([](ContextMenu* menu)
+                            {
+                                menu->AddItem(L"Test1", []() { MessageBoxA(nullptr, "ContextMenu.Test1", nullptr, 0); });
+                                menu->AddItem(L"Test2", []() { MessageBox::Show(L"ContextMenu.Test2", L"ContextMenu.Test2"); });
+                            });
+
+                            bubble->OnHotkey(InputModifier::None, InputKey::D, [](ControlBase* self)
+                            {
+                                self->OpenContextMenu();
+                            });
+
                         });
                     });
                 });
@@ -94,21 +111,21 @@ namespace
             // ==========================================
             // 2. ПАНЕЛЬ ВВОДА (Строка 1)
             // ==========================================
-            AddChild(1, 0, std::make_unique<Border>(ctor<Grid>([&](Grid* inputGrid)
+            AddChild(1, 0, std::make_unique<Border>(init<Grid>([&](Grid* inputGrid)
             {
                 inputGrid->HorizontalAlignment = HorizontalAlignment::Stretch;
                 inputGrid->AddColumn(ColumnDefinition{ GridLength::Auto() }); 
                 inputGrid->AddColumn(ColumnDefinition{ GridLength::Star(1.0f) });
 
                 // Префикс текст бокса
-                inputGrid->AddChild(0, 0, ctor<Label>([&](Label* promptLabel)
+                inputGrid->AddChild(0, 0, init<Label>([&](Label* promptLabel)
                 {
                     promptLabel->Text = L"Rikitav@Tamerlan> ";
                     promptLabel->HorizontalAlignment = HorizontalAlignment::Left;
                 }));
 
                 // Поле для ввода текста
-                inputGrid->AddChild(0, 1, ctor<TextBox>([&](TextBox* inputBox)
+                inputGrid->AddChild(0, 1, init<TextBox>([&](TextBox* inputBox)
                 {
                     inputBox->Text = L"";
                     inputBox->MaxSize = Size(-1, 1);
@@ -127,10 +144,15 @@ namespace
             // ==========================================
             // 3. СТАТУС-БАР (Строка 2)
             // ==========================================
-            AddChild(2, 0, ctor<Button>([&](Button* statusBar)
+            AddChild(2, 0, init<Button>([&](Button* statusBar)
             {
                 statusBar->Text = L"ESC - выход | /help | Чат: Tamerlan";
                 statusBar->HorizontalAlignment = HorizontalAlignment::Stretch;
+
+                statusBar->Clicked += []()
+                {
+                    MessageBox::Show(L"Test1", L"ХУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУЙ", MessageBoxButton::YesNoCancel);
+                };
             }));
 
             // ==========================================
@@ -139,6 +161,20 @@ namespace
             OnHotkey(InputModifier::None, InputKey::ESCAPE, [](ControlBase* self)
             {
                 HostApplication::Current().RequestStop();
+            });
+
+            OnHotkey(InputModifier::None, InputKey::SUBTRACT, [](ControlBase* self)
+            {
+                auto selectedFile = OpenFileDialog::Show();
+                if (!selectedFile.has_value())
+                    MessageBox::Show(L"OpenFileDialog test", L"returned nothing", MessageBoxButton::Ok);
+                else
+                    MessageBox::Show(L"OpenFileDialog test", selectedFile.value().wstring(), MessageBoxButton::Ok);
+            });
+
+            OnHotkey(InputModifier::None, InputKey::MULTIPLY, [](ControlBase* self)
+            {
+                MessageBox::Show(L"Help", L"Help screen", MessageBoxButton::YesNoCancel);
             });
         }
     };
@@ -149,8 +185,6 @@ int main()
 	HostApplication& app = HostApplication::Current();
 	app.EnterTerminal();
     app.SetRoot(std::make_unique<MessangerTest>());
-    //FocusManager::Current().MoveNext(Direction::Next);
-
     app.RunUILoop();
 	app.ExitTerminal();
 	return 0;

@@ -165,6 +165,9 @@
     <ClCompile Include="include\terminality\Controls\Button.ixx" />
     <ClCompile Include="include\terminality\Controls\TextBox.ixx" />
     <ClCompile Include="include\terminality\Controls\ItemsControl.ixx" />
+    <ClCompile Include="include\terminality\Controls\MessageBox.ixx" />
+    <ClCompile Include="include\terminality\Controls\ContextMenu.ixx" />
+    <ClCompile Include="include\terminality\Controls\OpenFileDialog.ixx" />
     <ClCompile Include="include\terminality\EventSignal.ixx" />
     <ClCompile Include="include\terminality\Layout\PropertyDescriptor.ixx" />
     <ClCompile Include="include\terminality\HostApplication.ixx" />
@@ -190,6 +193,9 @@
     <ClCompile Include="src\Controls\Border.cpp" />
     <ClCompile Include="src\Controls\Button.cpp" />
     <ClCompile Include="src\Controls\TextBox.cpp" />
+    <ClCompile Include="src\Controls\MessageBox.cpp" />
+    <ClCompile Include="src\Controls\ContextMenu.cpp" />
+    <ClCompile Include="src\Controls\OpenFileDialog.cpp" />
     <ClCompile Include="src\HostApplication.cpp" />
     <ClCompile Include="src\FocusManager.cpp" />
     <ClCompile Include="src\PlatformSpecific\HostApplication.Linux.cpp" />

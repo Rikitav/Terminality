@@ -38,6 +38,7 @@ export namespace terminality
 		void ExitTerminal();
 
 		void RunUILoop();
+		void RunUILoop(std::atomic<bool>& running);
 		void RequestStop();
 	};
 }

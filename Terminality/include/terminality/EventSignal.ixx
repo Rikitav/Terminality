@@ -26,7 +26,6 @@ export namespace terminality
 		EventSignalConnection(const EventSignalConnection<Args...>&) = delete;
 		~EventSignalConnection();
 
-		void Detach();
 		void Disconnect();
 	};
 

@@ -45,6 +45,15 @@
     <ClCompile Include="include\terminality\Controls\ItemsControl.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="include\terminality\Controls\MessageBox.ixx">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="include\terminality\Controls\ContextMenu.ixx">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="include\terminality\Controls\OpenFileDialog.ixx">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
     <ClCompile Include="include\terminality\EventSignal.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
@@ -144,6 +153,15 @@
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="src\Controls\TextBox.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Controls\MessageBox.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Controls\ContextMenu.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Controls\OpenFileDialog.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="src\Layout\ControlBase.cpp">

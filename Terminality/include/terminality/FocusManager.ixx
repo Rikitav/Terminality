@@ -3,7 +3,7 @@ export module terminality:FocusManager;
 import std;
 import :Focus;
 import :InputEvent;
-import :VisualTree;
+import :VisualTreeNode;
 import :EventSignal;
 
 export namespace terminality
@@ -12,9 +12,9 @@ export namespace terminality
 	{
 		std::vector<VisualTreeNode*> focusStack;
 
+	public:
 		FocusManager() = default;
 
-	public:
 		EventSignal<VisualTreeNode*, VisualTreeNode*> FocusChanged;
 
 		static FocusManager& Current();
@@ -22,5 +22,6 @@ export namespace terminality
 		VisualTreeNode* GetFocused() const;
 		bool SetFocused(VisualTreeNode* node);
 		bool MoveNext(Direction direction, InputModifier modifiers = InputModifier::None);
+		void ClearFocus(VisualTreeNode* node);
 	};
 }

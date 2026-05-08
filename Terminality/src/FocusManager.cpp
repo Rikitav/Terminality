@@ -9,8 +9,10 @@ FocusManager& FocusManager::Current()
 	if (HostApplication::IsUiThread())
 		throw std::runtime_error("Cannot get FocusManager within running UI thread or Before UI thread was started.");
 
-	static FocusManager focusManager;
-	return focusManager;
+	//static FocusManager focusManager;
+	//return focusManager;
+
+	return VisualTree::Current().GetFocusManager();
 }
 
 VisualTreeNode* FocusManager::GetFocused() const
@@ -62,14 +64,49 @@ bool FocusManager::MoveNext(Direction direction, InputModifier modifiers)
 	std::vector<VisualTreeNode*> focusStackCopy = focusStack;
 	for (auto i = focusStackCopy.rbegin(); i != focusStackCopy.rend(); i++)
 	{
-		VisualTreeNode* node = *i;
-		if (node->MoveFocusNext(direction, modifiers))
-			return true;
+		// Check if node can move focus
+		VisualTreeNode* searchNode = *i;
+		if (!searchNode->MoveFocusNext(direction, modifiers))
+		{
+			// Cannot move, continue
+			focusStack.pop_back();
+			continue;
+		}
 
-		node->OnLostFocus();
-		focusStack.pop_back();
-		continue;
+		// Can move, disfocussing all popped nodes
+		for (auto i = focusStackCopy.rbegin(); i != focusStackCopy.rend(); i++)
+		{
+			VisualTreeNode* disfocusNode = *i;
+			if (disfocusNode == searchNode)
+				break; // Cutting edge
+
+			disfocusNode->OnLostFocus();
+		}
+
+		// Success
+		return true;
 	}
 
+	focusStack = focusStackCopy;
 	return false;
+}
+
+void FocusManager::ClearFocus(VisualTreeNode* node)
+{
+	if (focusStack.empty() || node == nullptr)
+		return;
+
+	auto it = std::find(focusStack.begin(), focusStack.end(), node);
+	if (it != focusStack.end())
+	{
+		VisualTreeNode* oldFocused = focusStack.back();
+		for (auto& dropIt = it; dropIt != focusStack.end(); ++dropIt)
+			(*dropIt)->OnLostFocus();
+
+		focusStack.erase(it, focusStack.end());
+		VisualTreeNode* newFocused = focusStack.empty() ? nullptr : focusStack.back();
+
+		if (oldFocused != newFocused)
+			FocusChanged.Emit(oldFocused, newFocused);
+	}
 }

@@ -104,17 +104,11 @@ bool VisualTreeNode::OnKeyUp(InputEvent input)
 bool VisualTreeNode::MoveFocusNext(Direction direction, InputModifier modifiers)
 {
 	if (!IsFocusable())
-	{
 		return false;
-	}
 	
 	if (!focused_)
-	{
-		OnGotFocus();
 		return true;
-	}
 
-	OnLostFocus();
 	return false;
 }
 
@@ -134,6 +128,7 @@ void VisualTreeNode::OnAttachedToTree()
 void VisualTreeNode::OnDettachedFromTree()
 {
 	attached_ = false;
+	FocusManager::Current().ClearFocus(this);
 	InvalidateMeasure();
 	InvalidateVisual();
 }
@@ -148,4 +143,14 @@ void VisualTreeNode::OnLostFocus()
 {
 	focused_ = false;
 	InvalidateVisual();
+}
+
+Size VisualTreeNode::GetActualSize() const
+{
+	return actualSize_;
+}
+
+Rect VisualTreeNode::GetArrangedRect() const
+{
+	return arrangedRect_;
 }

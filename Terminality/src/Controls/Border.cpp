@@ -23,7 +23,7 @@ void Border::OnPropertyChanged(const char* propertyName)
 	if (std::strcmp(propertyName, "Content") == 0)
 	{
 		if (Content.Get() != nullptr)
-			Content.Get()->SetParent(this);
+			Content.Get()->SetParent(this, layer_);
 
 		InvalidateMeasure();
 		InvalidateVisual();
@@ -35,7 +35,6 @@ void Border::OnPropertyChanged(const char* propertyName)
 
 bool Border::MoveFocusNext(Direction direction, InputModifier modifiers)
 {
-	OnLostFocus();
 	return false;
 }
 
@@ -62,9 +61,7 @@ void Border::OnLostFocus()
 Size Border::MeasureOverride(const Size& availableSize)
 {
 	const int thickness = 2;
-	Size result(
-		availableSize.Width >= 0 ? availableSize.Width : thickness,
-		availableSize.Height >= 0 ? availableSize.Height : thickness);
+	Size desiredSize(thickness, thickness);
 
 	if (Content != nullptr)
 	{
@@ -74,14 +71,18 @@ Size Border::MeasureOverride(const Size& availableSize)
 		);
 
 		const Size childSize = Content.Get()->Measure(innerSize);
-		if (availableSize.Width < 0)
-			result.Width = std::max(thickness, childSize.Width + thickness);
 
-		if (availableSize.Height < 0)
-			result.Height = std::max(thickness, childSize.Height + thickness);
+		desiredSize.Width += childSize.Width;
+		desiredSize.Height += childSize.Height;
 	}
 
-	return result;
+	if (availableSize.Width >= 0)
+		desiredSize.Width = std::min(desiredSize.Width, availableSize.Width);
+
+	if (availableSize.Height >= 0)
+		desiredSize.Height = std::min(desiredSize.Height, availableSize.Height);
+
+	return desiredSize;
 }
 
 void Border::ArrangeOverride(const Rect& contentRect)
@@ -102,7 +103,7 @@ void Border::ArrangeOverride(const Rect& contentRect)
 void Border::RenderOverride(RenderContext& context)
 {
 	const Rect rect = context.ContextRect();
-	Color renderColor = focused_ ? FocusedForegroundColor : BorderColor;
+	Color renderColor = focused_ ? FocusedBorderColor : BorderColor;
 	
 	for (int32_t x = 0; x < rect.Width; ++x)
 	{

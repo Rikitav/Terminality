@@ -23,7 +23,6 @@ export namespace terminality
 		Label();
 		Label(std::wstring& text);
 
-		//bool IsFocusable() const override;
 		void OnPropertyChanged(const char* propertyName) override;
 
 	protected:

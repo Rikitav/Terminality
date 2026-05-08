@@ -16,13 +16,6 @@ Label::Label(std::wstring& text)
 	Text = text;
 }
 
-/*
-bool Label::IsFocusable() const
-{
-	return false;
-}
-*/
-
 void Label::OnPropertyChanged(const char* propertyName)
 {
 	if (std::strcmp(propertyName, "Text") == 0)
@@ -41,9 +34,9 @@ Size Label::MeasureOverride(const Size& availableSize)
 	for (const auto& line : lines)
 		maxWidth = std::max(maxWidth, line);
 
-	int32_t width = std::clamp(maxWidth + 1, 0, availableSize.Width);
+	int32_t width = availableSize.Width >= 0 ? std::clamp(maxWidth + 1, 0, availableSize.Width) : maxWidth + 1;
 	int32_t desiredHeight = std::max<int32_t>(1, static_cast<int32_t>(lines.size()));
-	int32_t height = std::min(desiredHeight, availableSize.Height);
+	int32_t height = availableSize.Height >= 0 ? std::min(desiredHeight, availableSize.Height) : desiredHeight;
 
 	return Size(width, height);
 }

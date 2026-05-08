@@ -8,10 +8,15 @@ target_sources(terminality
         include/terminality/Collections/Queries.ixx
         include/terminality/Controls/Border.ixx
         include/terminality/Controls/Button.ixx
+        include/terminality/Controls/CheckBox.ixx
+        include/terminality/Controls/ContextMenu.ixx
         include/terminality/Controls/Grid.ixx
         include/terminality/Controls/ItemsControl.ixx
+        include/terminality/Controls/MessageBox.ixx
+        include/terminality/Controls/OpenFileDialog.ixx
         include/terminality/Controls/StackPanel.ixx
         include/terminality/Controls/TextBox.ixx
+        include/terminality/Controls/ZStack.ixx
         include/terminality/EventSignal.ixx
         include/terminality/FocusManager.ixx
         include/terminality/HostApplication.ixx
@@ -30,9 +35,14 @@ target_sources(terminality
     PRIVATE
         src/Controls/Border.cpp
         src/Controls/Button.cpp
+        src/Controls/CheckBox.cpp
+        src/Controls/ContextMenu.cpp
         src/Controls/Grid.cpp
+        src/Controls/MessageBox.cpp
+        src/Controls/OpenFileDialog.cpp
         src/Controls/StackPanel.cpp
         src/Controls/TextBox.cpp
+        src/Controls/ZStack.cpp
         src/EventSignal.cpp
         src/FocusManager.cpp
         src/HostApplication.cpp

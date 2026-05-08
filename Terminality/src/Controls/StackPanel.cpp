@@ -10,7 +10,7 @@ void StackPanel::AddChild(std::unique_ptr<ControlBase> child)
 	if (!child)
 		return;
 
-	child->SetParent(this);
+	child->SetParent(this, layer_);
 	if (!child->IsAttached())
 		child->OnAttachedToTree();
 
@@ -30,10 +30,7 @@ std::unique_ptr<ControlBase> StackPanel::RemoveChild(ControlPredicate predicate)
 	contents_.erase(found);
 
 	if (removed)
-	{
-		removed->SetParent(nullptr);
-		removed->OnDettachedFromTree();
-	}
+		removed->SetParent(nullptr, nullptr);
 
 	if (focusedIndex_ >= contents_.size())
 		focusedIndex_ = contents_.empty() ? 0 : contents_.size() - 1;
@@ -50,14 +47,16 @@ void StackPanel::Insert(size_t index, std::unique_ptr<ControlBase> child)
 	if (index > contents_.size())
 		index = contents_.size();
 
-	child->SetParent(this);
+	child->SetParent(this, layer_);
 	if (!child->IsAttached())
 		child->OnAttachedToTree();
 
 	contents_.insert(contents_.begin() + index, std::move(child));
 
-	if (focusedIndex_ >= index && focusedIndex_ < contents_.size() - 1)
-		focusedIndex_++;
+    if (focusedIndex_ >= index && focusedIndex_ < contents_.size() - 1)
+        focusedIndex_++;
+    else
+        PushFocus(child.get());
 
 	InvalidateMeasure();
 }
@@ -71,10 +70,7 @@ std::unique_ptr<ControlBase> StackPanel::RemoveAt(size_t index)
 	contents_.erase(contents_.begin() + index);
 
 	if (removed)
-	{
-		removed->SetParent(nullptr);
-		removed->OnDettachedFromTree();
-	}
+		removed->SetParent(nullptr, nullptr);
 
 	if (focusedIndex_ >= contents_.size())
 		focusedIndex_ = contents_.empty() ? 0 : contents_.size() - 1;
@@ -88,10 +84,7 @@ void StackPanel::Clear()
 	for (auto& child : contents_)
 	{
 		if (child)
-		{
-			child->SetParent(nullptr);
-			child->OnDettachedFromTree();
-		}
+			child->SetParent(nullptr, nullptr);
 	}
 	
 	contents_.clear();
@@ -140,102 +133,234 @@ void StackPanel::OnPropertyChanged(const char* propertyName)
 
 bool StackPanel::MoveFocusNext(Direction direction, InputModifier modifiers)
 {
-	if (contents_.empty())
-		return false;
+    if (contents_.empty())
+        return false;
 
-	switch (direction)
-	{
-		case Direction::Left:
-		case Direction::Right:
-			return false;
+    bool goBack = false;
+    bool goForward = false;
 
-		case Direction::Up:
-		case Direction::Previous:
-		{
-			if (focusedIndex_ == 0)
-				return false;
+    switch (direction)
+    {
+        case Direction::Previous:
+        {
+            goBack = true;
+            break;
+        }
 
-			size_t nextIndex = focusedIndex_ - 1;
-			while (nextIndex < contents_.size())
-			{
-				ControlBase* control = contents_[nextIndex].get();
-				if (control->IsFocusable() && control->IsTabStop())
-				{
-					focusedIndex_ = nextIndex;
-					PushFocus(control);
-					return true;
-				}
-				nextIndex--;
-			}
+        case Direction::Next:
+        {
+            goForward = true;
+            break;
+        }
 
-			break;
-		}
+        case Direction::Up:
+        {
+            if (ContentOrientation == Orientation::Vertical)
+                goBack = true;
 
-		case Direction::Down:
-		case Direction::Next:
-		{
-			if (focusedIndex_ >= contents_.size() - 1)
-				return false;
+            break;
+        }
 
-			for (size_t i = focusedIndex_ + 1; i < contents_.size(); i++)
-			{
-				ControlBase* control = contents_[i].get();
-				if (control->IsFocusable() && control->IsTabStop())
-				{
-					focusedIndex_ = i;
-					PushFocus(control);
-					return true;
-				}
-			}
+        case Direction::Down:
+        {
+            if (ContentOrientation == Orientation::Vertical)
+                goForward = true;
 
-			break;
-		}
-	}
+            break;
+        }
 
-	return false;
+        case Direction::Left:
+        {
+            if (ContentOrientation == Orientation::Horizontal)
+                goBack = true;
+
+            break;
+        }
+
+        case Direction::Right:
+        {
+            if (ContentOrientation == Orientation::Horizontal)
+                goForward = true;
+
+            break;
+        }
+    }
+
+    size_t focusedIndexPre = focusedIndex_;
+    if (goBack)
+    {
+        if (focusedIndex_ == 0)
+        {
+            if (Looping)
+            {
+                if (hasFlag(modifiers, InputModifier::LeftAlt) || hasFlag(modifiers, InputModifier::RightAlt))
+                    return false;
+
+                focusedIndex_ = contents_.size() - 1;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            focusedIndex_ -= 1;
+        }
+
+        for (int i = static_cast<int>(focusedIndex_); i >= 0; i--)
+        {
+            ControlBase* control = contents_[i].get();
+            if (control->IsFocusable() && control->IsTabStop())
+            {
+                focusedIndex_ = i;
+                PushFocus(control);
+                return true;
+            }
+        }
+    }
+    else if (goForward)
+    {
+        if (focusedIndex_ == contents_.size() - 1)
+        {
+            if (Looping)
+            {
+                if (hasFlag(modifiers, InputModifier::LeftAlt) || hasFlag(modifiers, InputModifier::RightAlt))
+                    return false;
+
+                focusedIndex_ = 0;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            focusedIndex_ += 1;
+        }
+            
+        for (size_t i = focusedIndex_; i < contents_.size(); i++)
+        {
+            ControlBase* control = contents_[i].get();
+            if (control->IsFocusable() && control->IsTabStop())
+            {
+                focusedIndex_ = i;
+                PushFocus(control);
+                return true;
+            }
+        }
+    }
+
+    focusedIndex_ = focusedIndexPre;
+    return false;
 }
 
 Size StackPanel::MeasureOverride(const Size& availableSize)
 {
-	int32_t totalWidth = 0;
-	int32_t totalHeight = 0;
-	
-	for (const std::unique_ptr<ControlBase>& child : contents_)
-	{
-		const Size childAvailableSize = Size(availableSize.Width, availableSize.Height - totalHeight);
-		const Size childMeasured = child->Measure(childAvailableSize);
+    int32_t totalWidth = 0;
+    int32_t totalHeight = 0;
 
-		totalWidth = std::max(childMeasured.Width, totalWidth);
-		totalHeight += childMeasured.Height;
-	}
+    for (const auto& child : contents_)
+    {
+        Size childAvailable = availableSize;
+        if (ContentOrientation == Orientation::Vertical)
+            childAvailable.Height = -1;
+        else
+            childAvailable.Width = -1;
 
-	return Size(totalWidth, totalHeight);
+        const Size childSize = child->Measure(childAvailable);
+        if (ContentOrientation == Orientation::Vertical)
+        {
+            totalWidth = std::max(childSize.Width, totalWidth);
+            totalHeight += childSize.Height;
+        }
+        else
+        {
+            totalWidth += childSize.Width;
+            totalHeight = std::max(childSize.Height, totalHeight);
+        }
+    }
+
+    return Size(totalWidth, totalHeight);
 }
 
 void StackPanel::ArrangeOverride(const Rect& contentRect)
 {
-	int32_t currentY = 0;
+    int32_t totalContentWidth = 0;
+    int32_t totalContentHeight = 0;
 
-	for (const std::unique_ptr<ControlBase>& child : contents_)
-	{
-		const Size childSize = child->GetActualSize();
-		const Rect childRect(
-			contentRect.X,
-			contentRect.Y + currentY,
-			contentRect.Width,
-			childSize.Height);
+    for (const auto& child : contents_)
+    {
+        const Size childSize = child->GetActualSize();
+        if (ContentOrientation == Orientation::Vertical)
+        {
+            totalContentWidth = std::max(totalContentWidth, childSize.Width);
+            totalContentHeight += childSize.Height;
+        }
+        else
+        {
+            totalContentWidth += childSize.Width;
+            totalContentHeight = std::max(totalContentHeight, childSize.Height);
+        }
+    }
 
-		child->Arrange(childRect);
-		currentY += child->GetArrangedRect().Height;
-	}
+    int32_t startX = 0;
+    int32_t startY = 0;
+
+    if (ContentOrientation == Orientation::Vertical)
+    {
+        if (VerticalContentAlignment == VerticalAlignment::Bottom)
+            startY = std::max(0, contentRect.Height - totalContentHeight);
+        else if (VerticalContentAlignment == VerticalAlignment::Center)
+            startY = std::max(0, contentRect.Height - totalContentHeight) / 2;
+    }
+    else
+    {
+        if (HorizontalContentAlignment == HorizontalAlignment::Right)
+            startX = std::max(0, contentRect.Width - totalContentWidth);
+        else if (HorizontalContentAlignment == HorizontalAlignment::Center)
+            startX = std::max(0, contentRect.Width - totalContentWidth) / 2;
+    }
+
+    int32_t currentX = startX;
+    int32_t currentY = startY;
+
+    for (const std::unique_ptr<ControlBase>& child : contents_)
+    {
+        const Size childSize = child->GetActualSize();
+
+        if (ContentOrientation == Orientation::Vertical)
+        {
+            const Rect childRect(
+                contentRect.X,
+                contentRect.Y + currentY,
+                contentRect.Width,
+                childSize.Height);
+
+            child->Arrange(childRect);
+            currentY += childSize.Height;
+        }
+        else
+        {
+            const Rect childRect(
+                contentRect.X + currentX,
+                contentRect.Y,
+                childSize.Width,
+                contentRect.Height);
+
+            child->Arrange(childRect);
+            currentX += childSize.Width;
+        }
+    }
 }
 
 void StackPanel::RenderOverride(RenderContext& context)
 {
-	for (const std::unique_ptr<ControlBase>& child : contents_)
-	{
-		Rect childRect = child->GetArrangedRect();
-		RenderContext childContext = context.CreateInner(childRect);
-		child->Render(childContext);
-	}
+    for (const std::unique_ptr<ControlBase>& child : contents_)
+    {
+        Rect childRect = child->GetArrangedRect();
+        RenderContext childContext = context.CreateInner(childRect);
+        child->Render(childContext);
+    }
 }

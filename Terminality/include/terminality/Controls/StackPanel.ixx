@@ -11,10 +11,16 @@ export namespace terminality
 {
 	class StackPanel : public ControlBase
 	{
+	protected:
 		std::vector<std::unique_ptr<ControlBase>> contents_;
 		size_t focusedIndex_ = 0;
 
 	public:
+		PropertyDescriptor<StackPanel, Orientation> ContentOrientation								{ this, "ContentOrientation", Orientation::Vertical, InvalidationKind::Measure };
+		PropertyDescriptor<StackPanel, terminality::HorizontalAlignment> HorizontalContentAlignment { this, "HorizontalContentAlignment", HorizontalAlignment::Stretch, InvalidationKind::Measure };
+		PropertyDescriptor<StackPanel, terminality::VerticalAlignment> VerticalContentAlignment	    { this, "VerticalContentAlignment", VerticalAlignment::Stretch, InvalidationKind::Measure };
+		PropertyDescriptor<StackPanel, bool> Looping												{ this, "Looping", false, InvalidationKind::None };
+
 		StackPanel() = default;
 
 		void AddChild(std::unique_ptr<ControlBase> child);

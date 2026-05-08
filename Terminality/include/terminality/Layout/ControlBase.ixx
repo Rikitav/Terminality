@@ -8,6 +8,7 @@ import :RenderContext;
 import :EventSignal;
 import :PropertyDescriptor;
 import :VisualTreeNode;
+import :ContextMenu;
 
 export namespace terminality
 {
@@ -39,9 +40,10 @@ export namespace terminality
 		PropertyDescriptor<ControlBase, Color> FocusedBackgroundColor { this, "FocusedBackgroundColor", Color::WHITE, InvalidationKind::Visual };
 
 		PropertyDescriptor<ControlBase, bool> IsVisible { this, "IsVisible", true, InvalidationKind::Visual };
+		PropertyDescriptor<ControlBase, std::unique_ptr<ContextMenu>> CtxMenu { this, "ContextMenu", nullptr, InvalidationKind::None };
 
 		// Setters
-		void SetParent(VisualTreeNode* parent) override;
+		void SetParent(VisualTreeNode* parent, UILayer* layer) override;
 		void SetFocusable(bool value) override;
 		void SetTabStop(bool value) override;
 		void SetTabIndex(int value) override;
@@ -61,12 +63,9 @@ export namespace terminality
 		void OnHotkey(InputModifier modifier, InputKey key, KeyCombinationCallback callback);
 
 		// Ownership
+		void OpenContextMenu();
 		virtual const std::span<VisualTreeNode*> GetChildren() const;
 	
-	//protected:
-		Size GetActualSize() const;
-		Rect GetArrangedRect() const;
-
 	protected:
 		// Layout
 		virtual Size MeasureOverride(const Size& availableSize) = 0;
@@ -75,7 +74,7 @@ export namespace terminality
 	};
 
 	template <typename T>
-	std::unique_ptr<T> ctor(std::function<void(T*)> init)
+	std::unique_ptr<T> init(std::function<void(T*)> init)
 	{
 		std::unique_ptr<T> widget = std::make_unique<T>();
 		init(widget.get());

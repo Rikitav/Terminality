@@ -1,5 +1,8 @@
 export module terminality:VisualTreeNode;
 
+import std;
+import std.compat;
+
 import :Focus;
 import :Geometry;
 import :InputEvent;
@@ -7,8 +10,13 @@ import :RenderContext;
 
 export namespace terminality
 {
+	struct UILayer;
+
 	class VisualTreeNode
 	{
+		friend class VisualTree;
+		friend class VisualTreeNode;
+
 	protected:
 		bool measureDirty_ = true;
 		bool arrangeDirty_ = true;
@@ -23,6 +31,7 @@ export namespace terminality
 		Size actualSize_;
 		Rect arrangedRect_;
 
+		UILayer* layer_;
 		VisualTreeNode* parent_ = nullptr;
 
 		static void PopFocus(Direction direction, InputModifier modifiers);
@@ -38,7 +47,7 @@ export namespace terminality
 
 		// Tree structure
 		VisualTreeNode* GetParent() const;
-		virtual void SetParent(VisualTreeNode* parent) = 0;
+		virtual void SetParent(VisualTreeNode* parent, UILayer* layer) = 0;
 		virtual const std::span<VisualTreeNode*> GetChildren() const = 0;
 
 		// Layout
@@ -78,5 +87,9 @@ export namespace terminality
 		virtual void OnChildInvalidated(VisualTreeNode& child);
 		virtual void OnAttachedToTree();
 		virtual void OnDettachedFromTree();
+		
+	//protected:
+		Size GetActualSize() const;
+		Rect GetArrangedRect() const;
 	};
 }

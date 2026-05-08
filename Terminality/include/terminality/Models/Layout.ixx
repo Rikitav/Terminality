@@ -32,4 +32,10 @@ export namespace terminality
 		Right,
 		Justify
 	};
+
+	enum class Orientation
+	{
+		Vertical,
+		Horizontal
+	};
 }

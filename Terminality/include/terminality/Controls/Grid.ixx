@@ -11,7 +11,7 @@ export namespace terminality
     enum class GridUnitType
     {
         Auto,
-        Pixel,
+        Cell,
         Star
     };
 
@@ -24,7 +24,7 @@ export namespace terminality
             : Value(value), Type(type) { }
 
         static GridLength Auto();
-        static GridLength Pixel(int32_t pixels);
+        static GridLength Cell(int32_t cells);
         static GridLength Star(float weight = 1.0f);
     };
 

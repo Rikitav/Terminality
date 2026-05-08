@@ -12,6 +12,7 @@ export namespace terminality
 	{
 	public:
 		PropertyDescriptor<Border, Color> BorderColor					 { this, "BorderColor", Color::DARK_GRAY, InvalidationKind::Visual};
+		PropertyDescriptor<Border, Color> FocusedBorderColor             { this, "FocusedBorderColor", Color::CYAN, InvalidationKind::Visual };
 		PropertyDescriptor<Border, Thickness> BorderThickness			 { this, "BorderThickness", Thickness::Single, InvalidationKind::Visual };
 		PropertyDescriptor<Border, std::wstring> HeaderText			     { this, "HeaderText", L"", InvalidationKind::Visual };
 		PropertyDescriptor<Border, std::unique_ptr<ControlBase>> Content { this, "Content", nullptr, InvalidationKind::Visual };

@@ -22,12 +22,6 @@ RenderContext RenderContext::CreateInner(Rect targetRect)
 	return RenderContext(buffer_, Rect(x, y, width, height));
 }
 
-#if 0
-    return RenderContext(buffer_, Rect::Enclose(rect_, targetRect));
-}
-
-#endif
-
 Rect RenderContext::ContextRect()
 {
     return rect_;
@@ -160,9 +154,29 @@ void RenderContext::RenderRectangle(const Point& point, const Size& size, Rectan
     }
 }
 
+void RenderContext::RenderRectangle(const Point& point, const Size& size, Color fg, Color bg, RectangleStyle style)
+{
+    std::lock_guard<std::recursive_mutex> guard(buffer_.renderMutex);
+
+    for (int32_t y = 0; y < size.Height; ++y)
+    {
+        for (int32_t x = 0; x < size.Width; ++x)
+        {
+            wchar_t symbol = style({ x, y }, size);
+            if (symbol != L'\0')
+                SetCell(point.X + x, point.Y + y, CellInfo{ symbol, fg, bg });
+        }
+    }
+}
+
 void RenderContext::RenderRectangle(const Point& point, const Size& size)
 {
     RenderRectangle(point, size, [](const Point&, const Size&) { return L'#'; });
+}
+
+void RenderContext::RenderRectangle(const Point& point, const Size& size, Color fg, Color bg)
+{
+    RenderRectangle(point, size, fg, bg, [](const Point&, const Size&) { return L'#'; });
 }
 
 void RenderContext::RenderRectangle(const Point& point, const int32_t width, const int32_t height)
@@ -170,9 +184,19 @@ void RenderContext::RenderRectangle(const Point& point, const int32_t width, con
     RenderRectangle(point, Size(width, height));
 }
 
+void RenderContext::RenderRectangle(const Point& point, const int32_t width, const int32_t height, Color fg, Color bg)
+{
+    RenderRectangle(point, Size(width, height), fg, bg);
+}
+
 void RenderContext::RenderRectangle(const Point& point, const int32_t width, const int32_t height, RectangleStyle style)
 {
     RenderRectangle(point, Size(width, height), style);
+}
+
+void RenderContext::RenderRectangle(const Point& point, const int32_t width, const int32_t height, Color fg, Color bg, RectangleStyle style)
+{
+    RenderRectangle(point, Size(width, height), fg, bg, style);
 }
 
 void RenderContext::RenderLine(const Vector& vector)

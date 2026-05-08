@@ -5,12 +5,19 @@ import std.compat;
 import :Geometry;
 import :VisualTreeNode;
 import :RenderBuffer;
+import :FocusManager;
 
 export namespace terminality
 {
+	struct UILayer
+	{
+		std::unique_ptr<VisualTreeNode> RootNode;
+		FocusManager Focus;
+	};
+
 	class VisualTree
 	{
-		std::unique_ptr<VisualTreeNode> rootNode_;
+		std::vector<UILayer> layers_;
 		bool hasDirtyVisual_ = true;
 		Rect dirtyRect_;
 
@@ -20,8 +27,12 @@ export namespace terminality
 	public:
 		static VisualTree& Current();
 
-		void SetRoot(std::unique_ptr<VisualTreeNode> rootNode);
-		VisualTreeNode* Root() const { return rootNode_.get(); }
+		VisualTreeNode* Root() const;
+		VisualTreeNode* PeekLayer() const;
+		void PushLayer(std::unique_ptr<VisualTreeNode> layerRoot);
+		void PopLayer();
+		
+		FocusManager& GetFocusManager();
 
 		void Invalidate(const Rect& dirtyRect);
 		bool HasDirtyVisual() const { return hasDirtyVisual_; }
