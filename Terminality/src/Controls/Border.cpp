@@ -167,7 +167,7 @@ void Border::RenderOverride(RenderContext& context)
 
 	for (int32_t y = 0; y < rect.Height; ++y)
 	{
-		context.SetCell(0, y,				style(RectanglePos::LeftVerticalLine), renderColor, BackgroundColor);
+		context.SetCell(0, y,				style(RectanglePos::LeftVerticalLine),  renderColor, BackgroundColor);
 		context.SetCell(rect.Width - 1, y,	style(RectanglePos::RightVerticalLine), renderColor, BackgroundColor);
 	}
 

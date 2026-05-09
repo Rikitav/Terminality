@@ -22,8 +22,14 @@ export namespace terminality
 		EventSignalConnection(EventSignal<Args...>* owner, size_t id);
 
 	public:
-		EventSignalConnection(EventSignalConnection&& other);
+		EventSignalConnection() = default;
+
+		EventSignalConnection(EventSignalConnection<Args...>&& other) noexcept;
+		EventSignalConnection& operator=(EventSignalConnection<Args...>&& other) noexcept;
+
 		EventSignalConnection(const EventSignalConnection<Args...>&) = delete;
+		EventSignalConnection& operator=(const EventSignalConnection<Args...>&) = delete;
+
 		~EventSignalConnection();
 
 		void Disconnect();
@@ -33,7 +39,6 @@ export namespace terminality
 	class EventSignal
 	{
 		friend class EventSignalConnection<Args...>;
-		//static std::vector<EventSignalConnection<Args...>> detachedConnections;
 
 		std::unordered_map<size_t, Handler<Args...>> handlers_;
 		size_t nextId_ = 1;
@@ -48,14 +53,33 @@ export namespace terminality
 	};
 }
 
-template<typename... Args>
+template<typename ...Args>
 terminality::EventSignalConnection<Args...>::EventSignalConnection(EventSignal<Args...>* owner, size_t id)
-	: owner_(owner), id_(id) {}
+	: owner_(owner), id_(id) { }
 
-template<typename... Args>
-terminality::EventSignalConnection<Args...>::EventSignalConnection(EventSignalConnection&& other)
+template<typename ...Args>
+terminality::EventSignalConnection<Args...>::EventSignalConnection(EventSignalConnection<Args...>&& other) noexcept
+	: owner_(other.owner_), id_(other.id_)
 {
 	other.owner_ = nullptr;
+	other.id_ = 0;
+}
+
+template<typename ...Args>
+terminality::EventSignalConnection<Args...>& terminality::EventSignalConnection<Args...>::operator=(EventSignalConnection<Args...>&& other) noexcept
+{
+	if (this != &other)
+	{
+		Disconnect();
+
+		owner_ = other.owner_;
+		id_ = other.id_;
+
+		other.owner_ = nullptr;
+		other.id_ = 0;
+	}
+
+	return *this;
 }
 
 template<typename... Args>
@@ -74,21 +98,11 @@ void terminality::EventSignalConnection<Args...>::Disconnect()
 	}
 }
 
-/*
-template<typename ...Args>
-void terminality::EventSignalConnection<Args...>::Detach()
-{
-	detachedConnections.push_back(*this);
-	detached = true;
-}
-*/
-
 template<typename ...Args>
 void terminality::EventSignal<Args...>::operator+=(terminality::Handler<Args...> handler)
 {
 	const size_t id = nextId_++;
 	handlers_.emplace(id, std::move(handler));
-	//detachedConnections.emplace_back(this, id);
 }
 
 template<typename... Args>

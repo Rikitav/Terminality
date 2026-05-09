@@ -8,15 +8,15 @@ import terminality;
 
 using namespace terminality;
 
-namespace
+struct MessageModel
 {
-    struct MessageModel
-    {
-        bool isAuthor;
-        std::wstring Timestamp;
-        std::wstring Text;
-    };
+    bool isAuthor;
+    std::wstring Timestamp;
+    std::wstring Text;
+};
 
+namespace TestApp
+{
     class MessageBubble : public ControlBase
     {
     public:
@@ -44,12 +44,12 @@ namespace
             if (focused_)
             {
                 rin << SetBack(Color::WHITE);
-                rin << SetFore(Color::BLACK) << message_.Timestamp;
+                rin << SetFore(Color::DARK_GRAY) << message_.Timestamp;
             }
             else
             {
                 rin << SetBack(Color::BLACK);
-                rin << SetFore(Color::WHITE) << message_.Timestamp;
+                rin << SetFore(Color::LIGHT_GRAY) << message_.Timestamp;
             }
 
             rin << SetFore(message_.isAuthor ? Color::CYAN : Color::YELLOW);
@@ -82,7 +82,7 @@ namespace
             AddChild(0, 0, init<Border>([&](Border* chatBorder)
             {
                 chatBorder->HeaderText = L"Чат: Tamerlan";
-                chatBorder->Content = init<ItemsControl<MessageModel>>([&](ItemsControl<MessageModel>*chatList)
+                chatBorder->Content = init<ItemsControl<MessageModel>>([&](ItemsControl<MessageModel>* chatList)
                 {
                     //chatList->ContentOrientation = Orientation::Horizontal;
                     chatList->SetItemsSource(&chatHistory_);
@@ -114,18 +114,24 @@ namespace
             AddChild(1, 0, std::make_unique<Border>(init<Grid>([&](Grid* inputGrid)
             {
                 inputGrid->HorizontalAlignment = HorizontalAlignment::Stretch;
+                inputGrid->AddColumn(ColumnDefinition{ GridLength::Auto() });
                 inputGrid->AddColumn(ColumnDefinition{ GridLength::Auto() }); 
                 inputGrid->AddColumn(ColumnDefinition{ GridLength::Star(1.0f) });
 
+                inputGrid->AddChild(0, 0, init<Spinner>([&](Spinner* promptSpinner)
+                {
+                    promptSpinner->Margin = Thickness(1, 0, 1, 0);
+                }));
+
                 // Префикс текст бокса
-                inputGrid->AddChild(0, 0, init<Label>([&](Label* promptLabel)
+                inputGrid->AddChild(0, 1, init<Label>([&](Label* promptLabel)
                 {
                     promptLabel->Text = L"Rikitav@Tamerlan> ";
                     promptLabel->HorizontalAlignment = HorizontalAlignment::Left;
                 }));
 
                 // Поле для ввода текста
-                inputGrid->AddChild(0, 1, init<TextBox>([&](TextBox* inputBox)
+                inputGrid->AddChild(0, 2, init<TextBox>([&](TextBox* inputBox)
                 {
                     inputBox->Text = L"";
                     inputBox->MaxSize = Size(-1, 1);
@@ -184,7 +190,7 @@ int main()
 {
 	HostApplication& app = HostApplication::Current();
 	app.EnterTerminal();
-    app.SetRoot(std::make_unique<MessangerTest>());
+    app.SetRoot(std::make_unique<TestApp::MessangerTest>());
     app.RunUILoop();
 	app.ExitTerminal();
 	return 0;

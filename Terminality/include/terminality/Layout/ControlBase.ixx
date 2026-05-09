@@ -77,7 +77,16 @@ export namespace terminality
 	std::unique_ptr<T> init(std::function<void(T*)> init)
 	{
 		std::unique_ptr<T> widget = std::make_unique<T>();
-		init(widget.get());
+		if (init != nullptr)
+			init(widget.get());
+		
+		return std::move(widget);
+	}
+
+	template <typename T>
+	std::unique_ptr<T> init()
+	{
+		std::unique_ptr<T> widget = std::make_unique<T>();
 		return std::move(widget);
 	}
 }

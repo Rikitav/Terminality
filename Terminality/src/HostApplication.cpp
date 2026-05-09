@@ -1,5 +1,7 @@
 module terminality;
 
+//#include <chrono>
+
 import std;
 import std.compat;
 
@@ -35,64 +37,92 @@ void HostApplication::RunUILoop()
 	if (rootNode == nullptr)
 		return;
 
+	DispatchTimer& timer = DispatchTimer::Current();
 	VisualTree& tree = VisualTree::Current();
-	tree.PushLayer(std::move(rootNode));
-	RunUILoop(Running);
+	UILayer& layer = tree.PushLayer(std::move(rootNode));
+
+	timer.Start();
+	NestUILoop(layer);
+	timer.Stop();
 }
 
-void HostApplication::RunUILoop(std::atomic<bool>& running)
+void HostApplication::NestUILoop(UILayer& layer)
 {
+	DispatchTimer& timer = DispatchTimer::Current();
 	VisualTree& tree = VisualTree::Current();
-	
+
 	const Size initViewport = HostBackend::QueryViewportSize();
 	renderBuffer_.Resize(static_cast<uint32_t>(initViewport.Width), static_cast<uint32_t>(initViewport.Height));
 
-	running.store(true);
-	while (running.load())
+	// Подписываемся на завершение ресайза для инвалидации дерева
+	auto resizeConn = timer.ResizeFinishedEvent.Connect([&tree]()
 	{
+		if (tree.Root())
+		{
+			tree.Root()->InvalidateMeasure();
+			tree.Root()->InvalidateVisual();
+		}
+	});
+
+	layer.Running.store(true);
+	while (layer.Running.load() && timer.IsRunning())
+	{
+		timer.Tick();
+
 		const Size viewport = HostBackend::QueryViewportSize();
 		if (viewport.Height != renderBuffer_.Height() || viewport.Width != renderBuffer_.Width())
 		{
 			renderBuffer_.Resize(static_cast<uint32_t>(viewport.Width), static_cast<uint32_t>(viewport.Height));
-			tree.Root()->InvalidateVisual();
+			timer.BeginResize();
 		}
 
-		const InputEvent evt = HostBackend::PollInput(std::chrono::milliseconds(16));
+		if (!timer.IsResizing())
+		{
+			tree.RunLayout(viewport);
+			if (tree.HasDirtyVisual())
+			{
+				tree.Render(renderBuffer_);
+				renderBuffer_.DiffRender(std::wcout);
+			}
+		}
+
+		const InputEvent evt = HostBackend::PollInput(timer.GetRemainingFrameTime(60));
 		if (evt.Key != InputKey::None)
 		{
 			if (evt.Key == InputKey::ESCAPE)
 			{
-				running.store(false);
+				layer.Running.store(false);
 				break;
 			}
 
 			FocusManager& focus = tree.GetFocusManager();
 			VisualTreeNode* focused = focus.GetFocused();
-			
-			bool success = false;
-			while (!success)
-			{
-				if (focused == nullptr)
-					break;
 
+			bool success = false;
+			while (!success && focused != nullptr)
+			{
 				success = evt.Pressed
 					? focused->OnKeyDown(evt)
 					: focused->OnKeyUp(evt);
 
 				focused = focused->GetParent();
 			}
-		}
 
-		tree.RunLayout(viewport);
-		if (tree.HasDirtyVisual())
-		{
-			tree.Render(renderBuffer_);
-			renderBuffer_.DiffRender(std::wcout);
+			if (!timer.IsResizing())
+			{
+				tree.RunLayout(viewport);
+				if (tree.HasDirtyVisual())
+				{
+					tree.Render(renderBuffer_);
+					renderBuffer_.DiffRender(std::wcout);
+				}
+			}
 		}
 	}
 }
 
 void HostApplication::RequestStop()
 {
-	Running.store(false);
+	DispatchTimer& timer = DispatchTimer::Current();
+	timer.Stop();
 }

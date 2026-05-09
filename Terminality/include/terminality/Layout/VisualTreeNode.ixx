@@ -15,7 +15,6 @@ export namespace terminality
 	class VisualTreeNode
 	{
 		friend class VisualTree;
-		friend class VisualTreeNode;
 
 	protected:
 		bool measureDirty_ = true;

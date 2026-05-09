@@ -15,6 +15,7 @@ export import :Label;
 export import :CheckBox;
 export import :Button;
 export import :TextBox;
+export import :Spinner;
 
 export import :Border;
 export import :StackPanel;
@@ -26,6 +27,7 @@ export import :MessageBox;
 export import :OpenFileDialog;
 
 export import :EventSignal;
+export import :DispatchTimer;
 export import :RenderBuffer;
 export import :RenderContext;
 export import :FocusManager;

@@ -25,7 +25,7 @@ void ContextMenu::Open(Point position)
 	if (items_.empty())
 		return;
 
-	tree.PushLayer(init<Border>([&](Border* ctxMenuBody)
+	auto ctxMenuBody = init<Border>([&](Border* ctxMenuBody)
 	{
 		ctxMenuBody->HorizontalAlignment = HorizontalAlignment::Left;
 		ctxMenuBody->VerticalAlignment = VerticalAlignment::Top;
@@ -54,8 +54,9 @@ void ContextMenu::Open(Point position)
 				}));
 			}
 		});
-	}));
+	});
 
-	host.RunUILoop(running);
+	UILayer& layer = tree.PushLayer(std::move(ctxMenuBody));
+	host.NestUILoop(layer);
 	tree.PopLayer();
 }

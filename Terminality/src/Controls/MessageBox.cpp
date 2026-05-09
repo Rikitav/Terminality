@@ -11,7 +11,7 @@ MessageBoxResult MessageBox::Show(const std::wstring& title, const std::wstring&
     VisualTree& tree = VisualTree::Current();
 
     MessageBoxResult result = MessageBoxResult::None;
-    std::atomic<bool> running = true;
+    std::atomic<bool>* running = nullptr;
 
     auto rootGrid = init<Grid>([&](Grid* rootGrid)
     {
@@ -69,7 +69,7 @@ MessageBoxResult MessageBox::Show(const std::wstring& title, const std::wstring&
                             btn->Clicked += [res, &result, &running]()
                             {
                                 result = res;
-                                running.store(false);
+                                running->store(false);
                             };
                         }));
                     };
@@ -109,9 +109,11 @@ MessageBoxResult MessageBox::Show(const std::wstring& title, const std::wstring&
         }));
     });
 
-    tree.PushLayer(std::move(rootGrid));
+    UILayer& layer = tree.PushLayer(std::move(rootGrid));
+    running = &layer.Running;
+
     tree.GetFocusManager().MoveNext(Direction::Next);
-    host.RunUILoop(running);
+    host.NestUILoop(layer);
     tree.PopLayer();
     return result;
 }

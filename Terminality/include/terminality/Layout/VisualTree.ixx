@@ -12,16 +12,32 @@ export namespace terminality
 	struct UILayer
 	{
 		std::unique_ptr<VisualTreeNode> RootNode;
+		std::atomic<bool> Running { false };
 		FocusManager Focus;
+
+		UILayer() = delete;
+
+		UILayer(std::unique_ptr<VisualTreeNode> rootNode) : RootNode(std::move(rootNode))
+		{
+			RootNode->SetParent(nullptr, this);
+		}
+
+		UILayer(const UILayer&) = delete;
+		UILayer& operator=(const UILayer&) = delete;
+		UILayer(UILayer&&) = delete;
+		UILayer& operator=(UILayer&&) = delete;
 	};
 
 	class VisualTree
 	{
-		std::vector<UILayer> layers_;
+		std::vector<std::unique_ptr<UILayer>> layers_;
 		bool hasDirtyVisual_ = true;
 		Rect dirtyRect_;
 
-		VisualTree() = default;
+		VisualTree();
+		VisualTree(const VisualTree&) = delete;
+		VisualTree& operator=(const VisualTree&) = delete;
+
 		void CollectDirtyNodeRect(const VisualTreeNode& node);
 
 	public:
@@ -29,7 +45,7 @@ export namespace terminality
 
 		VisualTreeNode* Root() const;
 		VisualTreeNode* PeekLayer() const;
-		void PushLayer(std::unique_ptr<VisualTreeNode> layerRoot);
+		UILayer& PushLayer(std::unique_ptr<VisualTreeNode> layerRoot);
 		void PopLayer();
 		
 		FocusManager& GetFocusManager();

@@ -8,6 +8,7 @@ import :VisualTree;
 import :VisualTreeNode;
 import :RenderBuffer;
 import :FocusManager;
+import :EventSignal;
 
 export namespace terminality
 {
@@ -22,11 +23,16 @@ export namespace terminality
 	{
 		static std::optional<std::thread::id> uiThreadId;
 
+		bool isResizing_ = false;
+		float resizeDebounceTimer_ = 0.0f;
+		float RESIZE_DELAY = 0.1f;
+		
 		std::unique_ptr<VisualTreeNode> rootNode;
 		RenderBuffer renderBuffer_{ 1, 1 };
-		std::atomic<bool> Running = false;
 
 		HostApplication() = default;
+		HostApplication(const HostApplication&) = delete;
+		HostApplication& operator=(const HostApplication&) = delete;
 		
 	public:
 		static HostApplication& Current();
@@ -38,7 +44,7 @@ export namespace terminality
 		void ExitTerminal();
 
 		void RunUILoop();
-		void RunUILoop(std::atomic<bool>& running);
+		void NestUILoop(UILayer& layer);
 		void RequestStop();
 	};
 }
