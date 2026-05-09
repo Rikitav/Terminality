@@ -20,7 +20,7 @@ void ContextMenu::Open(Point position)
 	HostApplication& host = HostApplication::Current();
 	VisualTree& tree = VisualTree::Current();
 
-	std::atomic<bool> running = true;
+	std::atomic<bool>* running = nullptr;
 
 	if (items_.empty())
 		return;
@@ -49,7 +49,7 @@ void ContextMenu::Open(Point position)
 						if (item.Action != nullptr)
 							item.Action();
 
-						running.store(false);
+						running->store(false);
 					};
 				}));
 			}
@@ -57,6 +57,8 @@ void ContextMenu::Open(Point position)
 	});
 
 	UILayer& layer = tree.PushLayer(std::move(ctxMenuBody));
+	running = &layer.Running;
+	
 	host.NestUILoop(layer);
 	tree.PopLayer();
 }

@@ -13,7 +13,7 @@ std::optional<std::filesystem::path> OpenFileDialog::Show(const std::wstring& ti
     VisualTree& tree = VisualTree::Current();
 
     std::optional<std::filesystem::path> result = std::nullopt;
-    std::atomic<bool> running = true;
+	std::atomic<bool>* running = nullptr;
 
     std::filesystem::path currentDir = initialDireinity.empty()
         ? std::filesystem::current_path()
@@ -118,7 +118,7 @@ std::optional<std::filesystem::path> OpenFileDialog::Show(const std::wstring& ti
                                 else
                                 {
                                     result = currentDir / item;
-                                    running.store(false);
+                                    running->store(false);
                                 }
                             };
                         });
@@ -131,7 +131,7 @@ std::optional<std::filesystem::path> OpenFileDialog::Show(const std::wstring& ti
                     cancelBtn->HorizontalAlignment = HorizontalAlignment::Right;
                     cancelBtn->Clicked += [&running]()
                     {
-                        running.store(false);
+                        running->store(false);
                     };
                 }));
             });
@@ -139,11 +139,11 @@ std::optional<std::filesystem::path> OpenFileDialog::Show(const std::wstring& ti
     });
 
     loadDirectory();
+    UILayer& layer = tree.PushLayer(std::move(ctxMenuBody));
+    running = &layer.Running;
 
-    tree.PushLayer(std::move(rootGrid));
-    host.RunUILoop(running);
+    host.NestUILoop(layer);
     tree.PopLayer();
-
     return result;
     */
 
