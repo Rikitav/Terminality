@@ -66,48 +66,56 @@ export namespace terminality
 		ItemsControl() = default;
 		virtual ~ItemsControl() = default;
 
-		void SetItemTemplate(ItemTemplate itemTemplate)
-		{
-			itemTemplate_ = std::move(itemTemplate);
-			RebuildItems();
-		}
+		void SetItemTemplate(ItemTemplate itemTemplate);
+		void SetItemsSource(ObservableCollection<T>* itemsSource);
 
-		void SetItemsSource(ObservableCollection<T>* itemsSource)
-		{
-			if (itemsSource_ == itemsSource)
-				return;
-
-			if (itemsSource_)
-			{
-				addedConnection_.reset();
-				removedConnection_.reset();
-				replacedConnection_.reset();
-				clearedConnection_.reset();
-			}
-
-			itemsSource_ = itemsSource;
-
-			if (itemsSource_)
-			{
-				addedConnection_.emplace(itemsSource_->ItemAdded.Connect(
-					[this](std::size_t index, const T& item) { OnItemAdded(index, item); }));
-				
-				removedConnection_.emplace(itemsSource_->ItemRemoved.Connect(
-					[this](std::size_t index, const T& item) { OnItemRemoved(index, item); }));
-				
-				replacedConnection_.emplace(itemsSource_->ItemReplaced.Connect(
-					[this](std::size_t index, const T& oldItem, const T& newItem) { OnItemReplaced(index, oldItem, newItem); }));
-				
-				clearedConnection_.emplace(itemsSource_->CollectionCleared.Connect(
-					[this]() { OnCollectionCleared(); }));
-			}
-
-			RebuildItems();
-		}
-
-		ObservableCollection<T>* GetItemsSource() const
-		{
-			return itemsSource_;
-		}
+		ObservableCollection<T>* GetItemsSource() const;
 	};
+
+	template<typename T>
+	void ItemsControl<T>::SetItemTemplate(ItemTemplate itemTemplate)
+	{
+		itemTemplate_ = std::move(itemTemplate);
+		RebuildItems();
+	}
+
+	template<typename T>
+	void ItemsControl<T>::SetItemsSource(ObservableCollection<T>* itemsSource)
+	{
+		if (itemsSource_ == itemsSource)
+			return;
+
+		if (itemsSource_)
+		{
+			addedConnection_.reset();
+			removedConnection_.reset();
+			replacedConnection_.reset();
+			clearedConnection_.reset();
+		}
+
+		itemsSource_ = itemsSource;
+
+		if (itemsSource_)
+		{
+			addedConnection_.emplace(itemsSource_->ItemAdded.Connect(
+				[this](std::size_t index, const T& item) { OnItemAdded(index, item); }));
+
+			removedConnection_.emplace(itemsSource_->ItemRemoved.Connect(
+				[this](std::size_t index, const T& item) { OnItemRemoved(index, item); }));
+
+			replacedConnection_.emplace(itemsSource_->ItemReplaced.Connect(
+				[this](std::size_t index, const T& oldItem, const T& newItem) { OnItemReplaced(index, oldItem, newItem); }));
+
+			clearedConnection_.emplace(itemsSource_->CollectionCleared.Connect(
+				[this]() { OnCollectionCleared(); }));
+		}
+
+		RebuildItems();
+	}
+
+	template<typename T>
+	ObservableCollection<T>* ItemsControl<T>::GetItemsSource() const
+	{
+		return itemsSource_;
+	}
 }

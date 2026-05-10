@@ -16,10 +16,10 @@ export namespace terminality
 	{
 		friend class EventSignal<Args...>;
 
-		EventSignal<Args...>* owner_ = nullptr;
+		std::weak_ptr<EventSignal<Args...>*> tracker_;
 		std::size_t id_ = 0;
 
-		EventSignalConnection(EventSignal<Args...>* owner, std::size_t id);
+		EventSignalConnection(std::weak_ptr<EventSignal<Args...>*> tracker, std::size_t id);
 
 	public:
 		EventSignalConnection() = default;
@@ -40,10 +40,20 @@ export namespace terminality
 	{
 		friend class EventSignalConnection<Args...>;
 
+		std::shared_ptr<EventSignal<Args...>*> selfToken_;
 		std::unordered_map<std::size_t, Handler<Args...>> handlers_;
 		std::size_t nextId_ = 1;
 
 	public:
+		EventSignal();
+		~EventSignal();
+
+		EventSignal(EventSignal&& other) noexcept;
+		EventSignal& operator=(EventSignal&& other) noexcept;
+
+		EventSignal(const EventSignal&) = delete;
+		EventSignal& operator=(const EventSignal&) = delete;
+
 		void operator+=(Handler<Args...> handler);
 		[[nodiscard]] EventSignalConnection<Args...> Connect(Handler<Args...> handler);
 		void Emit(Args... args);
@@ -54,14 +64,13 @@ export namespace terminality
 }
 
 template<typename ...Args>
-terminality::EventSignalConnection<Args...>::EventSignalConnection(EventSignal<Args...>* owner, std::size_t id)
-	: owner_(owner), id_(id) { }
+terminality::EventSignalConnection<Args...>::EventSignalConnection(std::weak_ptr<EventSignal<Args...>*> tracker, std::size_t id)
+	: tracker_(std::move(tracker)), id_(id) { }
 
 template<typename ...Args>
 terminality::EventSignalConnection<Args...>::EventSignalConnection(EventSignalConnection<Args...>&& other) noexcept
-	: owner_(other.owner_), id_(other.id_)
+	: tracker_(std::move(other.tracker_)), id_(other.id_)
 {
-	other.owner_ = nullptr;
 	other.id_ = 0;
 }
 
@@ -72,10 +81,8 @@ terminality::EventSignalConnection<Args...>& terminality::EventSignalConnection<
 	{
 		Disconnect();
 
-		owner_ = other.owner_;
+		tracker_ = std::move(other.tracker_);
 		id_ = other.id_;
-
-		other.owner_ = nullptr;
 		other.id_ = 0;
 	}
 
@@ -91,11 +98,55 @@ terminality::EventSignalConnection<Args...>::~EventSignalConnection()
 template<typename... Args>
 void terminality::EventSignalConnection<Args...>::Disconnect()
 {
-	if (owner_ != nullptr)
+	if (auto locked = tracker_.lock())
 	{
-		owner_->Disconnect(id_);
-		owner_ = nullptr;
+		if (EventSignal<Args...>* owner = *locked)
+			owner->Disconnect(id_);
 	}
+
+	tracker_.reset();
+}
+
+template<typename ...Args>
+terminality::EventSignal<Args...>::EventSignal()
+	: selfToken_(std::make_shared<EventSignal<Args...>*>(this)) { }
+
+template<typename ...Args>
+terminality::EventSignal<Args...>::~EventSignal()
+{
+	if (selfToken_)
+	{
+		*selfToken_ = nullptr;
+	}
+}
+
+template<typename ...Args>
+terminality::EventSignal<Args...>::EventSignal(EventSignal&& other) noexcept
+	: handlers_(std::move(other.handlers_)), nextId_(other.nextId_), selfToken_(std::move(other.selfToken_))
+{
+	if (selfToken_)
+	{
+		*selfToken_ = this;
+	}
+}
+
+template<typename ...Args>
+terminality::EventSignal<Args...>& terminality::EventSignal<Args...>::operator=(EventSignal&& other) noexcept
+{
+	if (this != &other)
+	{
+		if (selfToken_)
+			*selfToken_ = nullptr;
+
+		handlers_ = std::move(other.handlers_);
+		nextId_ = other.nextId_;
+		selfToken_ = std::move(other.selfToken_);
+
+		if (selfToken_)
+			*selfToken_ = this;
+	}
+
+	return *this;
 }
 
 template<typename ...Args>
@@ -110,7 +161,8 @@ terminality::EventSignalConnection<Args...> terminality::EventSignal<Args...>::C
 {
 	const std::size_t id = nextId_++;
 	handlers_.emplace(id, std::move(handler));
-	return EventSignalConnection<Args...>(this, id);
+
+	return EventSignalConnection<Args...>(selfToken_, id);
 }
 
 template<typename... Args>
