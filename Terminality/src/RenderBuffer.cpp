@@ -43,8 +43,8 @@ RenderBuffer::RenderBuffer(uint32_t initialWidth, uint32_t initialHeight)
 {
 	std::lock_guard<std::recursive_mutex> guard(renderMutex);
 
-	buffer.assign(MAX_WIDTH * MAX_HEIGHT, CellInfo('\0', static_cast<Color>(-1), static_cast<Color>(-1)));
-	snapshotBuffer.assign(MAX_WIDTH * MAX_HEIGHT, CellInfo('\0', static_cast<Color>(-1), static_cast<Color>(-1)));
+	buffer.assign(MAX_WIDTH * MAX_HEIGHT, CellInfo(' ', static_cast<Color>(-1), static_cast<Color>(-1)));
+	snapshotBuffer.assign(MAX_WIDTH * MAX_HEIGHT, CellInfo(' ', static_cast<Color>(-1), static_cast<Color>(-1)));
 
 	width = std::min(initialWidth, static_cast<uint32_t>(MAX_WIDTH));
 	height = std::min(initialHeight, static_cast<uint32_t>(MAX_HEIGHT));
@@ -120,6 +120,10 @@ void RenderBuffer::BulkRender(std::wostream& out)
 
 	for (uint32_t y = 0; y < height; ++y)
 	{
+		output += L"\x1b[";
+		output += std::to_wstring(y + 1);
+		output += L";1H";
+
 		for (uint32_t x = 0; x < width; ++x)
 		{
 			const size_t idx = GetIndex(x, y);
@@ -138,11 +142,10 @@ void RenderBuffer::BulkRender(std::wostream& out)
 			}
 			
 			output += cell.Symbol;
-			snapshotBuffer[idx] = cell;
 		}
 
 		if (y < height - 1)
-			output += L"\n";
+			output += L"\r\n";
 	}
 
 	out.write(output.data(), output.size());
@@ -209,7 +212,6 @@ void RenderBuffer::DiffRender(std::wostream& out)
 			}
 			
 			output += cell.Symbol;
-			snapshotBuffer[idx] = cell;
 			
 			expectedX = x + 1;
 			expectedY = y;

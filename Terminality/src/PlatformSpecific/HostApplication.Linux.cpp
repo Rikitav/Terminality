@@ -54,21 +54,12 @@ void HostApplication::EnterTerminal()
 	std::ios_base::sync_with_stdio(false);
 	std::wcout.tie(nullptr);
 
-	// \x1b[?1049h - Включаем Alternate Screen Buffer (нет скроллинга!)
-	// \x1b[?7l    - Отключаем авто-перенос строк
-	// \x1b[2J     - Очищаем этот новый буфер
-	// \x1b[?25l   - Прячем курсор
 	std::wcout << L"\x1b[?1049h\x1b[0m\x1b[40m\x1b[?7l\x1b[2J\x1b[?25l";
-	//std::wcout << L"\x1b[?1049h\x1b[?7l\x1b[2J\x1b[?25l";
 	std::wcout.flush();
 }
 
 void HostApplication::ExitTerminal()
 {
-	// Возвращаем всё как было:
-	// \x1b[?1049l - Выключаем Alternate Screen Buffer
-	// \x1b[?7h    - Включаем авто-перенос строк
-	// \x1b[?25h   - Показываем курсор
 	std::wcout << L"\x1b[?1049l\x1b[?7h\x1b[?25h";
 	std::wcout.flush();
 
@@ -78,18 +69,7 @@ void HostApplication::ExitTerminal()
 Size HostBackend::QueryViewportSize()
 {
 	struct winsize w;
-
-	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1 || w.ws_col == 0 || w.ws_row == 0)
-	{
-		if (ioctl(STDIN_FILENO, TIOCGWINSZ, &w) == -1 || w.ws_col == 0 || w.ws_row == 0)
-		{
-			if (ioctl(STDERR_FILENO, TIOCGWINSZ, &w) == -1 || w.ws_col == 0 || w.ws_row == 0)
-			{
-				return Size(120, 30);
-			}
-		}
-	}
-
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 	return Size(w.ws_col, w.ws_row);
 }
 

@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 4.0.2)
-
 add_library(terminality STATIC)
 target_include_directories(terminality PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 

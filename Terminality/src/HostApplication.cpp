@@ -1,7 +1,5 @@
 module terminality;
 
-//#include <chrono>
-
 import std;
 import std.compat;
 
@@ -54,10 +52,9 @@ void HostApplication::NestUILoop(UILayer& layer)
 	const Size initViewport = HostBackend::QueryViewportSize();
 	renderBuffer_.Resize(static_cast<uint32_t>(initViewport.Width), static_cast<uint32_t>(initViewport.Height));
 
-	// Подписываемся на завершение ресайза для инвалидации дерева
 	auto resizeConn = timer.ResizeFinishedEvent.Connect([&tree]()
 	{
-		if (tree.Root())
+		if (tree.Root() != nullptr)
 		{
 			tree.Root()->InvalidateMeasure();
 			tree.Root()->InvalidateVisual();
@@ -65,6 +62,8 @@ void HostApplication::NestUILoop(UILayer& layer)
 	});
 
 	layer.Running.store(true);
+	layer.RootNode.get()->InvalidateVisual();
+
 	while (layer.Running.load() && timer.IsRunning())
 	{
 		timer.Tick();
@@ -115,7 +114,6 @@ void HostApplication::NestUILoop(UILayer& layer)
 				{
 					tree.Render(renderBuffer_);
 					renderBuffer_.DiffRender(std::wcout);
-					//renderBuffer_.BulkRender(std::wcout);
 				}
 			}
 		}
