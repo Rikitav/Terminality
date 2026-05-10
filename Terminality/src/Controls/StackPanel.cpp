@@ -10,7 +10,7 @@ void StackPanel::AddChild(std::unique_ptr<ControlBase> child)
 	if (!child)
 		return;
 
-	child->SetParent(this, layer_);
+	child->SetParent(this);
 	if (!child->IsAttached())
 		child->OnAttachedToTree();
 
@@ -30,7 +30,7 @@ std::unique_ptr<ControlBase> StackPanel::RemoveChild(ControlPredicate predicate)
 	contents_.erase(found);
 
 	if (removed)
-		removed->SetParent(nullptr, nullptr);
+		removed->SetParent(nullptr);
 
 	if (focusedIndex_ >= contents_.size())
 		focusedIndex_ = contents_.empty() ? 0 : contents_.size() - 1;
@@ -47,7 +47,7 @@ void StackPanel::Insert(size_t index, std::unique_ptr<ControlBase> child)
 	if (index > contents_.size())
 		index = contents_.size();
 
-	child->SetParent(this, layer_);
+	child->SetParent(this);
 	if (!child->IsAttached())
 		child->OnAttachedToTree();
 
@@ -70,7 +70,7 @@ std::unique_ptr<ControlBase> StackPanel::RemoveAt(size_t index)
 	contents_.erase(contents_.begin() + index);
 
 	if (removed)
-		removed->SetParent(nullptr, nullptr);
+		removed->SetParent(nullptr);
 
 	if (focusedIndex_ >= contents_.size())
 		focusedIndex_ = contents_.empty() ? 0 : contents_.size() - 1;
@@ -84,7 +84,7 @@ void StackPanel::Clear()
 	for (auto& child : contents_)
 	{
 		if (child)
-			child->SetParent(nullptr, nullptr);
+			child->SetParent(nullptr);
 	}
 	
 	contents_.clear();
@@ -94,27 +94,51 @@ void StackPanel::Clear()
 
 void StackPanel::OnGotFocus()
 {
-	if (contents_.empty())
-	{
-		InvalidateVisual();
-		return;
-	}
+    if (contents_.empty())
+    {
+        InvalidateVisual();
+        return;
+    }
 
-	if (focusedIndex_ > contents_.size() - 1)
-		focusedIndex_ = contents_.size() - 1;
+    if (focusedIndex_ < contents_.size())
+    {
+        VisualTreeNode* focusedControl = contents_[focusedIndex_].get();
+        if (focusedControl->IsFocusable())
+        {
+            PushFocus(focusedControl);
+            InvalidateVisual();
+            return;
+        }
+    }
 
-	if (focusedIndex_ < 0)
-		focusedIndex_ = 0;
+    for (size_t i = 0; i < contents_.size(); ++i)
+    {
+        VisualTreeNode* focusedControl = contents_[i].get();
+        if (focusedControl->IsFocusable())
+        {
+            focusedIndex_ = i;
+            PushFocus(focusedControl);
+            break;
+        }
+    }
 
-	VisualTreeNode* focusedControl = contents_[focusedIndex_].get();
-	PushFocus(focusedControl);
-	InvalidateVisual();
+    InvalidateVisual();
 }
 
 void StackPanel::OnLostFocus()
 {
 	focused_ = false;
 	InvalidateVisual();
+}
+
+size_t StackPanel::VisualChildrenCount() const
+{
+    return contents_.size();
+}
+
+VisualTreeNode* StackPanel::GetVisualChild(size_t index) const
+{
+    return contents_.at(index).get();
 }
 
 void StackPanel::OnPropertyChanged(const char* propertyName)

@@ -18,6 +18,11 @@ VisualTree& VisualTree::Current()
 	return visualTree;
 }
 
+size_t VisualTree::LayerCount()
+{
+	return layers_.size();
+}
+
 VisualTreeNode* VisualTree::Root() const
 {
 	if (layers_.empty())

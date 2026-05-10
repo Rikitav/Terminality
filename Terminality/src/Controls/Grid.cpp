@@ -37,7 +37,7 @@ void Grid::AddChild(int32_t row, int32_t column, int32_t rowSpan, int32_t colSpa
     if (!child)
         return;
 
-    child->SetParent(this, layer_);
+    child->SetParent(this);
     if (!child->IsAttached())
         child->OnAttachedToTree();
 
@@ -50,7 +50,7 @@ void Grid::AddChild(int32_t row, int32_t column, std::unique_ptr<ControlBase> ch
     if (!child)
         return;
 
-    child->SetParent(this, layer_);
+    child->SetParent(this);
     if (!child->IsAttached())
         child->OnAttachedToTree();
 
@@ -223,6 +223,16 @@ void Grid::RenderOverride(RenderContext& context)
     }
 }
 
+size_t Grid::VisualChildrenCount() const
+{
+    return children_.size();
+}
+
+VisualTreeNode* Grid::GetVisualChild(size_t index) const
+{
+    return children_.at(index).Control.get();
+}
+
 void Grid::OnGotFocus()
 {
     if (focusedIndex_ < children_.size())
@@ -243,6 +253,7 @@ void Grid::OnGotFocus()
         {
             focusedIndex_ = i;
             PushFocus(focusedControl);
+            InvalidateVisual();
             break;
         }
     }

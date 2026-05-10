@@ -172,7 +172,7 @@ void ControlBase::Render(RenderContext& context)
 	RenderOverride(context);
 }
 
-void ControlBase::SetParent(VisualTreeNode* parent, UILayer* layer)
+void ControlBase::SetParent(VisualTreeNode* parent)
 {
 	if (parent_ == parent)
 		return;
@@ -181,19 +181,47 @@ void ControlBase::SetParent(VisualTreeNode* parent, UILayer* layer)
 	{
 		OnDettachedFromTree();
 		parent_ = nullptr;
-		layer_ = nullptr;
 		return;
 	}
 
 	parent_ = parent;
-	layer_ = layer;
 	OnPropertyChanged("Parent");
 }
 
-const std::span<VisualTreeNode*> ControlBase::GetChildren() const
+void ControlBase::SetLayer(UILayer* layer)
 {
-	static std::span<VisualTreeNode*> dummy;
-	return dummy;
+	if (layer_ == layer)
+		return;
+
+	if (layer == nullptr)
+	{
+		layer_ = nullptr;
+		return;
+	}
+
+	layer_ = layer;
+	OnPropertyChanged("Layer");
+
+	for (auto it = child_begin(); it != child_end(); ++it)
+	{
+		VisualTreeNode* child = *it;
+		child->SetLayer(layer);
+	}
+}
+
+const ChildIterator ControlBase::child_begin() const
+{
+	return ChildIterator(this, 0);
+}
+
+const ChildIterator ControlBase::child_end() const
+{
+	return ChildIterator(this, VisualChildrenCount());
+}
+
+void ControlBase::Close()
+{
+	layer_->Running.store(false);
 }
 
 void ControlBase::OpenContextMenu()
@@ -203,6 +231,16 @@ void ControlBase::OpenContextMenu()
 		Rect rect = GetArrangedRect();
 		CtxMenu.Get()->Open(Point(rect.X, rect.Y + rect.Height));
 	}
+}
+
+size_t ControlBase::VisualChildrenCount() const
+{
+	return 0;
+}
+
+VisualTreeNode* ControlBase::GetVisualChild(size_t index) const
+{
+	return nullptr;
 }
 
 void ControlBase::ApplyInvalidation(InvalidationKind invalidation)
@@ -226,7 +264,7 @@ bool ControlBase::OnKeyDown(InputEvent input)
 		const InputEvent event = pair.first;
 		if (input.Modifier == event.Modifier && input.Key == event.Key)
 		{
-			KeyCombinationCallback callback = pair.second;
+			HotkeyCallback callback = pair.second;
 			callback(this);
 			return true;
 		}
@@ -279,7 +317,7 @@ bool ControlBase::OnKeyUp(InputEvent input)
 	return false;
 }
 
-void ControlBase::OnHotkey(InputModifier modifier, InputKey key, KeyCombinationCallback callback)
+void ControlBase::OnHotkey(InputModifier modifier, InputKey key, HotkeyCallback callback)
 {
 	InputEvent event(modifier, key, true);
 	if (hotkeys_.find(event) != hotkeys_.end())

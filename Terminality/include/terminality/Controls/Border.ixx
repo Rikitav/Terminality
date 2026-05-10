@@ -47,5 +47,8 @@ export namespace terminality
 		Size MeasureOverride(const Size& availableSize) override;
 		void ArrangeOverride(const Rect& contentRect) override;
 		void RenderOverride(RenderContext& context) override;
+
+		size_t VisualChildrenCount() const override;
+		VisualTreeNode* GetVisualChild(size_t index) const override;
 	};
 }

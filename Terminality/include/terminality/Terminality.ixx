@@ -32,6 +32,7 @@ export import :RenderBuffer;
 export import :RenderContext;
 export import :FocusManager;
 export import :RenderStream;
+export import :Navigator;
 export import :Host;
 
 export import :ObservableCollection;

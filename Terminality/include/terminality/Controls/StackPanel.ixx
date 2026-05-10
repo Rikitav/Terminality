@@ -35,6 +35,9 @@ export namespace terminality
 		void OnGotFocus() override;
 		void OnLostFocus() override;
 
+		size_t VisualChildrenCount() const override;
+		VisualTreeNode* GetVisualChild(size_t index) const override;
+
 	protected:
 		Size MeasureOverride(const Size& availableSize) override;
 		void ArrangeOverride(const Rect& contentRect) override;

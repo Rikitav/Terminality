@@ -7,12 +7,8 @@ using namespace terminality;
 
 MessageBoxResult MessageBox::Show(const std::wstring& title, const std::wstring& message, MessageBoxButton buttons)
 {
-    HostApplication& host = HostApplication::Current();
-    VisualTree& tree = VisualTree::Current();
-
     MessageBoxResult result = MessageBoxResult::None;
-    std::atomic<bool>* running = nullptr;
-
+    
     auto rootGrid = init<Grid>([&](Grid* rootGrid)
     {
         rootGrid->HorizontalAlignment = HorizontalAlignment::Stretch;
@@ -66,10 +62,10 @@ MessageBoxResult MessageBox::Show(const std::wstring& title, const std::wstring&
                         buttonGrid->AddChild(0, colIndex++, init<Button>([&](Button* btn)
                         {
                             btn->Text = text;
-                            btn->Clicked += [res, &result, &running]()
+                            btn->Clicked += [btn, res, &result]()
                             {
                                 result = res;
-                                running->store(false);
+                                btn->Close();
                             };
                         }));
                     };
@@ -109,11 +105,6 @@ MessageBoxResult MessageBox::Show(const std::wstring& title, const std::wstring&
         }));
     });
 
-    UILayer& layer = tree.PushLayer(std::move(rootGrid));
-    running = &layer.Running;
-
-    tree.GetFocusManager().MoveNext(Direction::Next);
-    host.NestUILoop(layer);
-    tree.PopLayer();
+    Navigator::Current().Navigate(std::move(rootGrid));
     return result;
 }

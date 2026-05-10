@@ -161,6 +161,7 @@
     <ClCompile Include="include\terminality\Models\Focus.ixx" />
     <ClCompile Include="include\terminality\Models\Layout.ixx" />
     <ClCompile Include="include\terminality\Models\InputEvent.ixx" />
+    <ClCompile Include="include\terminality\Navigator.ixx" />
     <ClCompile Include="include\terminality\RenderContext.ixx" />
     <ClCompile Include="include\terminality\Layout\ControlBase.ixx" />
     <ClCompile Include="include\terminality\Controls\Border.ixx" />
@@ -182,6 +183,7 @@
     <ClCompile Include="include\terminality\Collections\ObservableCollection.ixx" />
     <ClCompile Include="include\terminality\Collections\Queries.ixx" />
     <ClCompile Include="src\DispatchTimer.cpp" />
+    <ClCompile Include="src\Navigator.cpp" />
     <ClCompile Include="src\RenderStream.cpp" />
   </ItemGroup>
   <ItemGroup>

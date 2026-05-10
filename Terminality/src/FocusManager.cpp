@@ -9,9 +9,6 @@ FocusManager& FocusManager::Current()
 	if (HostApplication::IsUiThread())
 		throw std::runtime_error("Cannot get FocusManager within running UI thread or Before UI thread was started.");
 
-	//static FocusManager focusManager;
-	//return focusManager;
-
 	return VisualTree::Current().GetFocusManager();
 }
 

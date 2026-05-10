@@ -46,8 +46,11 @@ export namespace terminality
 
 		// Tree structure
 		VisualTreeNode* GetParent() const;
-		virtual void SetParent(VisualTreeNode* parent, UILayer* layer) = 0;
-		virtual const std::span<VisualTreeNode*> GetChildren() const = 0;
+		virtual void SetParent(VisualTreeNode* parent) = 0;
+		virtual void SetLayer(UILayer* layer) = 0;
+
+		virtual size_t VisualChildrenCount() const = 0;
+		virtual VisualTreeNode* GetVisualChild(size_t index) const = 0;
 
 		// Layout
 		void InvalidateMeasure();

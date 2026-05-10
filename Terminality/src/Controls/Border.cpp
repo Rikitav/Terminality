@@ -75,7 +75,7 @@ void Border::OnPropertyChanged(const char* propertyName)
 	if (std::strcmp(propertyName, "Content") == 0)
 	{
 		if (Content.Get() != nullptr)
-			Content.Get()->SetParent(this, layer_);
+			Content.Get()->SetParent(this);
 
 		InvalidateMeasure();
 		InvalidateVisual();
@@ -190,4 +190,14 @@ void Border::RenderOverride(RenderContext& context)
 			Content.Get()->Render(childContext);
 		}
 	}
+}
+
+size_t Border::VisualChildrenCount() const
+{
+	return 1;
+}
+
+VisualTreeNode* Border::GetVisualChild(size_t index) const
+{
+	return Content.Get().get();
 }

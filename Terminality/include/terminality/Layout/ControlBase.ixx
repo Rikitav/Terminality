@@ -15,11 +15,55 @@ export namespace terminality
 	class ControlBase;
 
 	typedef std::function<bool(const ControlBase*)> ControlPredicate;
-	typedef std::function<void(ControlBase*)> KeyCombinationCallback;
+	typedef std::function<void(ControlBase*)> HotkeyCallback;
+
+	class ChildIterator
+	{
+		const VisualTreeNode* node_;
+		size_t index_;
+
+	public:
+		using iterator_category = std::forward_iterator_tag;
+		using value_type = VisualTreeNode*;
+		using difference_type = std::ptrdiff_t;
+		using pointer = VisualTreeNode**;
+		using reference = VisualTreeNode*&;
+
+		ChildIterator(const VisualTreeNode* node, size_t index)
+			: node_(node), index_(index) { }
+
+		VisualTreeNode* operator*() const
+		{
+			return node_->GetVisualChild(index_);
+		}
+
+		ChildIterator& operator++()
+		{
+			index_++;
+			return *this;
+		}
+
+		ChildIterator operator++(int)
+		{
+			ChildIterator temp = *this;
+			index_++;
+			return temp;
+		}
+
+		bool operator==(const ChildIterator& other) const
+		{
+			return node_ == other.node_ && index_ == other.index_;
+		}
+
+		bool operator!=(const ChildIterator& other) const
+		{
+			return !(*this == other);
+		}
+	};
 
 	class ControlBase : public VisualTreeNode
 	{
-		std::unordered_map<InputEvent, KeyCombinationCallback, InputEventHasher> hotkeys_;
+		std::unordered_map<InputEvent, HotkeyCallback, InputEventHasher> hotkeys_;
 
 	public:
 		EventSignal<const char*> PropertyChanged;
@@ -43,7 +87,9 @@ export namespace terminality
 		PropertyDescriptor<ControlBase, std::unique_ptr<ContextMenu>> CtxMenu { this, "ContextMenu", nullptr, InvalidationKind::None };
 
 		// Setters
-		void SetParent(VisualTreeNode* parent, UILayer* layer) override;
+		void SetParent(VisualTreeNode* parent) override;
+		void SetLayer(UILayer* layer) override;
+
 		void SetFocusable(bool value) override;
 		void SetTabStop(bool value) override;
 		void SetTabIndex(int value) override;
@@ -60,12 +106,20 @@ export namespace terminality
 		// User input
 		bool OnKeyDown(InputEvent input) override;
 		bool OnKeyUp(InputEvent input) override;
-		void OnHotkey(InputModifier modifier, InputKey key, KeyCombinationCallback callback);
+		void OnHotkey(InputModifier modifier, InputKey key, HotkeyCallback callback);
 
 		// Ownership
 		void OpenContextMenu();
-		virtual const std::span<VisualTreeNode*> GetChildren() const;
-	
+
+		virtual size_t VisualChildrenCount() const override;
+		virtual VisualTreeNode* GetVisualChild(size_t index) const override;
+
+		const ChildIterator child_begin() const;
+		const ChildIterator child_end() const;
+
+		// Navigation
+		void Close();
+
 	protected:
 		// Layout
 		virtual Size MeasureOverride(const Size& availableSize) = 0;

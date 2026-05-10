@@ -19,7 +19,7 @@ export namespace terminality
 
 		UILayer(std::unique_ptr<VisualTreeNode> rootNode) : RootNode(std::move(rootNode))
 		{
-			RootNode->SetParent(nullptr, this);
+			RootNode->SetLayer(this);
 		}
 
 		UILayer(const UILayer&) = delete;
@@ -43,6 +43,7 @@ export namespace terminality
 	public:
 		static VisualTree& Current();
 
+		size_t LayerCount();
 		VisualTreeNode* Root() const;
 		VisualTreeNode* PeekLayer() const;
 		UILayer& PushLayer(std::unique_ptr<VisualTreeNode> layerRoot);
