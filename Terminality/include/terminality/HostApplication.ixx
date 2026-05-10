@@ -27,7 +27,6 @@ export namespace terminality
 		float resizeDebounceTimer_ = 0.0f;
 		float RESIZE_DELAY = 0.1f;
 		
-		std::unique_ptr<VisualTreeNode> rootNode;
 		RenderBuffer renderBuffer_{ 1, 1 };
 
 		HostApplication() = default;
@@ -38,12 +37,10 @@ export namespace terminality
 		static HostApplication& Current();
 		static bool IsUiThread();
 
-		void SetRoot(std::unique_ptr<VisualTreeNode> root);
-
 		void EnterTerminal();
 		void ExitTerminal();
 
-		void RunUILoop();
+		void RunUILoop(std::unique_ptr<VisualTreeNode> root);
 		void NestUILoop(UILayer& layer);
 		void RequestStop();
 	};

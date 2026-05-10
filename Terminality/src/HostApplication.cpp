@@ -21,33 +21,18 @@ HostApplication& HostApplication::Current()
 	return app;
 }
 
-void HostApplication::SetRoot(std::unique_ptr<VisualTreeNode> root)
-{
-	rootNode = std::move(root);
-}
-
-void HostApplication::RunUILoop()
+void HostApplication::RunUILoop(std::unique_ptr<VisualTreeNode> root)
 {
 	if (uiThreadId.has_value())
 		throw std::runtime_error("UI loop thread was already start somewhere else");
 
 	uiThreadId = std::this_thread::get_id();
-	if (rootNode == nullptr)
-		return;
+	if (root == nullptr)
+		throw std::runtime_error("UI root widget cannot be null or empty");
 
 	DispatchTimer& timer = DispatchTimer::Current();
 	VisualTree& tree = VisualTree::Current();
-	UILayer& layer = tree.PushLayer(std::move(rootNode));
-
-	timer.Start();
-	NestUILoop(layer);
-	timer.Stop();
-}
-
-void HostApplication::NestUILoop(UILayer& layer)
-{
-	DispatchTimer& timer = DispatchTimer::Current();
-	VisualTree& tree = VisualTree::Current();
+	UILayer& layer = tree.PushLayer(std::move(root));
 
 	const Size initViewport = HostBackend::QueryViewportSize();
 	renderBuffer_.Resize(static_cast<uint32_t>(initViewport.Width), static_cast<uint32_t>(initViewport.Height));
@@ -61,9 +46,17 @@ void HostApplication::NestUILoop(UILayer& layer)
 		}
 	});
 
-	layer.Running.store(true);
-	layer.RootNode.get()->InvalidateVisual();
+	timer.Start();
+	NestUILoop(layer);
+	timer.Stop();
+}
 
+void HostApplication::NestUILoop(UILayer& layer)
+{
+	DispatchTimer& timer = DispatchTimer::Current();
+	VisualTree& tree = VisualTree::Current();
+
+	layer.Running.store(true);
 	while (layer.Running.load() && timer.IsRunning())
 	{
 		timer.Tick();

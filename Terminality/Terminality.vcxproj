@@ -152,6 +152,7 @@
   <ItemGroup>
     <ClCompile Include="include\terminality\Controls\CheckBox.ixx" />
     <ClCompile Include="include\terminality\Controls\Label.ixx" />
+    <ClCompile Include="include\terminality\Controls\ProgressBar.ixx" />
     <ClCompile Include="include\terminality\Controls\Spinner.ixx" />
     <ClCompile Include="include\terminality\DispatchTimer.ixx" />
     <ClCompile Include="include\terminality\Layout\TextHelper.ixx" />
@@ -182,6 +183,7 @@
     <ClCompile Include="include\terminality\RenderBuffer.ixx" />
     <ClCompile Include="include\terminality\Collections\ObservableCollection.ixx" />
     <ClCompile Include="include\terminality\Collections\Queries.ixx" />
+    <ClCompile Include="src\Controls\ProgressBar.cpp" />
     <ClCompile Include="src\Controls\Spinner.cpp" />
     <ClCompile Include="src\DispatchTimer.cpp" />
     <ClCompile Include="src\Navigator.cpp" />

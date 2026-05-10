@@ -150,17 +150,46 @@ namespace TestApp
             // ==========================================
             // 3. СТАТУС-БАР (Строка 2)
             // ==========================================
-            AddChild(2, 0, init<Button>([&](Button* statusBar)
+            AddChild(2, 0, init<Grid>([&](Grid* statusGrid)
             {
-                statusBar->Text = L"ESC - выход | /help | Чат: Tamerlan";
-                statusBar->HorizontalAlignment = HorizaontalAllign::Stretch;
+                statusGrid->HorizontalAlignment = HorizaontalAllign::Stretch;
+                statusGrid->AddColumn(ColumnDefinition{ GridLength::Auto() });
+                statusGrid->AddColumn(ColumnDefinition{ GridLength::Star() });
 
-                statusBar->Clicked += []()
+                // Кнопочка от нефиг делать
+                statusGrid->AddChild(0, 0, init<Button>([](Button* statusBar)
                 {
-                    MessageBox::Show(L"Test1", L"ХУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУЙ", MessageBoxButton::YesNoCancel);
-                };
-            }));
+                    statusBar->Text = L"ESC - выход | /help | Чат: Tamerlan";
+                    statusBar->HorizontalAlignment = HorizaontalAllign::Stretch;
+                    statusBar->VerticalAlignment = VerticalAlign::Top;
 
+                    statusBar->Clicked += []()
+                    {
+                        MessageBox::Show(L"Test1", L"ХУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУЙ", MessageBoxButton::YesNoCancel);
+                    };
+                }));
+
+                // Тестовый прогрессбар
+                statusGrid->AddChild(0, 1, init<ProgressBar>([](ProgressBar* progress)
+                {
+                    progress->Margin = Thickness(1, 0, 1, 0);
+                    progress->HorizontalAlignment = HorizaontalAllign::Stretch;
+                    progress->VerticalAlignment = VerticalAlign::Top;
+
+                    // Онимация
+                    DispatchTimer::Current().TickEvent += [progress](float dt)
+                    {
+                        float current = progress->Value.Get();
+                        current += dt * 10.0f; // +10% в секунду
+
+                        if (current > progress->Maximum.Get())
+                            current = progress->Minimum.Get();
+
+                        progress->Value = current;
+                    };
+                }));
+            })); 
+            
             // ==========================================
             // ГОРЯЧИЕ КЛАВИШИ
             // ==========================================
@@ -190,8 +219,7 @@ int main()
 {
 	HostApplication& app = HostApplication::Current();
 	app.EnterTerminal();
-    app.SetRoot(std::make_unique<TestApp::MessangerTest>());
-    app.RunUILoop();
+    app.RunUILoop(std::make_unique<TestApp::MessangerTest>());
 	app.ExitTerminal();
 	return 0;
 }

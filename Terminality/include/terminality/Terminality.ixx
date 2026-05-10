@@ -16,6 +16,7 @@ export import :CheckBox;
 export import :Button;
 export import :TextBox;
 export import :Spinner;
+export import :ProgressBar;
 
 export import :Border;
 export import :StackPanel;
