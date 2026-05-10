@@ -362,3 +362,18 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /build/.cmake/api/v1/query/client-neocmake
+/.cmake/api/v1
+/.idea
+/CMakeFiles
+/Terminality/CMakeFiles
+/Terminality/libterminality.a
+/Terminality/cmake_install.cmake
+/Terminality.TespApp/CMakeFiles
+/.ninja_deps
+/.ninja_log
+/build.ninja
+/cmake_install.cmake
+/compile_commands.json
+/CMakeCache.txt
+/Terminality.TespApp/Terminality.TespApp
+/Terminality.TespApp/cmake_install.cmake
