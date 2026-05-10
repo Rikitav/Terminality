@@ -15,13 +15,13 @@ export namespace terminality
 		std::optional<bool> isChecked_ = false;
 
 	public:
-		PropertyDescriptor<CheckBox, std::wstring> Text{ this, "Text", L"", InvalidationKind::Measure };
-		PropertyDescriptor<CheckBox, Color> PressedForegroundColor{ this, "PressedForegroundColor", Color::BLACK, InvalidationKind::Visual };
-		PropertyDescriptor<CheckBox, Color> PressedBackgroundColor{ this, "PressedBackgroundColor", Color::CYAN, InvalidationKind::Visual };
+		Property<CheckBox, std::wstring> Text{ this, "Text", L"", InvalidationKind::Measure };
+		Property<CheckBox, Color> PressedForegroundColor{ this, "PressedForegroundColor", Color::BLACK, InvalidationKind::Visual };
+		Property<CheckBox, Color> PressedBackgroundColor{ this, "PressedBackgroundColor", Color::CYAN, InvalidationKind::Visual };
 
-		EventSignal<std::optional<bool>> Toggled;
-		EventSignal<> Checked;
-		EventSignal<> Unchecked;
+		Event<std::optional<bool>> Toggled;
+		Event<> Checked;
+		Event<> Unchecked;
 
 		void Toggle(std::optional<bool> value);
 

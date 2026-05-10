@@ -26,8 +26,8 @@ export namespace terminality
 		DispatchTimer& operator=(const DispatchTimer&) = delete;
 
 	public:
-		EventSignal<float> TickEvent;
-		EventSignal<> ResizeFinishedEvent;
+		Event<float> TickEvent;
+		Event<> ResizeFinishedEvent;
 
 		static DispatchTimer& Current();
 

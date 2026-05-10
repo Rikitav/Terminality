@@ -12,12 +12,12 @@ export namespace terminality
 {
     class Spinner : public ControlBase
     {
-        EventSignalConnection<float> tickConnection_;
+        EventConnection<float> tickConnection_;
         float accumulator_ = 0.0f;
         int frame_ = 0;
 
     public:
-        PropertyDescriptor<Spinner, std::vector<std::wstring>> Frames = { this, "Frames", std::vector<std::wstring>{ L"-", L"\\", L"|", L"/" }, InvalidationKind::Visual };
+        Property<Spinner, std::vector<std::wstring>> Frames = { this, "Frames", std::vector<std::wstring>{ L"-", L"\\", L"|", L"/" }, InvalidationKind::Visual };
 
         Spinner();
 

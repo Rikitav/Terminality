@@ -28,12 +28,12 @@ export namespace terminality
 	class Border : public ControlBase
 	{
 	public:
-		PropertyDescriptor<Border, Color> BorderColor					 { this, "BorderColor", Color::DARK_GRAY, InvalidationKind::Visual};
-		PropertyDescriptor<Border, Color> FocusedBorderColor             { this, "FocusedBorderColor", Color::CYAN, InvalidationKind::Visual };
-		PropertyDescriptor<Border, Thickness> BorderThickness			 { this, "BorderThickness", Thickness::Single, InvalidationKind::Visual };
-		PropertyDescriptor<Border, std::wstring> HeaderText			     { this, "HeaderText", L"", InvalidationKind::Visual };
-		PropertyDescriptor<Border, std::unique_ptr<ControlBase>> Content { this, "Content", nullptr, InvalidationKind::Visual };
-		PropertyDescriptor<Border, BorderStyle> Style				     { this, "BorderStyle", nullptr, InvalidationKind::Visual };
+		Property<Border, Color> BorderColor					 { this, "BorderColor", Color::DARK_GRAY, InvalidationKind::Visual};
+		Property<Border, Color> FocusedBorderColor             { this, "FocusedBorderColor", Color::CYAN, InvalidationKind::Visual };
+		Property<Border, Thickness> BorderThickness			 { this, "BorderThickness", Thickness::Single, InvalidationKind::Visual };
+		Property<Border, std::wstring> HeaderText			     { this, "HeaderText", L"", InvalidationKind::Visual };
+		Property<Border, std::unique_ptr<ControlBase>> Content { this, "Content", nullptr, InvalidationKind::Visual };
+		Property<Border, BorderStyle> Style				     { this, "BorderStyle", nullptr, InvalidationKind::Visual };
 
 		Border();
 		Border(std::unique_ptr<ControlBase> content);

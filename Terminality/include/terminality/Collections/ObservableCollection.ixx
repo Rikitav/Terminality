@@ -11,10 +11,10 @@ export namespace terminality
 		std::vector<T> items_;
 
 	public:
-		EventSignal<std::size_t, const T&> ItemAdded;
-		EventSignal<std::size_t, const T&> ItemRemoved;
-		EventSignal<std::size_t, const T&, const T&> ItemReplaced;
-		EventSignal<> CollectionCleared;
+		Event<std::size_t, const T&> ItemAdded;
+		Event<std::size_t, const T&> ItemRemoved;
+		Event<std::size_t, const T&, const T&> ItemReplaced;
+		Event<> CollectionCleared;
 
 		ObservableCollection() = default;
 		~ObservableCollection() = default;

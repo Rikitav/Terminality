@@ -18,49 +18,16 @@ export namespace terminality
 		ObservableCollection<T>* itemsSource_ = nullptr;
 		ItemTemplate itemTemplate_;
 
-		std::optional<EventSignalConnection<std::size_t, const T&>> addedConnection_;
-		std::optional<EventSignalConnection<std::size_t, const T&>> removedConnection_;
-		std::optional<EventSignalConnection<std::size_t, const T&, const T&>> replacedConnection_;
-		std::optional<EventSignalConnection<>> clearedConnection_;
+		std::optional<EventConnection<std::size_t, const T&>> addedConnection_;
+		std::optional<EventConnection<std::size_t, const T&>> removedConnection_;
+		std::optional<EventConnection<std::size_t, const T&, const T&>> replacedConnection_;
+		std::optional<EventConnection<>> clearedConnection_;
 
-		void RebuildItems()
-		{
-			this->Clear();
-			if (itemsSource_ && itemTemplate_)
-			{
-				for (const auto& item : *itemsSource_)
-				{
-					this->AddChild(itemTemplate_(item));
-				}
-			}
-		}
-
-		void OnItemAdded(std::size_t index, const T& item)
-		{
-			if (itemTemplate_)
-			{
-				this->Insert(index, itemTemplate_(item));
-			}
-		}
-
-		void OnItemRemoved(std::size_t index, const T& item)
-		{
-			this->RemoveAt(index);
-		}
-
-		void OnItemReplaced(std::size_t index, const T& oldItem, const T& newItem)
-		{
-			if (itemTemplate_)
-			{
-				this->RemoveAt(index);
-				this->Insert(index, itemTemplate_(newItem));
-			}
-		}
-
-		void OnCollectionCleared()
-		{
-			this->Clear();
-		}
+		void RebuildItems();
+		void OnItemAdded(std::size_t index, const T& item);
+		void OnItemRemoved(std::size_t index, const T& item);
+		void OnItemReplaced(std::size_t index, const T& oldItem, const T& newItem);
+		void OnCollectionCleared();
 
 	public:
 		ItemsControl() = default;
@@ -71,6 +38,50 @@ export namespace terminality
 
 		ObservableCollection<T>* GetItemsSource() const;
 	};
+
+	template<typename T>
+	void ItemsControl<T>::RebuildItems()
+	{
+		this->Clear();
+		if (itemsSource_ && itemTemplate_)
+		{
+			for (const auto& item : *itemsSource_)
+			{
+				this->AddChild(itemTemplate_(item));
+			}
+		}
+	}
+
+	template<typename T>
+	void ItemsControl<T>::OnItemAdded(std::size_t index, const T& item)
+	{
+		if (itemTemplate_)
+		{
+			this->Insert(index, itemTemplate_(item));
+		}
+	}
+
+	template<typename T>
+	void ItemsControl<T>::OnItemRemoved(std::size_t index, const T& item)
+	{
+		this->RemoveAt(index);
+	}
+
+	template<typename T>
+	void ItemsControl<T>::OnItemReplaced(std::size_t index, const T& oldItem, const T& newItem)
+	{
+		if (itemTemplate_)
+		{
+			this->RemoveAt(index);
+			this->Insert(index, itemTemplate_(newItem));
+		}
+	}
+
+	template<typename T>
+	void ItemsControl<T>::OnCollectionCleared()
+	{
+		this->Clear();
+	}
 
 	template<typename T>
 	void ItemsControl<T>::SetItemTemplate(ItemTemplate itemTemplate)

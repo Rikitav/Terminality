@@ -14,7 +14,7 @@ export namespace terminality
 	};
 
 	template<typename TOwner, typename T>
-	class PropertyDescriptor
+	class Property
 	{
 		TOwner* owner_;
 		const char* name_;
@@ -22,82 +22,100 @@ export namespace terminality
 		InvalidationKind invalidation_;
 
 	public:
-		/*
-		PropertyDescriptor(TOwner* owner, const char* name, const T& defaultValue = T(), InvalidationKind invalidation = InvalidationKind::None)
-			: owner_(owner), name_(name), value_(defaultValue), invalidation_(invalidation) { }
-		*/
-		
-		PropertyDescriptor(TOwner* owner, const char* name, T defaultValue = T(), InvalidationKind invalidation = InvalidationKind::None)
-			: owner_(owner), name_(name), value_(std::move(defaultValue)), invalidation_(invalidation) {}
+		Property(TOwner* owner, const char* name, T defaultValue = T(), InvalidationKind invalidation = InvalidationKind::None);
 
-		PropertyDescriptor& operator=(const T& value)
-		{
-			if (value_ == value)
-				return *this;
+		Property& operator=(const T& value);
+		Property& operator=(T&& value);
 
-			value_ = value;
-			if (owner_)
-			{
-				owner_->ApplyInvalidation(invalidation_);
-				owner_->OnPropertyChanged(name_);
-			}
+		operator const T&() const;
+		const T* operator->() const;
 
-			return *this;
-		}
-		
-		PropertyDescriptor& operator=(T&& value)
-		{
-			if (value_ == value)
-				return *this;
+		const T& Get() const;
+		TOwner& Set(T&& value);
 
-			value_ = std::move(value);
-			if (owner_ != nullptr)
-			{
-				owner_->ApplyInvalidation(invalidation_);
-				owner_->OnPropertyChanged(name_);
-			}
-
-			return *this;
-		}
-
-		operator const T&() const
-		{
-			return value_;
-		}
-
-		const T& Get() const
-		{
-			return value_;
-		}
-		
-		TOwner& Set(T&& value)
-		{
-			if (value_ == value)
-				return *owner_;
-
-			value_ = std::move(value);
-			if (owner_ != nullptr)
-			{
-				owner_->ApplyInvalidation(invalidation_);
-				owner_->OnPropertyChanged(name_);
-			}
-
-			return *owner_;
-		}
-
-		const T* operator->() const
-		{
-			return &value_;
-		}
-
-		bool operator==(const T& other) const
-		{
-			return value_ == other;
-		}
-
-		bool operator!=(const T& other) const
-		{
-			return value_ != other;
-		}
+		bool operator==(const T& other) const;
+		bool operator!=(const T& other) const;
 	};
+
+	template<typename TOwner, typename T>
+	Property<TOwner, T>::Property(TOwner* owner, const char* name, T defaultValue, InvalidationKind invalidation)
+		: owner_(owner), name_(name), value_(std::move(defaultValue)), invalidation_(invalidation) { }
+
+	template<typename TOwner, typename T>
+	Property<TOwner, T>& Property<TOwner, T>::operator=(const T& value)
+	{
+		if (value_ == value)
+			return *this;
+
+		value_ = value;
+		if (owner_)
+		{
+			owner_->ApplyInvalidation(invalidation_);
+			owner_->OnPropertyChanged(name_);
+		}
+
+		return *this;
+	}
+
+	template<typename TOwner, typename T>
+	Property<TOwner, T>& Property<TOwner, T>::operator=(T&& value)
+	{
+		if (value_ == value)
+			return *this;
+
+		value_ = std::move(value);
+		if (owner_ != nullptr)
+		{
+			owner_->ApplyInvalidation(invalidation_);
+			owner_->OnPropertyChanged(name_);
+		}
+
+		return *this;
+	}
+
+	template<typename TOwner, typename T>
+	Property<TOwner, T>::operator const T&() const
+	{
+		return value_;
+	}
+
+	template<typename TOwner, typename T>
+	const T& Property<TOwner, T>::Get() const
+	{
+		return value_;
+	}
+
+	template<typename TOwner, typename T>
+	TOwner& Property<TOwner, T>::Set(T&& value)
+	{
+		if (value_ == value)
+			return *owner_;
+
+		value_ = std::move(value);
+		if (owner_ != nullptr)
+		{
+			owner_->ApplyInvalidation(invalidation_);
+			owner_->OnPropertyChanged(name_);
+		}
+
+		return *owner_;
+	}
+
+	template<typename TOwner, typename T>
+	const T* Property<TOwner, T>::operator->() const
+	{
+		return &value_;
+	}
+
+	template<typename TOwner, typename T>
+	bool Property<TOwner, T>::operator==(const T& other) const
+	{
+		return value_ == other;
+	}
+
+	template<typename TOwner, typename T>
+	bool Property<TOwner, T>::operator!=(const T& other) const
+	{
+		return value_ != other;
+	}
 }

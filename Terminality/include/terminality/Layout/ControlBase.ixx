@@ -66,25 +66,25 @@ export namespace terminality
 		std::unordered_map<InputEvent, HotkeyCallback, InputEventHasher> hotkeys_;
 
 	public:
-		EventSignal<const char*> PropertyChanged;
-		EventSignal<InputEvent> KeyDown;
-		EventSignal<InputEvent> KeyUp;
+		Event<const char*> PropertyChanged;
+		Event<InputEvent> KeyDown;
+		Event<InputEvent> KeyUp;
 
-		PropertyDescriptor<ControlBase, Size> MinSize { this, "MinSize", Size::Auto, InvalidationKind::Measure };
-		PropertyDescriptor<ControlBase, Size> MaxSize { this, "MaxSize", Size::Auto, InvalidationKind::Measure };
-		PropertyDescriptor<ControlBase, Size> ExpSize { this, "ExpSize", Size::Auto, InvalidationKind::Measure };
+		Property<ControlBase, Size> MinSize { this, "MinSize", Size::Auto, InvalidationKind::Measure };
+		Property<ControlBase, Size> MaxSize { this, "MaxSize", Size::Auto, InvalidationKind::Measure };
+		Property<ControlBase, Size> ExpSize { this, "ExpSize", Size::Auto, InvalidationKind::Measure };
 
-		PropertyDescriptor<ControlBase, Thickness> Margin                       { this, "Margin", Thickness::Zero, InvalidationKind::Measure };
-		PropertyDescriptor<ControlBase, HorizaontalAllign> HorizontalAlignment  { this, "HorizontalAlignment", HorizaontalAllign::Stretch, InvalidationKind::Measure };
-		PropertyDescriptor<ControlBase, VerticalAlign> VerticalAlignment        { this, "VerticalAlignment", VerticalAlign::Stretch, InvalidationKind::Measure };
+		Property<ControlBase, Thickness> Margin                       { this, "Margin", Thickness::Zero, InvalidationKind::Measure };
+		Property<ControlBase, HorizaontalAllign> HorizontalAlignment  { this, "HorizontalAlignment", HorizaontalAllign::Stretch, InvalidationKind::Measure };
+		Property<ControlBase, VerticalAlign> VerticalAlignment        { this, "VerticalAlignment", VerticalAlign::Stretch, InvalidationKind::Measure };
 
-		PropertyDescriptor<ControlBase, Color> ForegroundColor		  { this, "ForegroundColor", Color::WHITE, InvalidationKind::Visual };
-		PropertyDescriptor<ControlBase, Color> BackgroundColor		  { this, "BackgroundColor", Color::BLACK, InvalidationKind::Visual };
-		PropertyDescriptor<ControlBase, Color> FocusedForegroundColor { this, "FocusedForegroundColor", Color::BLACK, InvalidationKind::Visual };
-		PropertyDescriptor<ControlBase, Color> FocusedBackgroundColor { this, "FocusedBackgroundColor", Color::WHITE, InvalidationKind::Visual };
+		Property<ControlBase, Color> ForegroundColor		  { this, "ForegroundColor", Color::WHITE, InvalidationKind::Visual };
+		Property<ControlBase, Color> BackgroundColor		  { this, "BackgroundColor", Color::BLACK, InvalidationKind::Visual };
+		Property<ControlBase, Color> FocusedForegroundColor { this, "FocusedForegroundColor", Color::BLACK, InvalidationKind::Visual };
+		Property<ControlBase, Color> FocusedBackgroundColor { this, "FocusedBackgroundColor", Color::WHITE, InvalidationKind::Visual };
 
-		PropertyDescriptor<ControlBase, bool> IsVisible                       { this, "IsVisible", true, InvalidationKind::Visual };
-		PropertyDescriptor<ControlBase, std::unique_ptr<ContextMenu>> CtxMenu { this, "ContextMenu", nullptr, InvalidationKind::None };
+		Property<ControlBase, bool> IsVisible                       { this, "IsVisible", true, InvalidationKind::Visual };
+		Property<ControlBase, std::unique_ptr<ContextMenu>> CtxMenu { this, "ContextMenu", nullptr, InvalidationKind::None };
 
 		// Setters
 		void SetParent(VisualTreeNode* parent) override;

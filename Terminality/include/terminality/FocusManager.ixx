@@ -15,7 +15,7 @@ export namespace terminality
 	public:
 		FocusManager() = default;
 
-		EventSignal<VisualTreeNode*, VisualTreeNode*> FocusChanged;
+		Event<VisualTreeNode*, VisualTreeNode*> FocusChanged;
 
 		static FocusManager& Current();
 

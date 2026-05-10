@@ -16,12 +16,12 @@ export namespace terminality
 		std::size_t cursorPosition_ = 0;
 
 	public:
-		PropertyDescriptor<TextBox, std::wstring> Text		 { this, "Text", L"", InvalidationKind::Measure };
-		PropertyDescriptor<TextBox, TextWrap> TextWrapping	 { this, "TextWrapping", terminality::TextWrap::NoWrap, InvalidationKind::Measure };
-		PropertyDescriptor<TextBox, TextAlign> TextAlignment { this, "TextAlignment", terminality::TextAlign::Left, InvalidationKind::Visual };
-		PropertyDescriptor<TextBox, bool> AcceptsReturn		 { this, "AcceptsReturn", false, InvalidationKind::Measure };
+		Property<TextBox, std::wstring> Text		 { this, "Text", L"", InvalidationKind::Measure };
+		Property<TextBox, TextWrap> TextWrapping	 { this, "TextWrapping", terminality::TextWrap::NoWrap, InvalidationKind::Measure };
+		Property<TextBox, TextAlign> TextAlignment { this, "TextAlignment", terminality::TextAlign::Left, InvalidationKind::Visual };
+		Property<TextBox, bool> AcceptsReturn		 { this, "AcceptsReturn", false, InvalidationKind::Measure };
 
-		EventSignal<> TextChanged;
+		Event<> TextChanged;
 
 		TextBox();
 

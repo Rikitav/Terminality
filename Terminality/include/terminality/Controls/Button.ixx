@@ -14,11 +14,11 @@ export namespace terminality
 		bool isPressed_ = false;
 
 	public:
-		PropertyDescriptor<Button, std::wstring> Text  { this, "Text", L"", InvalidationKind::Measure };
-		PropertyDescriptor<Button, Color> PressedForegroundColor { this, "PressedForegroundColor", Color::BLACK, InvalidationKind::Visual };
-		PropertyDescriptor<Button, Color> PressedBackgroundColor { this, "PressedBackgroundColor", Color::CYAN, InvalidationKind::Visual };
+		Property<Button, std::wstring> Text  { this, "Text", L"", InvalidationKind::Measure };
+		Property<Button, Color> PressedForegroundColor { this, "PressedForegroundColor", Color::BLACK, InvalidationKind::Visual };
+		Property<Button, Color> PressedBackgroundColor { this, "PressedBackgroundColor", Color::CYAN, InvalidationKind::Visual };
 
-		EventSignal<> Clicked;
+		Event<> Clicked;
 
 		void Click();
 

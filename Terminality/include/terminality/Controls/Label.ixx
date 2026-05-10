@@ -14,11 +14,11 @@ export namespace terminality
 		bool isPressed_ = false;
 
 	public:
-		PropertyDescriptor<Label, std::wstring> Text		   { this, "Text", L"", InvalidationKind::Measure };
-		PropertyDescriptor<Label, TextWrap> TextWrapping   { this, "TextWrapping", terminality::TextWrap::NoWrap, InvalidationKind::Measure };
-		PropertyDescriptor<Label, TextAlign> TextAlignment { this, "TextAlignment", terminality::TextAlign::Left, InvalidationKind::Visual };
+		Property<Label, std::wstring> Text		   { this, "Text", L"", InvalidationKind::Measure };
+		Property<Label, TextWrap> TextWrapping   { this, "TextWrapping", terminality::TextWrap::NoWrap, InvalidationKind::Measure };
+		Property<Label, TextAlign> TextAlignment { this, "TextAlignment", terminality::TextAlign::Left, InvalidationKind::Visual };
 
-		EventSignal<> TextChanged;
+		Event<> TextChanged;
 
 		Label();
 		Label(std::wstring& text);

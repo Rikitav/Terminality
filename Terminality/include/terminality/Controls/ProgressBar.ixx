@@ -11,12 +11,12 @@ export namespace terminality
 	class ProgressBar : public ControlBase
 	{
 	public:
-		PropertyDescriptor<ProgressBar, float> Minimum { this, "Minimum", 0.0f, InvalidationKind::Visual };
-		PropertyDescriptor<ProgressBar, float> Maximum { this, "Maximum", 100.0f, InvalidationKind::Visual };
-		PropertyDescriptor<ProgressBar, float> Value   { this, "Value", 0.0f, InvalidationKind::Visual };
+		Property<ProgressBar, float> Minimum { this, "Minimum", 0.0f, InvalidationKind::Visual };
+		Property<ProgressBar, float> Maximum { this, "Maximum", 100.0f, InvalidationKind::Visual };
+		Property<ProgressBar, float> Value   { this, "Value", 0.0f, InvalidationKind::Visual };
 
-		PropertyDescriptor<ProgressBar, Color> BarColor   { this, "BarColor", Color::GREEN, InvalidationKind::Visual };
-		PropertyDescriptor<ProgressBar, Color> TrackColor { this, "TrackColor", Color::DARK_GRAY, InvalidationKind::Visual };
+		Property<ProgressBar, Color> BarColor   { this, "BarColor", Color::GREEN, InvalidationKind::Visual };
+		Property<ProgressBar, Color> TrackColor { this, "TrackColor", Color::DARK_GRAY, InvalidationKind::Visual };
 
 		ProgressBar() = default;
 

@@ -16,10 +16,10 @@ export namespace terminality
 		std::size_t focusedIndex_ = 0;
 
 	public:
-		PropertyDescriptor<StackPanel, Orientation> ContentOrientation								{ this, "ContentOrientation", Orientation::Vertical, InvalidationKind::Measure };
-		PropertyDescriptor<StackPanel, terminality::HorizaontalAllign> HorizontalContentAlignment { this, "HorizontalContentAlignment", HorizaontalAllign::Stretch, InvalidationKind::Measure };
-		PropertyDescriptor<StackPanel, terminality::VerticalAlign> VerticalContentAlignment	    { this, "VerticalContentAlignment", VerticalAlign::Stretch, InvalidationKind::Measure };
-		PropertyDescriptor<StackPanel, bool> Looping												{ this, "Looping", false, InvalidationKind::None };
+		Property<StackPanel, Orientation> ContentOrientation								{ this, "ContentOrientation", Orientation::Vertical, InvalidationKind::Measure };
+		Property<StackPanel, terminality::HorizaontalAllign> HorizontalContentAlignment { this, "HorizontalContentAlignment", HorizaontalAllign::Stretch, InvalidationKind::Measure };
+		Property<StackPanel, terminality::VerticalAlign> VerticalContentAlignment	    { this, "VerticalContentAlignment", VerticalAlign::Stretch, InvalidationKind::Measure };
+		Property<StackPanel, bool> Looping												{ this, "Looping", false, InvalidationKind::None };
 
 		StackPanel() = default;
 
