@@ -56,24 +56,3 @@ void RenderStream::NewLine()
 {
     pos_.X = 0; pos_.Y += 1;
 }
-
-RenderStreamColor terminality::SetColor(Color fg, Color bg)
-{
-    return { fg, bg };
-}
-
-RenderStreamColor terminality::SetBack(Color bg)
-{
-    return { std::nullopt, bg };
-}
-
-RenderStreamColor terminality::SetFore(Color fg)
-{
-    return { fg, std::nullopt };
-}
-
-RenderStream& terminality::endl(RenderStream& stream)
-{
-    stream.NewLine();
-    return stream;
-}

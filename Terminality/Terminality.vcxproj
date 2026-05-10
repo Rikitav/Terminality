@@ -182,6 +182,7 @@
     <ClCompile Include="include\terminality\RenderBuffer.ixx" />
     <ClCompile Include="include\terminality\Collections\ObservableCollection.ixx" />
     <ClCompile Include="include\terminality\Collections\Queries.ixx" />
+    <ClCompile Include="src\Controls\Spinner.cpp" />
     <ClCompile Include="src\DispatchTimer.cpp" />
     <ClCompile Include="src\Navigator.cpp" />
     <ClCompile Include="src\RenderStream.cpp" />

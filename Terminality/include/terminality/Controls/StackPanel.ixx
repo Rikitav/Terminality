@@ -13,20 +13,20 @@ export namespace terminality
 	{
 	protected:
 		std::vector<std::unique_ptr<ControlBase>> contents_;
-		size_t focusedIndex_ = 0;
+		std::size_t focusedIndex_ = 0;
 
 	public:
 		PropertyDescriptor<StackPanel, Orientation> ContentOrientation								{ this, "ContentOrientation", Orientation::Vertical, InvalidationKind::Measure };
-		PropertyDescriptor<StackPanel, terminality::HorizontalAlignment> HorizontalContentAlignment { this, "HorizontalContentAlignment", HorizontalAlignment::Stretch, InvalidationKind::Measure };
-		PropertyDescriptor<StackPanel, terminality::VerticalAlignment> VerticalContentAlignment	    { this, "VerticalContentAlignment", VerticalAlignment::Stretch, InvalidationKind::Measure };
+		PropertyDescriptor<StackPanel, terminality::HorizaontalAllign> HorizontalContentAlignment { this, "HorizontalContentAlignment", HorizaontalAllign::Stretch, InvalidationKind::Measure };
+		PropertyDescriptor<StackPanel, terminality::VerticalAlign> VerticalContentAlignment	    { this, "VerticalContentAlignment", VerticalAlign::Stretch, InvalidationKind::Measure };
 		PropertyDescriptor<StackPanel, bool> Looping												{ this, "Looping", false, InvalidationKind::None };
 
 		StackPanel() = default;
 
 		void AddChild(std::unique_ptr<ControlBase> child);
-		void Insert(size_t index, std::unique_ptr<ControlBase> child);
+		void Insert(std::size_t index, std::unique_ptr<ControlBase> child);
 		std::unique_ptr<ControlBase> RemoveChild(ControlPredicate predicate);
-		std::unique_ptr<ControlBase> RemoveAt(size_t index);
+		std::unique_ptr<ControlBase> RemoveAt(std::size_t index);
 		void Clear();
 
 		void OnPropertyChanged(const char* propertyName) override;
@@ -35,8 +35,8 @@ export namespace terminality
 		void OnGotFocus() override;
 		void OnLostFocus() override;
 
-		size_t VisualChildrenCount() const override;
-		VisualTreeNode* GetVisualChild(size_t index) const override;
+		std::size_t VisualChildrenCount() const override;
+		VisualTreeNode* GetVisualChild(std::size_t index) const override;
 
 	protected:
 		Size MeasureOverride(const Size& availableSize) override;

@@ -334,16 +334,16 @@ void StackPanel::ArrangeOverride(const Rect& contentRect)
 
     if (ContentOrientation == Orientation::Vertical)
     {
-        if (VerticalContentAlignment == VerticalAlignment::Bottom)
+        if (VerticalContentAlignment == VerticalAlign::Bottom)
             startY = std::max(0, contentRect.Height - totalContentHeight);
-        else if (VerticalContentAlignment == VerticalAlignment::Center)
+        else if (VerticalContentAlignment == VerticalAlign::Center)
             startY = std::max(0, contentRect.Height - totalContentHeight) / 2;
     }
     else
     {
-        if (HorizontalContentAlignment == HorizontalAlignment::Right)
+        if (HorizontalContentAlignment == HorizaontalAllign::Right)
             startX = std::max(0, contentRect.Width - totalContentWidth);
-        else if (HorizontalContentAlignment == HorizontalAlignment::Center)
+        else if (HorizontalContentAlignment == HorizaontalAllign::Center)
             startX = std::max(0, contentRect.Width - totalContentWidth) / 2;
     }
 

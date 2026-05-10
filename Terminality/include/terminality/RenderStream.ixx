@@ -53,9 +53,24 @@ export namespace terminality
         void NewLine();
     };
 
-    inline RenderStreamColor SetColor(Color fg, Color bg = Color::BLACK);
-    inline RenderStreamColor SetBack(Color bg);
-    inline RenderStreamColor SetFore(Color fg);
+    inline RenderStreamColor SetColor(Color fg, Color bg = Color::BLACK)
+    {
+        return RenderStreamColor{ fg, bg };
+    }
 
-    inline RenderStream& endl(RenderStream& stream);
+    inline RenderStreamColor SetBack(Color bg)
+    {
+        return RenderStreamColor{ std::nullopt, bg };
+    }
+
+    inline RenderStreamColor SetFore(Color fg)
+    {
+        return RenderStreamColor{ fg, std::nullopt };
+    }
+
+    inline RenderStream& endl(RenderStream& stream)
+    {
+        stream.NewLine();
+        return stream;
+    }
 }

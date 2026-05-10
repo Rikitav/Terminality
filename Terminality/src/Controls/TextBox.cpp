@@ -80,7 +80,7 @@ void TextBox::RenderOverride(RenderContext& context)
 	int32_t viewWidth = rect.Width;
 	int32_t offset = 0;
 
-	if (TextWrapping == TextWrapping::NoWrap)
+	if (TextWrapping == TextWrap::NoWrap)
 	{
 		if (cursorX >= viewWidth)
 		{
@@ -103,11 +103,11 @@ void TextBox::RenderOverride(RenderContext& context)
 			visibleText = L"";
 
 		int32_t textLen = static_cast<int32_t>(visibleText.length());
-		if (TextAlignment.Get() == terminality::TextAlignment::Center)
+		if (TextAlignment.Get() == terminality::TextAlign::Center)
 		{
 			xOffset = std::max(0, (rect.Width - textLen) / 2);
 		}
-		else if (TextAlignment.Get() == terminality::TextAlignment::Right)
+		else if (TextAlignment.Get() == terminality::TextAlign::Right)
 		{
 			xOffset = std::max(0, rect.Width - textLen);
 		}
@@ -192,7 +192,7 @@ bool TextBox::OnKeyDown(InputEvent input)
 
 		case InputKey::UP:
 		{
-			if (!AcceptsReturn.Get() && TextWrapping.Get() == terminality::TextWrapping::NoWrap)
+			if (!AcceptsReturn.Get() && TextWrapping.Get() == terminality::TextWrap::NoWrap)
 			{
 				PopFocus(Direction::Up, input.Modifier);
 				return true;
@@ -220,7 +220,7 @@ bool TextBox::OnKeyDown(InputEvent input)
 
 		case InputKey::DOWN:
 		{
-			if (!AcceptsReturn.Get() && TextWrapping.Get() == terminality::TextWrapping::NoWrap)
+			if (!AcceptsReturn.Get() && TextWrapping.Get() == terminality::TextWrap::NoWrap)
 			{
 				PopFocus(Direction::Down, input.Modifier);
 				return true;

@@ -15,8 +15,8 @@ export namespace terminality
 
 	public:
 		PropertyDescriptor<Label, std::wstring> Text		   { this, "Text", L"", InvalidationKind::Measure };
-		PropertyDescriptor<Label, TextWrapping> TextWrapping   { this, "TextWrapping", terminality::TextWrapping::NoWrap, InvalidationKind::Measure };
-		PropertyDescriptor<Label, TextAlignment> TextAlignment { this, "TextAlignment", terminality::TextAlignment::Left, InvalidationKind::Visual };
+		PropertyDescriptor<Label, TextWrap> TextWrapping   { this, "TextWrapping", terminality::TextWrap::NoWrap, InvalidationKind::Measure };
+		PropertyDescriptor<Label, TextAlign> TextAlignment { this, "TextAlignment", terminality::TextAlign::Left, InvalidationKind::Visual };
 
 		EventSignal<> TextChanged;
 

@@ -244,7 +244,7 @@ export namespace terminality::queries
 		template <std::ranges::range R>
 		auto operator()(R&& range) const
 		{
-			size_t c = 0;
+			std::size_t c = 0;
 			for (auto&& item : range)
 			{
 				if (pred(item))

@@ -43,7 +43,7 @@ export namespace terminality
 	public:
 		static VisualTree& Current();
 
-		size_t LayerCount();
+		std::size_t LayerCount();
 		VisualTreeNode* Root() const;
 		VisualTreeNode* PeekLayer() const;
 		UILayer& PushLayer(std::unique_ptr<VisualTreeNode> layerRoot);

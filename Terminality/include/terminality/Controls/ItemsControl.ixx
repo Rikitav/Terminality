@@ -18,9 +18,9 @@ export namespace terminality
 		ObservableCollection<T>* itemsSource_ = nullptr;
 		ItemTemplate itemTemplate_;
 
-		std::optional<EventSignalConnection<size_t, const T&>> addedConnection_;
-		std::optional<EventSignalConnection<size_t, const T&>> removedConnection_;
-		std::optional<EventSignalConnection<size_t, const T&, const T&>> replacedConnection_;
+		std::optional<EventSignalConnection<std::size_t, const T&>> addedConnection_;
+		std::optional<EventSignalConnection<std::size_t, const T&>> removedConnection_;
+		std::optional<EventSignalConnection<std::size_t, const T&, const T&>> replacedConnection_;
 		std::optional<EventSignalConnection<>> clearedConnection_;
 
 		void RebuildItems()
@@ -35,7 +35,7 @@ export namespace terminality
 			}
 		}
 
-		void OnItemAdded(size_t index, const T& item)
+		void OnItemAdded(std::size_t index, const T& item)
 		{
 			if (itemTemplate_)
 			{
@@ -43,12 +43,12 @@ export namespace terminality
 			}
 		}
 
-		void OnItemRemoved(size_t index, const T& item)
+		void OnItemRemoved(std::size_t index, const T& item)
 		{
 			this->RemoveAt(index);
 		}
 
-		void OnItemReplaced(size_t index, const T& oldItem, const T& newItem)
+		void OnItemReplaced(std::size_t index, const T& oldItem, const T& newItem)
 		{
 			if (itemTemplate_)
 			{
@@ -90,13 +90,13 @@ export namespace terminality
 			if (itemsSource_)
 			{
 				addedConnection_.emplace(itemsSource_->ItemAdded.Connect(
-					[this](size_t index, const T& item) { OnItemAdded(index, item); }));
+					[this](std::size_t index, const T& item) { OnItemAdded(index, item); }));
 				
 				removedConnection_.emplace(itemsSource_->ItemRemoved.Connect(
-					[this](size_t index, const T& item) { OnItemRemoved(index, item); }));
+					[this](std::size_t index, const T& item) { OnItemRemoved(index, item); }));
 				
 				replacedConnection_.emplace(itemsSource_->ItemReplaced.Connect(
-					[this](size_t index, const T& oldItem, const T& newItem) { OnItemReplaced(index, oldItem, newItem); }));
+					[this](std::size_t index, const T& oldItem, const T& newItem) { OnItemReplaced(index, oldItem, newItem); }));
 				
 				clearedConnection_.emplace(itemsSource_->CollectionCleared.Connect(
 					[this]() { OnCollectionCleared(); }));

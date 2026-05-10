@@ -1,9 +1,16 @@
-cmake_minimum_required(VERSION 3.28)
-project(Terminality CXX)
+cmake_minimum_required(VERSION 4.0.2)
+
+set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
+set(CMAKE_CXX_MODULE_STD ON)
 
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED YES)
-set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_SCAN_FOR_MODULES ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE OFF)
 
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+project(Terminality LANGUAGES CXX)
 add_subdirectory(Terminality)
 add_subdirectory(Terminality.TespApp)

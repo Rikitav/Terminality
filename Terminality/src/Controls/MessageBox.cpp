@@ -11,13 +11,13 @@ MessageBoxResult MessageBox::Show(const std::wstring& title, const std::wstring&
     
     auto rootGrid = init<Grid>([&](Grid* rootGrid)
     {
-        rootGrid->HorizontalAlignment = HorizontalAlignment::Stretch;
-        rootGrid->VerticalAlignment = VerticalAlignment::Stretch;
+        rootGrid->HorizontalAlignment = HorizaontalAllign::Stretch;
+        rootGrid->VerticalAlignment = VerticalAlign::Stretch;
 
         rootGrid->AddChild(0, 0, init<Border>([&](Border* dialogBorder)
         {
-            dialogBorder->HorizontalAlignment = HorizontalAlignment::Center;
-            dialogBorder->VerticalAlignment = VerticalAlignment::Center;
+            dialogBorder->HorizontalAlignment = HorizaontalAllign::Center;
+            dialogBorder->VerticalAlignment = VerticalAlign::Center;
 
             if (!title.empty())
             {
@@ -26,8 +26,8 @@ MessageBoxResult MessageBox::Show(const std::wstring& title, const std::wstring&
 
             dialogBorder->Content = init<StackPanel>([&](StackPanel* dialogContent)
             {
-                dialogContent->HorizontalAlignment = HorizontalAlignment::Stretch;
-                dialogContent->VerticalAlignment = VerticalAlignment::Top;
+                dialogContent->HorizontalAlignment = HorizaontalAllign::Stretch;
+                dialogContent->VerticalAlignment = VerticalAlign::Top;
                 dialogContent->Margin = Thickness(2, 1, 2, 0);
 
                 /*
@@ -47,13 +47,13 @@ MessageBoxResult MessageBox::Show(const std::wstring& title, const std::wstring&
                     messageBox->Text = message;
                     messageBox->SetFocusable(false);
                     messageBox->SetTabStop(false);
-                    messageBox->TextWrapping = TextWrapping::WrapWholeWords;
+                    messageBox->TextWrapping = TextWrap::WrapWholeWords;
                 }));
 
                 dialogContent->AddChild(init<Grid>([&](Grid* buttonGrid)
                 {
                     buttonGrid->Margin = Thickness(0, 1, 0, 0);
-                    buttonGrid->HorizontalAlignment = HorizontalAlignment::Right;
+                    buttonGrid->HorizontalAlignment = HorizaontalAllign::Right;
 
                     int colIndex = 0;
                     auto addButton = [&](const std::wstring& text, MessageBoxResult res)

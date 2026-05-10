@@ -11,9 +11,9 @@ export namespace terminality
 		std::vector<T> items_;
 
 	public:
-		EventSignal<size_t, const T&> ItemAdded;
-		EventSignal<size_t, const T&> ItemRemoved;
-		EventSignal<size_t, const T&, const T&> ItemReplaced;
+		EventSignal<std::size_t, const T&> ItemAdded;
+		EventSignal<std::size_t, const T&> ItemRemoved;
+		EventSignal<std::size_t, const T&, const T&> ItemReplaced;
 		EventSignal<> CollectionCleared;
 
 		ObservableCollection() = default;
@@ -28,15 +28,15 @@ export namespace terminality
 		auto cend() const { return items_.cend(); }
 
 		// Capacity
-		size_t size() const { return items_.size(); }
+		std::size_t size() const { return items_.size(); }
 		bool empty() const { return items_.empty(); }
 
 		// Element access
-		T& operator[](size_t index) { return items_[index]; }
-		const T& operator[](size_t index) const { return items_[index]; }
+		T& operator[](std::size_t index) { return items_[index]; }
+		const T& operator[](std::size_t index) const { return items_[index]; }
 
-		T& at(size_t index) { return items_.at(index); }
-		const T& at(size_t index) const { return items_.at(index); }
+		T& at(std::size_t index) { return items_.at(index); }
+		const T& at(std::size_t index) const { return items_.at(index); }
 
 		// Modifiers
 		void push_back(const T& item)
@@ -55,12 +55,12 @@ export namespace terminality
 		{
 			if (items_.empty()) return;
 			T removedItem = std::move(items_.back());
-			size_t index = items_.size() - 1;
+			std::size_t index = items_.size() - 1;
 			items_.pop_back();
 			ItemRemoved.Emit(index, removedItem);
 		}
 
-		void insert(size_t index, const T& item)
+		void insert(std::size_t index, const T& item)
 		{
 			if (index > items_.size())
 
@@ -69,7 +69,7 @@ export namespace terminality
 			ItemAdded.Emit(index, item);
 		}
 
-		void insert(size_t index, T&& item)
+		void insert(std::size_t index, T&& item)
 		{
 			if (index > items_.size())
 				throw std::out_of_range("Index out of range");
@@ -78,7 +78,7 @@ export namespace terminality
 			ItemAdded.Emit(index, items_[index]);
 		}
 
-		void erase(size_t index)
+		void erase(std::size_t index)
 		{
 			if (index >= items_.size())
 				throw std::out_of_range("Index out of range");
@@ -88,7 +88,7 @@ export namespace terminality
 			ItemRemoved.Emit(index, removedItem);
 		}
 
-		void replace(size_t index, const T& item)
+		void replace(std::size_t index, const T& item)
 		{
 			if (index >= items_.size())
 				throw std::out_of_range("Index out of range");
@@ -98,7 +98,7 @@ export namespace terminality
 			ItemReplaced.Emit(index, oldItem, item);
 		}
 
-		void replace(size_t index, T&& item)
+		void replace(std::size_t index, T&& item)
 		{
 			if (index >= items_.size())
 				throw std::out_of_range("Index out of range");

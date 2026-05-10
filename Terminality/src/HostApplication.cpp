@@ -115,6 +115,7 @@ void HostApplication::NestUILoop(UILayer& layer)
 				{
 					tree.Render(renderBuffer_);
 					renderBuffer_.DiffRender(std::wcout);
+					//renderBuffer_.BulkRender(std::wcout);
 				}
 			}
 		}

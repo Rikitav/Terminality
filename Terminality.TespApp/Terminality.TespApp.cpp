@@ -2,7 +2,7 @@
 import std.compat;
 import terminality;
 
-#include <Windows.h>
+//#include <Windows.h>
 
 #undef MessageBox
 
@@ -24,7 +24,7 @@ namespace TestApp
 
         MessageBubble()
         {
-            HorizontalAlignment = HorizontalAlignment::Left;
+            HorizontalAlignment = HorizaontalAllign::Left;
         }
 
         Size MeasureOverride(const Size& availableSize) override
@@ -65,8 +65,8 @@ namespace TestApp
         MessangerTest()
         {
             // Растягиваем корневую сетку на весь экран
-            HorizontalAlignment = HorizontalAlignment::Stretch;
-            VerticalAlignment = VerticalAlignment::Stretch;
+            HorizontalAlignment = HorizaontalAllign::Stretch;
+            VerticalAlignment = VerticalAlign::Stretch;
 
             AddRow(RowDefinition{ GridLength::Star(1.0f) });   // Строка 0: Основной чат
             AddRow(RowDefinition{ GridLength::Cell(3) });      // Строка 1: Поле ввода
@@ -94,7 +94,7 @@ namespace TestApp
                             bubble->message_ = item;
                             bubble->CtxMenu = init<ContextMenu>([](ContextMenu* menu)
                             {
-                                menu->AddItem(L"Test1", []() { MessageBoxA(nullptr, "ContextMenu.Test1", nullptr, 0); });
+                                //menu->AddItem(L"Test1", []() { MessageBoxA(nullptr, "ContextMenu.Test1", nullptr, 0); });
                                 menu->AddItem(L"Test2", []() { MessageBox::Show(L"ContextMenu.Test2", L"ContextMenu.Test2"); });
                             });
 
@@ -113,7 +113,7 @@ namespace TestApp
             // ==========================================
             AddChild(1, 0, std::make_unique<Border>(init<Grid>([&](Grid* inputGrid)
             {
-                inputGrid->HorizontalAlignment = HorizontalAlignment::Stretch;
+                inputGrid->HorizontalAlignment = HorizaontalAllign::Stretch;
                 inputGrid->AddColumn(ColumnDefinition{ GridLength::Auto() });
                 inputGrid->AddColumn(ColumnDefinition{ GridLength::Auto() }); 
                 inputGrid->AddColumn(ColumnDefinition{ GridLength::Star(1.0f) });
@@ -127,7 +127,7 @@ namespace TestApp
                 inputGrid->AddChild(0, 1, init<Label>([&](Label* promptLabel)
                 {
                     promptLabel->Text = L"Rikitav@Tamerlan> ";
-                    promptLabel->HorizontalAlignment = HorizontalAlignment::Left;
+                    promptLabel->HorizontalAlignment = HorizaontalAllign::Left;
                 }));
 
                 // Поле для ввода текста
@@ -135,7 +135,7 @@ namespace TestApp
                 {
                     inputBox->Text = L"";
                     inputBox->MaxSize = Size(-1, 1);
-                    inputBox->HorizontalAlignment = HorizontalAlignment::Stretch;
+                    inputBox->HorizontalAlignment = HorizaontalAllign::Stretch;
                     inputBox->AcceptsReturn = false;
 
                     inputBox->OnHotkey(InputModifier::None, InputKey::RETURN, [&](ControlBase* self)
@@ -153,7 +153,7 @@ namespace TestApp
             AddChild(2, 0, init<Button>([&](Button* statusBar)
             {
                 statusBar->Text = L"ESC - выход | /help | Чат: Tamerlan";
-                statusBar->HorizontalAlignment = HorizontalAlignment::Stretch;
+                statusBar->HorizontalAlignment = HorizaontalAllign::Stretch;
 
                 statusBar->Clicked += []()
                 {

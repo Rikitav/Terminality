@@ -155,7 +155,7 @@ void Border::ArrangeOverride(const Rect& contentRect)
 void Border::RenderOverride(RenderContext& context)
 {
 	const Rect rect = context.ContextRect();
-	const Size size = rect.Size();
+	const Size size = rect.AsSize();
 	const Color renderColor = focused_ ? FocusedBorderColor : BorderColor;
 	const BorderStyle style = Style;
 

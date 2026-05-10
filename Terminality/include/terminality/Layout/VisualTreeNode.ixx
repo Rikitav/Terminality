@@ -49,8 +49,8 @@ export namespace terminality
 		virtual void SetParent(VisualTreeNode* parent) = 0;
 		virtual void SetLayer(UILayer* layer) = 0;
 
-		virtual size_t VisualChildrenCount() const = 0;
-		virtual VisualTreeNode* GetVisualChild(size_t index) const = 0;
+		virtual std::size_t VisualChildrenCount() const = 0;
+		virtual VisualTreeNode* GetVisualChild(std::size_t index) const = 0;
 
 		// Layout
 		void InvalidateMeasure();

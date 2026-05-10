@@ -48,7 +48,7 @@ export namespace terminality
 		void ArrangeOverride(const Rect& contentRect) override;
 		void RenderOverride(RenderContext& context) override;
 
-		size_t VisualChildrenCount() const override;
-		VisualTreeNode* GetVisualChild(size_t index) const override;
+		std::size_t VisualChildrenCount() const override;
+		VisualTreeNode* GetVisualChild(std::size_t index) const override;
 	};
 }

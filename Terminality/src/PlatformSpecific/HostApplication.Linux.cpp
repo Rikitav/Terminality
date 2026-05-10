@@ -23,48 +23,72 @@ static struct termios original_termios;
 
 void HostApplication::EnterTerminal()
 {
-    std::setlocale(LC_ALL, "en_US.UTF-8");
-    try
-    {
-        std::locale::global(std::locale("en_US.UTF-8"));
-        std::cout.imbue(std::locale());
-        std::cerr.imbue(std::locale());
-    }
-    catch (...)
-    {
-        // Locale not available; keep process defaults.
-    }
+	std::setlocale(LC_ALL, "");
 
-    tcgetattr(STDIN_FILENO, &original_termios);
+	try
+	{
+		std::locale loc("");
+		std::locale::global(loc);
+		std::cout.imbue(loc);
+		std::cerr.imbue(loc);
+		std::wcout.imbue(loc);
+		std::wcin.imbue(loc);
+	}
+	catch (...)
+	{
+		std::cerr << "Warning: Failed to set UTF-8 locale. UI may render incorrectly.\n";
+	}
 
-    struct termios raw = original_termios;
-    raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
-    raw.c_oflag &= ~(OPOST);
-    raw.c_cflag |= (CS8);
-    raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
-    raw.c_cc[VMIN] = 0;
-    raw.c_cc[VTIME] = 1;
+	tcgetattr(STDIN_FILENO, &original_termios);
 
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+	struct termios raw = original_termios;
+	raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+	raw.c_oflag &= ~(OPOST);
+	raw.c_cflag |= (CS8);
+	raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
+	raw.c_cc[VMIN] = 0;
+	raw.c_cc[VTIME] = 1;
 
-    std::ios_base::sync_with_stdio(false);
-    std::wcout.tie(nullptr);
-	std::wcout << L"\x1b[2J\x1b[?25l";
+	tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+
+	std::ios_base::sync_with_stdio(false);
+	std::wcout.tie(nullptr);
+
+	// \x1b[?1049h - Включаем Alternate Screen Buffer (нет скроллинга!)
+	// \x1b[?7l    - Отключаем авто-перенос строк
+	// \x1b[2J     - Очищаем этот новый буфер
+	// \x1b[?25l   - Прячем курсор
+	std::wcout << L"\x1b[?1049h\x1b[0m\x1b[40m\x1b[?7l\x1b[2J\x1b[?25l";
+	//std::wcout << L"\x1b[?1049h\x1b[?7l\x1b[2J\x1b[?25l";
+	std::wcout.flush();
 }
 
 void HostApplication::ExitTerminal()
 {
-	std::wcout << L"\x1b[0m\x1b[?25h";
+	// Возвращаем всё как было:
+	// \x1b[?1049l - Выключаем Alternate Screen Buffer
+	// \x1b[?7h    - Включаем авто-перенос строк
+	// \x1b[?25h   - Показываем курсор
+	std::wcout << L"\x1b[?1049l\x1b[?7h\x1b[?25h";
 	std::wcout.flush();
 
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &original_termios);
+	tcsetattr(STDIN_FILENO, TCSAFLUSH, &original_termios);
 }
 
 Size HostBackend::QueryViewportSize()
 {
 	struct winsize w;
-	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1)
-		return Size(80, 24);
+
+	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1 || w.ws_col == 0 || w.ws_row == 0)
+	{
+		if (ioctl(STDIN_FILENO, TIOCGWINSZ, &w) == -1 || w.ws_col == 0 || w.ws_row == 0)
+		{
+			if (ioctl(STDERR_FILENO, TIOCGWINSZ, &w) == -1 || w.ws_col == 0 || w.ws_row == 0)
+			{
+				return Size(120, 30);
+			}
+		}
+	}
 
 	return Size(w.ws_col, w.ws_row);
 }

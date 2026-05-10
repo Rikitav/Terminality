@@ -5,7 +5,7 @@ import std.compat;
 
 using namespace terminality;
 
-std::vector<LineBounds> TextHelper::CalculateLineBounds(const std::wstring& text, int32_t availableWidth, TextWrapping wrapping)
+std::vector<LineBounds> TextHelper::CalculateLineBounds(const std::wstring& text, int32_t availableWidth, TextWrap wrapping)
 {
     std::vector<LineBounds> bounds;
     if (text.empty())
@@ -23,7 +23,7 @@ std::vector<LineBounds> TextHelper::CalculateLineBounds(const std::wstring& text
         int32_t width = 0;
         size_t lastSpace = std::wstring::npos;
 
-        if (wrapping == TextWrapping::NoWrap || availableWidth <= 0)
+        if (wrapping == TextWrap::NoWrap || availableWidth <= 0)
         {
             while (end < len && text[end] != L'\n')
                 end++;
@@ -49,7 +49,7 @@ std::vector<LineBounds> TextHelper::CalculateLineBounds(const std::wstring& text
             continue;
         }
 
-        if (wrapping == TextWrapping::WrapWholeWords)
+        if (wrapping == TextWrap::WrapWholeWords)
         {
             if (end < len && (text[end] == L' ' || text[end] == L'\n'))
             {
@@ -76,7 +76,7 @@ std::vector<LineBounds> TextHelper::CalculateLineBounds(const std::wstring& text
     return bounds;
 }
 
-std::vector<LineInfo> TextHelper::GetLines(const std::wstring& text, int32_t availableWidth, TextWrapping wrapping)
+std::vector<LineInfo> TextHelper::GetLines(const std::wstring& text, int32_t availableWidth, TextWrap wrapping)
 {
     std::vector<LineInfo> lines;
     auto bounds = CalculateLineBounds(text, availableWidth, wrapping);
@@ -90,7 +90,7 @@ std::vector<LineInfo> TextHelper::GetLines(const std::wstring& text, int32_t ava
     return lines;
 }
 
-std::vector<int32_t> TextHelper::MeasureLines(const std::wstring& text, int32_t availableWidth, TextWrapping wrapping)
+std::vector<int32_t> TextHelper::MeasureLines(const std::wstring& text, int32_t availableWidth, TextWrap wrapping)
 {
     std::vector<int32_t> lineLengths;
     auto bounds = CalculateLineBounds(text, availableWidth, wrapping);

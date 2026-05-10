@@ -89,27 +89,27 @@ void ControlBase::Arrange(const Rect& finalRect)
 
 	switch (HorizontalAlignment)
 	{
-		case HorizontalAlignment::Left:
+		case HorizaontalAllign::Left:
 		{
 			width = width < 0 ? slotWidth : std::min(width, slotWidth);
 			break;
 		}
 
-		case HorizontalAlignment::Center:
+		case HorizaontalAllign::Center:
 		{
 			width = width < 0 ? slotWidth : std::min(width, slotWidth);
 			x += (slotWidth - width) / 2;
 			break;
 		}
 
-		case HorizontalAlignment::Right:
+		case HorizaontalAllign::Right:
 		{
 			width = width < 0 ? slotWidth : std::min(width, slotWidth);
 			x += slotWidth - width;
 			break;
 		}
 
-		case HorizontalAlignment::Stretch:
+		case HorizaontalAllign::Stretch:
 		{
 			width = std::clamp<int32_t>(slotWidth,
 				MinSize->Width  < 0 ? 0         : MinSize->Width,
@@ -122,27 +122,27 @@ void ControlBase::Arrange(const Rect& finalRect)
 
 	switch (VerticalAlignment)
 	{
-		case VerticalAlignment::Top:
+		case VerticalAlign::Top:
 		{
 			height = height < 0 ? slotHeight : std::min(height, slotHeight);
 			break;
 		}
 
-		case VerticalAlignment::Center:
+		case VerticalAlign::Center:
 		{
 			height = height < 0 ? slotHeight : std::min(height, slotHeight);
 			y += (slotHeight - height) / 2;
 			break;
 		}
 
-		case VerticalAlignment::Bottom:
+		case VerticalAlign::Bottom:
 		{
 			height = height < 0 ? slotHeight : std::min(height, slotHeight);
 			y += slotHeight - height;
 			break;
 		}
 
-		case VerticalAlignment::Stretch:
+		case VerticalAlign::Stretch:
 		{
 			height = std::clamp<int32_t>(slotHeight,
 				MinSize->Height < 0 ? 0          : MinSize->Height,
@@ -166,7 +166,7 @@ static wchar_t EmptyRectangleStyle(const Point& point, const Size& size)
 void ControlBase::Render(RenderContext& context)
 {
 	Rect rect = context.ContextRect();
-	context.RenderRectangle(Point::Zero, rect.Size(), ForegroundColor, BackgroundColor, EmptyRectangleStyle);
+	context.RenderRectangle(Point::Zero, rect.AsSize(), ForegroundColor, BackgroundColor, EmptyRectangleStyle);
 
 	visualDirty_ = false;
 	RenderOverride(context);

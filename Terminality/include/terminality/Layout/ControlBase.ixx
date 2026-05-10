@@ -20,7 +20,7 @@ export namespace terminality
 	class ChildIterator
 	{
 		const VisualTreeNode* node_;
-		size_t index_;
+		std::size_t index_;
 
 	public:
 		using iterator_category = std::forward_iterator_tag;
@@ -29,7 +29,7 @@ export namespace terminality
 		using pointer = VisualTreeNode**;
 		using reference = VisualTreeNode*&;
 
-		ChildIterator(const VisualTreeNode* node, size_t index)
+		ChildIterator(const VisualTreeNode* node, std::size_t index)
 			: node_(node), index_(index) { }
 
 		VisualTreeNode* operator*() const
@@ -74,16 +74,16 @@ export namespace terminality
 		PropertyDescriptor<ControlBase, Size> MaxSize { this, "MaxSize", Size::Auto, InvalidationKind::Measure };
 		PropertyDescriptor<ControlBase, Size> ExpSize { this, "ExpSize", Size::Auto, InvalidationKind::Measure };
 
-		PropertyDescriptor<ControlBase, Thickness> Margin                        { this, "Margin", Thickness::Zero, InvalidationKind::Measure };
-		PropertyDescriptor<ControlBase, HorizontalAlignment> HorizontalAlignment { this, "HorizontalAlignment", HorizontalAlignment::Stretch, InvalidationKind::Measure };
-		PropertyDescriptor<ControlBase, VerticalAlignment> VerticalAlignment     { this, "VerticalAlignment", VerticalAlignment::Stretch, InvalidationKind::Measure };
+		PropertyDescriptor<ControlBase, Thickness> Margin                       { this, "Margin", Thickness::Zero, InvalidationKind::Measure };
+		PropertyDescriptor<ControlBase, HorizaontalAllign> HorizontalAlignment  { this, "HorizontalAlignment", HorizaontalAllign::Stretch, InvalidationKind::Measure };
+		PropertyDescriptor<ControlBase, VerticalAlign> VerticalAlignment        { this, "VerticalAlignment", VerticalAlign::Stretch, InvalidationKind::Measure };
 
 		PropertyDescriptor<ControlBase, Color> ForegroundColor		  { this, "ForegroundColor", Color::WHITE, InvalidationKind::Visual };
 		PropertyDescriptor<ControlBase, Color> BackgroundColor		  { this, "BackgroundColor", Color::BLACK, InvalidationKind::Visual };
 		PropertyDescriptor<ControlBase, Color> FocusedForegroundColor { this, "FocusedForegroundColor", Color::BLACK, InvalidationKind::Visual };
 		PropertyDescriptor<ControlBase, Color> FocusedBackgroundColor { this, "FocusedBackgroundColor", Color::WHITE, InvalidationKind::Visual };
 
-		PropertyDescriptor<ControlBase, bool> IsVisible { this, "IsVisible", true, InvalidationKind::Visual };
+		PropertyDescriptor<ControlBase, bool> IsVisible                       { this, "IsVisible", true, InvalidationKind::Visual };
 		PropertyDescriptor<ControlBase, std::unique_ptr<ContextMenu>> CtxMenu { this, "ContextMenu", nullptr, InvalidationKind::None };
 
 		// Setters
@@ -111,8 +111,8 @@ export namespace terminality
 		// Ownership
 		void OpenContextMenu();
 
-		virtual size_t VisualChildrenCount() const override;
-		virtual VisualTreeNode* GetVisualChild(size_t index) const override;
+		virtual std::size_t VisualChildrenCount() const override;
+		virtual VisualTreeNode* GetVisualChild(std::size_t index) const override;
 
 		const ChildIterator child_begin() const;
 		const ChildIterator child_end() const;

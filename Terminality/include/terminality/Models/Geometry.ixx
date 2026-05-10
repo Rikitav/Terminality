@@ -121,7 +121,8 @@ export namespace terminality
 		bool IsEmpty() const;
 		int32_t Right() const;
 		int32_t Bottom() const;
-		Size Size() const;
+		Size AsSize() const;
+		bool Contains(Point point) const;
 
 		static Rect Union(const Rect& a, const Rect& b);
 		static Rect Enclose(const Rect& into, const Rect& rect);

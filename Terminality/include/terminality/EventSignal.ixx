@@ -17,9 +17,9 @@ export namespace terminality
 		friend class EventSignal<Args...>;
 
 		EventSignal<Args...>* owner_ = nullptr;
-		size_t id_ = 0;
+		std::size_t id_ = 0;
 
-		EventSignalConnection(EventSignal<Args...>* owner, size_t id);
+		EventSignalConnection(EventSignal<Args...>* owner, std::size_t id);
 
 	public:
 		EventSignalConnection() = default;
@@ -40,8 +40,8 @@ export namespace terminality
 	{
 		friend class EventSignalConnection<Args...>;
 
-		std::unordered_map<size_t, Handler<Args...>> handlers_;
-		size_t nextId_ = 1;
+		std::unordered_map<std::size_t, Handler<Args...>> handlers_;
+		std::size_t nextId_ = 1;
 
 	public:
 		void operator+=(Handler<Args...> handler);
@@ -49,12 +49,12 @@ export namespace terminality
 		void Emit(Args... args);
 		
 	private:
-		void Disconnect(size_t id);
+		void Disconnect(std::size_t id);
 	};
 }
 
 template<typename ...Args>
-terminality::EventSignalConnection<Args...>::EventSignalConnection(EventSignal<Args...>* owner, size_t id)
+terminality::EventSignalConnection<Args...>::EventSignalConnection(EventSignal<Args...>* owner, std::size_t id)
 	: owner_(owner), id_(id) { }
 
 template<typename ...Args>
@@ -101,14 +101,14 @@ void terminality::EventSignalConnection<Args...>::Disconnect()
 template<typename ...Args>
 void terminality::EventSignal<Args...>::operator+=(terminality::Handler<Args...> handler)
 {
-	const size_t id = nextId_++;
+	const std::size_t id = nextId_++;
 	handlers_.emplace(id, std::move(handler));
 }
 
 template<typename... Args>
 terminality::EventSignalConnection<Args...> terminality::EventSignal<Args...>::Connect(terminality::Handler<Args...> handler)
 {
-	const size_t id = nextId_++;
+	const std::size_t id = nextId_++;
 	handlers_.emplace(id, std::move(handler));
 	return EventSignalConnection<Args...>(this, id);
 }
@@ -116,7 +116,7 @@ terminality::EventSignalConnection<Args...> terminality::EventSignal<Args...>::C
 template<typename... Args>
 void terminality::EventSignal<Args...>::Emit(Args... args)
 {
-	const std::unordered_map<size_t, Handler<Args...>> snapshot = handlers_;
+	const std::unordered_map<std::size_t, Handler<Args...>> snapshot = handlers_;
 	for (const auto& entry : snapshot)
 	{
 		entry.second(args...);
@@ -124,7 +124,7 @@ void terminality::EventSignal<Args...>::Emit(Args... args)
 }
 
 template<typename... Args>
-void terminality::EventSignal<Args...>::Disconnect(size_t id)
+void terminality::EventSignal<Args...>::Disconnect(std::size_t id)
 {
 	handlers_.erase(id);
 }

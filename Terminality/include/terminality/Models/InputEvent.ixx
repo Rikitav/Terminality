@@ -218,7 +218,7 @@ export namespace terminality
     
     struct InputEventHasher
     {
-        size_t operator()(const InputEvent& e) const
+        std::size_t operator()(const InputEvent& e) const
         {
             return
                 (std::hash<int>()(static_cast<int>(e.Modifier)) << 0) ^

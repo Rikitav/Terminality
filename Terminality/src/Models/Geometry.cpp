@@ -78,9 +78,14 @@ int32_t Rect::Bottom() const
 	return Y + Height;
 }
 
-Size Rect::Size() const
+Size Rect::AsSize() const
 {
 	return terminality::Size(Width, Height);
+}
+
+bool Rect::Contains(Point point) const
+{
+	return point.X >= X && point.X < X + Width && point.Y >= Y && point.Y < Y + Height;
 }
 
 bool Rect::IsEmpty() const

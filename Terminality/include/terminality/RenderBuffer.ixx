@@ -45,12 +45,12 @@ export namespace terminality
 		bool hasDirtyRect = true;
 		Rect dirtyRect;
 
-		size_t GetIndex(uint32_t x, uint32_t y) const;
+		std::size_t GetIndex(uint32_t x, uint32_t y) const;
 		void MarkDirty(const Rect& rect);
 
 	public:
-		static constexpr size_t MAX_WIDTH = 512;
-		static constexpr size_t MAX_HEIGHT = 256;
+		static constexpr std::size_t MAX_WIDTH = 512;
+		static constexpr std::size_t MAX_HEIGHT = 256;
 
 		RenderBuffer(uint32_t initialWidth, uint32_t initialHeight);
 

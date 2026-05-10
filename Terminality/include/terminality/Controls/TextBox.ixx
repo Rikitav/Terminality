@@ -13,13 +13,13 @@ export namespace terminality
 {
 	class TextBox : public ControlBase
 	{
-		size_t cursorPosition_ = 0;
+		std::size_t cursorPosition_ = 0;
 
 	public:
-		PropertyDescriptor<TextBox, std::wstring> Text			 { this, "Text", L"", InvalidationKind::Measure };
-		PropertyDescriptor<TextBox, TextWrapping> TextWrapping	 { this, "TextWrapping", terminality::TextWrapping::NoWrap, InvalidationKind::Measure };
-		PropertyDescriptor<TextBox, TextAlignment> TextAlignment { this, "TextAlignment", terminality::TextAlignment::Left, InvalidationKind::Visual };
-		PropertyDescriptor<TextBox, bool> AcceptsReturn			 { this, "AcceptsReturn", false, InvalidationKind::Measure };
+		PropertyDescriptor<TextBox, std::wstring> Text		 { this, "Text", L"", InvalidationKind::Measure };
+		PropertyDescriptor<TextBox, TextWrap> TextWrapping	 { this, "TextWrapping", terminality::TextWrap::NoWrap, InvalidationKind::Measure };
+		PropertyDescriptor<TextBox, TextAlign> TextAlignment { this, "TextAlignment", terminality::TextAlign::Left, InvalidationKind::Visual };
+		PropertyDescriptor<TextBox, bool> AcceptsReturn		 { this, "AcceptsReturn", false, InvalidationKind::Measure };
 
 		EventSignal<> TextChanged;
 

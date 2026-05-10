@@ -62,7 +62,7 @@ export namespace terminality
         std::vector<RowDefinition> rowDefs_;
         std::vector<ColumnDefinition> colDefs_;
         std::vector<GridChild> children_;
-        size_t focusedIndex_ = 0;
+        std::size_t focusedIndex_ = 0;
 
         void EnsureGridDefinitions();
 
@@ -83,7 +83,7 @@ export namespace terminality
         void ArrangeOverride(const Rect& contentRect) override;
         void RenderOverride(RenderContext& context) override;
 
-        size_t VisualChildrenCount() const override;
-        VisualTreeNode* GetVisualChild(size_t index) const override;
+        std::size_t VisualChildrenCount() const override;
+        VisualTreeNode* GetVisualChild(std::size_t index) const override;
     };
 }

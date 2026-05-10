@@ -2,7 +2,7 @@ export module terminality:Layout;
 
 export namespace terminality
 {
-	enum class HorizontalAlignment
+	enum class HorizaontalAllign
 	{
 		Left,
 		Center,
@@ -10,7 +10,7 @@ export namespace terminality
 		Stretch
 	};
 
-	enum class VerticalAlignment
+	enum class VerticalAlign
 	{
 		Top,
 		Center,
@@ -18,14 +18,14 @@ export namespace terminality
 		Stretch
 	};
 
-	enum class TextWrapping
+	enum class TextWrap
 	{
 		NoWrap,
 		Wrap,
 		WrapWholeWords
 	};
 
-	enum class TextAlignment
+	enum class TextAlign
 	{
 		Left,
 		Center,

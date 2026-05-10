@@ -43,8 +43,8 @@ RenderBuffer::RenderBuffer(uint32_t initialWidth, uint32_t initialHeight)
 {
 	std::lock_guard<std::recursive_mutex> guard(renderMutex);
 
-	buffer.assign(MAX_WIDTH * MAX_HEIGHT, CellInfo());
-	snapshotBuffer.assign(MAX_WIDTH * MAX_HEIGHT, CellInfo());
+	buffer.assign(MAX_WIDTH * MAX_HEIGHT, CellInfo('\0', static_cast<Color>(-1), static_cast<Color>(-1)));
+	snapshotBuffer.assign(MAX_WIDTH * MAX_HEIGHT, CellInfo('\0', static_cast<Color>(-1), static_cast<Color>(-1)));
 
 	width = std::min(initialWidth, static_cast<uint32_t>(MAX_WIDTH));
 	height = std::min(initialHeight, static_cast<uint32_t>(MAX_HEIGHT));
@@ -145,7 +145,6 @@ void RenderBuffer::BulkRender(std::wostream& out)
 			output += L"\n";
 	}
 
-	out << std::nounitbuf;
 	out.write(output.data(), output.size());
 	out.flush();
 

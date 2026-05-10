@@ -135,6 +135,9 @@
     <ClCompile Include="src\Navigator.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="src\Controls\Spinner.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\RenderBuffer.cpp">
