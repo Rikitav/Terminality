@@ -2,7 +2,7 @@ export module terminality:Layout;
 
 export namespace terminality
 {
-	enum class HorizaontalAllign
+	enum class HorizontalAlign
 	{
 		Left,
 		Center,

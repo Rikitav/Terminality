@@ -24,7 +24,7 @@ namespace TestApp
 
         MessageBubble()
         {
-            HorizontalAlignment = HorizaontalAllign::Left;
+            HorizontalAlignment = HorizontalAlign::Left;
         }
 
         Size MeasureOverride(const Size& availableSize) override
@@ -65,7 +65,7 @@ namespace TestApp
         MessangerTest()
         {
             // Растягиваем корневую сетку на весь экран
-            HorizontalAlignment = HorizaontalAllign::Stretch;
+            HorizontalAlignment = HorizontalAlign::Stretch;
             VerticalAlignment = VerticalAlign::Stretch;
 
             AddRow(RowDefinition{ GridLength::Star(1.0f) });   // Строка 0: Основной чат
@@ -113,7 +113,7 @@ namespace TestApp
             // ==========================================
             AddChild(1, 0, std::make_unique<Border>(init<Grid>([&](Grid* inputGrid)
             {
-                inputGrid->HorizontalAlignment = HorizaontalAllign::Stretch;
+                inputGrid->HorizontalAlignment = HorizontalAlign::Stretch;
                 inputGrid->AddColumn(ColumnDefinition{ GridLength::Auto() });
                 inputGrid->AddColumn(ColumnDefinition{ GridLength::Auto() }); 
                 inputGrid->AddColumn(ColumnDefinition{ GridLength::Star(1.0f) });
@@ -127,7 +127,7 @@ namespace TestApp
                 inputGrid->AddChild(0, 1, init<Label>([&](Label* promptLabel)
                 {
                     promptLabel->Text = L"Rikitav@Tamerlan> ";
-                    promptLabel->HorizontalAlignment = HorizaontalAllign::Left;
+                    promptLabel->HorizontalAlignment = HorizontalAlign::Left;
                 }));
 
                 // Поле для ввода текста
@@ -135,7 +135,7 @@ namespace TestApp
                 {
                     inputBox->Text = L"";
                     inputBox->MaxSize = Size(-1, 1);
-                    inputBox->HorizontalAlignment = HorizaontalAllign::Stretch;
+                    inputBox->HorizontalAlignment = HorizontalAlign::Stretch;
                     inputBox->AcceptsReturn = false;
 
                     inputBox->OnHotkey(InputModifier::None, InputKey::RETURN, [&](ControlBase* self)
@@ -152,7 +152,7 @@ namespace TestApp
             // ==========================================
             AddChild(2, 0, init<Grid>([&](Grid* statusGrid)
             {
-                statusGrid->HorizontalAlignment = HorizaontalAllign::Stretch;
+                statusGrid->HorizontalAlignment = HorizontalAlign::Stretch;
                 statusGrid->AddColumn(ColumnDefinition{ GridLength::Auto() });
                 statusGrid->AddColumn(ColumnDefinition{ GridLength::Star() });
 
@@ -160,7 +160,7 @@ namespace TestApp
                 statusGrid->AddChild(0, 0, init<Button>([](Button* statusBar)
                 {
                     statusBar->Text = L"ESC - выход | /help | Чат: Tamerlan";
-                    statusBar->HorizontalAlignment = HorizaontalAllign::Stretch;
+                    statusBar->HorizontalAlignment = HorizontalAlign::Stretch;
                     statusBar->VerticalAlignment = VerticalAlign::Top;
 
                     statusBar->Clicked += []()
@@ -173,7 +173,7 @@ namespace TestApp
                 statusGrid->AddChild(0, 1, init<ProgressBar>([](ProgressBar* progress)
                 {
                     progress->Margin = Thickness(1, 0, 1, 0);
-                    progress->HorizontalAlignment = HorizaontalAllign::Stretch;
+                    progress->HorizontalAlignment = HorizontalAlign::Stretch;
                     progress->VerticalAlignment = VerticalAlign::Top;
 
                     // Онимация

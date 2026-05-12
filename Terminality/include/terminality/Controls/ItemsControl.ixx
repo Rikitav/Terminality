@@ -4,6 +4,7 @@ import std;
 import :ControlBase;
 import :StackPanel;
 import :ObservableCollection;
+import :FocusManager;
 import :EventSignal;
 
 export namespace terminality
@@ -33,11 +34,25 @@ export namespace terminality
 		ItemsControl() = default;
 		virtual ~ItemsControl() = default;
 
+		bool MoveFocusNext(Direction direction, InputModifier modifiers) override;
+
 		void SetItemTemplate(ItemTemplate itemTemplate);
 		void SetItemsSource(ObservableCollection<T>* itemsSource);
 
 		ObservableCollection<T>* GetItemsSource() const;
 	};
+	
+	template<typename T>
+	bool ItemsControl<T>::MoveFocusNext(Direction direction, InputModifier modifiers)
+	{
+		if (modifiers == InputModifier::Special)
+		{
+			focusedIndex_ = 0;
+			return true;
+		}
+
+		return StackPanel::MoveFocusNext(direction, modifiers);
+	}
 
 	template<typename T>
 	void ItemsControl<T>::RebuildItems()
@@ -80,6 +95,7 @@ export namespace terminality
 	template<typename T>
 	void ItemsControl<T>::OnCollectionCleared()
 	{
+		FocusManager::Current().MoveNext(Direction::Previous, InputModifier::Special);
 		this->Clear();
 	}
 

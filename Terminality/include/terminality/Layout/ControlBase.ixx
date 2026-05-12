@@ -74,12 +74,12 @@ export namespace terminality
 		Property<ControlBase, Size> MaxSize { this, "MaxSize", Size::Auto, InvalidationKind::Measure };
 		Property<ControlBase, Size> ExpSize { this, "ExpSize", Size::Auto, InvalidationKind::Measure };
 
-		Property<ControlBase, Thickness> Margin                       { this, "Margin", Thickness::Zero, InvalidationKind::Measure };
-		Property<ControlBase, HorizaontalAllign> HorizontalAlignment  { this, "HorizontalAlignment", HorizaontalAllign::Stretch, InvalidationKind::Measure };
-		Property<ControlBase, VerticalAlign> VerticalAlignment        { this, "VerticalAlignment", VerticalAlign::Stretch, InvalidationKind::Measure };
+		Property<ControlBase, Thickness> Margin                    { this, "Margin", Thickness::Zero, InvalidationKind::Measure };
+		Property<ControlBase, HorizontalAlign> HorizontalAlignment { this, "HorizontalAlign", HorizontalAlign::Stretch, InvalidationKind::Measure };
+		Property<ControlBase, VerticalAlign> VerticalAlignment     { this, "VerticalAlign", VerticalAlign::Stretch, InvalidationKind::Measure };
 
-		Property<ControlBase, Color> ForegroundColor		  { this, "ForegroundColor", Color::WHITE, InvalidationKind::Visual };
-		Property<ControlBase, Color> BackgroundColor		  { this, "BackgroundColor", Color::BLACK, InvalidationKind::Visual };
+		Property<ControlBase, Color> ForegroundColor	    { this, "ForegroundColor", Color::WHITE, InvalidationKind::Visual };
+		Property<ControlBase, Color> BackgroundColor	    { this, "BackgroundColor", Color::BLACK, InvalidationKind::Visual };
 		Property<ControlBase, Color> FocusedForegroundColor { this, "FocusedForegroundColor", Color::BLACK, InvalidationKind::Visual };
 		Property<ControlBase, Color> FocusedBackgroundColor { this, "FocusedBackgroundColor", Color::WHITE, InvalidationKind::Visual };
 

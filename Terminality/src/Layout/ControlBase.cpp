@@ -89,27 +89,27 @@ void ControlBase::Arrange(const Rect& finalRect)
 
 	switch (HorizontalAlignment)
 	{
-		case HorizaontalAllign::Left:
+		case HorizontalAlign::Left:
 		{
 			width = width < 0 ? slotWidth : std::min(width, slotWidth);
 			break;
 		}
 
-		case HorizaontalAllign::Center:
+		case HorizontalAlign::Center:
 		{
 			width = width < 0 ? slotWidth : std::min(width, slotWidth);
 			x += (slotWidth - width) / 2;
 			break;
 		}
 
-		case HorizaontalAllign::Right:
+		case HorizontalAlign::Right:
 		{
 			width = width < 0 ? slotWidth : std::min(width, slotWidth);
 			x += slotWidth - width;
 			break;
 		}
 
-		case HorizaontalAllign::Stretch:
+		case HorizontalAlign::Stretch:
 		{
 			width = std::clamp<int32_t>(slotWidth,
 				MinSize->Width  < 0 ? 0         : MinSize->Width,

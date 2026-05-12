@@ -194,7 +194,8 @@ export namespace terminality
         Shift = 1 << 4,
         CapsLockOn = 1 << 7,
         NumLockOn = 1 << 5,
-        ScrollLockOn = 1 << 6
+        ScrollLockOn = 1 << 6,
+        Special = 1 << 7,
     };
     
     struct InputEvent

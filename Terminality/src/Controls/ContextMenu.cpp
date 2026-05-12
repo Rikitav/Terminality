@@ -27,7 +27,7 @@ void ContextMenu::Open(Point position)
 
 	auto ctxMenuBody = init<Border>([&](Border* ctxMenuBody)
 	{
-		ctxMenuBody->HorizontalAlignment = HorizaontalAllign::Left;
+		ctxMenuBody->HorizontalAlignment = HorizontalAlign::Left;
 		ctxMenuBody->VerticalAlignment = VerticalAlign::Top;
 		ctxMenuBody->Margin = Thickness(position.X, position.Y, 0, 0);
 		ctxMenuBody->BorderColor = Color::YELLOW;
@@ -35,7 +35,7 @@ void ContextMenu::Open(Point position)
 
 		ctxMenuBody->Content = init<StackPanel>([&](StackPanel* panel)
 		{
-			panel->HorizontalAlignment = HorizaontalAllign::Stretch;
+			panel->HorizontalAlignment = HorizontalAlign::Stretch;
 			panel->VerticalAlignment = VerticalAlign::Stretch;
 
 			for (const ContextMenuItem& item : items_)
@@ -43,7 +43,7 @@ void ContextMenu::Open(Point position)
 				panel->AddChild(init<Button>([&](Button* itemButton)
 				{
 					itemButton->Text = item.Text;
-					itemButton->HorizontalAlignment = HorizaontalAllign::Stretch;
+					itemButton->HorizontalAlignment = HorizontalAlign::Stretch;
 					itemButton->Clicked += [&running, item]()
 					{
 						if (item.Action != nullptr)
