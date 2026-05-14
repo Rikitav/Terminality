@@ -17,10 +17,10 @@ target_sources(terminality
 
 if (WIN32)
   target_sources(terminality PRIVATE
-          src/PlatformSpecific/HostApplication.Windows.cpp
+          src/Framework/PlatformSpecific/HostApplication.Windows.cpp
   )
 elseif (UNIX)
   target_sources(terminality PRIVATE
-          src/PlatformSpecific/HostApplication.Linux.cpp
+          src/Framework/PlatformSpecific/HostApplication.Linux.cpp
   )
 endif()
