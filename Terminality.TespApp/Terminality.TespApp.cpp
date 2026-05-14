@@ -1,9 +1,9 @@
-﻿import std;
-import std.compat;
-import terminality;
+﻿import terminality;
 
-//#include <Windows.h>
+import <string>;
+import <functional>;
 
+#include <Windows.h>
 #undef MessageBox
 
 using namespace terminality;

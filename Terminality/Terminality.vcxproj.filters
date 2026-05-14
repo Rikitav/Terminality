@@ -15,186 +15,186 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="include\terminality\Controls\Grid.ixx">
+    <ClCompile Include="include\terminality\Controls\Layout\Grid.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Controls\StackPanel.ixx">
+    <ClCompile Include="include\terminality\Controls\Layout\StackPanel.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Models\Focus.ixx">
+    <ClCompile Include="include\terminality\Core\Focus.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Models\Layout.ixx">
+    <ClCompile Include="include\terminality\Core\Layout.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Models\InputEvent.ixx">
+    <ClCompile Include="include\terminality\Core\InputEvent.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Layout\ControlBase.ixx">
+    <ClCompile Include="include\terminality\Framework\ControlBase.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Controls\Border.ixx">
+    <ClCompile Include="include\terminality\Controls\Visual\Border.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Controls\Button.ixx">
+    <ClCompile Include="include\terminality\Controls\Interactable\Button.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Controls\TextBox.ixx">
+    <ClCompile Include="include\terminality\Controls\Interactable\TextBox.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Controls\ItemsControl.ixx">
+    <ClCompile Include="include\terminality\Controls\Layout\ItemsControl.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Controls\MessageBox.ixx">
+    <ClCompile Include="include\terminality\Dialogs\MessageBox.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Controls\ContextMenu.ixx">
+    <ClCompile Include="include\terminality\Dialogs\ContextMenu.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Controls\OpenFileDialog.ixx">
+    <ClCompile Include="include\terminality\Dialogs\OpenFileDialog.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\EventSignal.ixx">
+    <ClCompile Include="include\terminality\Framework\Event.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Layout\PropertyDescriptor.ixx">
+    <ClCompile Include="include\terminality\Framework\Property.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\HostApplication.ixx">
+    <ClCompile Include="include\terminality\Framework\HostApplication.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\FocusManager.ixx">
+    <ClCompile Include="include\terminality\Engine\FocusManager.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Layout\VisualTree.ixx">
+    <ClCompile Include="include\terminality\Framework\VisualTree.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="include\terminality\Terminality.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\RenderBuffer.ixx">
+    <ClCompile Include="include\terminality\Engine\RenderBuffer.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Models\Geometry.ixx">
+    <ClCompile Include="include\terminality\Core\Geometry.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\EventSignal.cpp">
+    <ClCompile Include="include\terminality\Engine\RenderContext.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\RenderContext.ixx">
+    <ClCompile Include="include\terminality\Framework\VisualTreeNode.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Layout\VisualTreeNode.ixx">
+    <ClCompile Include="src\Framework\PlatformSpecific\HostApplication.Linux.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\PlatformSpecific\HostApplication.Linux.cpp">
+    <ClCompile Include="include\terminality\Framework\Collections\ObservableCollection.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Collections\ObservableCollection.ixx">
+    <ClCompile Include="include\terminality\Framework\Collections\Queries.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Collections\Queries.ixx">
+    <ClCompile Include="include\terminality\Controls\Interactable\CheckBox.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Controls\CheckBox.ixx">
+    <ClCompile Include="src\Controls\Interactable\CheckBox.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\Controls\CheckBox.cpp">
+    <ClCompile Include="include\terminality\Controls\Visual\Label.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Controls\Label.ixx">
+    <ClCompile Include="src\Controls\Visual\Label.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\Controls\Label.cpp">
+    <ClCompile Include="include\terminality\Core\TextHelper.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Layout\TextHelper.ixx">
+    <ClCompile Include="src\Core\TextHelper.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\Layout\TextHelper.cpp">
+    <ClCompile Include="include\terminality\Engine\RenderStream.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\RenderStream.ixx">
+    <ClCompile Include="src\Engine\RenderStream.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\RenderStream.cpp">
+    <ClCompile Include="include\terminality\Controls\Visual\Spinner.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Controls\Spinner.ixx">
+    <ClCompile Include="src\Engine\DispatchTimer.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\DispatchTimer.cpp">
+    <ClCompile Include="include\terminality\Engine\DispatchTimer.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\DispatchTimer.ixx">
+    <ClCompile Include="include\terminality\Engine\Navigator.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Navigator.ixx">
+    <ClCompile Include="src\Engine\Navigator.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\Navigator.cpp">
+    <ClCompile Include="src\Controls\Visual\Spinner.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\Controls\Spinner.cpp">
+    <ClCompile Include="include\terminality\Controls\Visual\ProgressBar.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="include\terminality\Controls\ProgressBar.ixx">
+    <ClCompile Include="src\Controls\Visual\ProgressBar.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\Controls\ProgressBar.cpp">
+    <ClCompile Include="include\terminality\Core\Color.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\RenderBuffer.cpp">
+    <ClCompile Include="src\Engine\RenderBuffer.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\HostApplication.cpp">
+    <ClCompile Include="src\Framework\HostApplication.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\FocusManager.cpp">
+    <ClCompile Include="src\Engine\FocusManager.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\Layout\VisualTreeNode.cpp">
+    <ClCompile Include="src\Framework\VisualTreeNode.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\RenderContext.cpp">
+    <ClCompile Include="src\Engine\RenderContext.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\Layout\VisualTree.cpp">
+    <ClCompile Include="src\Framework\VisualTree.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\Models\Geometry.cpp">
+    <ClCompile Include="src\Core\Geometry.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\PlatformSpecific\HostApplication.Windows.cpp">
+    <ClCompile Include="src\Framework\PlatformSpecific\HostApplication.Windows.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\Controls\Border.cpp">
+    <ClCompile Include="src\Controls\Visual\Border.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\Controls\Button.cpp">
+    <ClCompile Include="src\Controls\Interactable\Button.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\Controls\TextBox.cpp">
+    <ClCompile Include="src\Controls\Interactable\TextBox.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\Controls\MessageBox.cpp">
+    <ClCompile Include="src\Dialogs\MessageBox.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\Controls\ContextMenu.cpp">
+    <ClCompile Include="src\Dialogs\ContextMenu.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\Controls\OpenFileDialog.cpp">
+    <ClCompile Include="src\Dialogs\OpenFileDialog.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\Layout\ControlBase.cpp">
+    <ClCompile Include="src\Framework\ControlBase.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\Controls\StackPanel.cpp">
+    <ClCompile Include="src\Controls\Layout\StackPanel.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\Controls\Grid.cpp">
+    <ClCompile Include="src\Controls\Layout\Grid.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>

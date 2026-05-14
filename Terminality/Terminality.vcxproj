@@ -120,7 +120,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp23</LanguageStandard>
       <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
-      <BuildStlModules>true</BuildStlModules>
+      <BuildStlModules>false</BuildStlModules>
       <BrowseInformation>true</BrowseInformation>
     </ClCompile>
     <Link>
@@ -150,68 +150,68 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="include\terminality\Controls\CheckBox.ixx" />
-    <ClCompile Include="include\terminality\Controls\Label.ixx" />
-    <ClCompile Include="include\terminality\Controls\ProgressBar.ixx" />
-    <ClCompile Include="include\terminality\Controls\Spinner.ixx" />
-    <ClCompile Include="include\terminality\DispatchTimer.ixx" />
-    <ClCompile Include="include\terminality\Layout\TextHelper.ixx" />
-    <ClCompile Include="include\terminality\Models\Geometry.ixx" />
-    <ClCompile Include="include\terminality\Controls\Grid.ixx" />
-    <ClCompile Include="include\terminality\Controls\StackPanel.ixx" />
-    <ClCompile Include="include\terminality\Models\Focus.ixx" />
-    <ClCompile Include="include\terminality\Models\Layout.ixx" />
-    <ClCompile Include="include\terminality\Models\InputEvent.ixx" />
-    <ClCompile Include="include\terminality\Navigator.ixx" />
-    <ClCompile Include="include\terminality\RenderContext.ixx" />
-    <ClCompile Include="include\terminality\Layout\ControlBase.ixx" />
-    <ClCompile Include="include\terminality\Controls\Border.ixx" />
-    <ClCompile Include="include\terminality\Controls\Button.ixx" />
-    <ClCompile Include="include\terminality\Controls\TextBox.ixx" />
-    <ClCompile Include="include\terminality\Controls\ItemsControl.ixx" />
-    <ClCompile Include="include\terminality\Controls\MessageBox.ixx" />
-    <ClCompile Include="include\terminality\Controls\ContextMenu.ixx" />
-    <ClCompile Include="include\terminality\Controls\OpenFileDialog.ixx" />
-    <ClCompile Include="include\terminality\EventSignal.ixx" />
-    <ClCompile Include="include\terminality\Layout\PropertyDescriptor.ixx" />
-    <ClCompile Include="include\terminality\HostApplication.ixx" />
-    <ClCompile Include="include\terminality\FocusManager.ixx" />
-    <ClCompile Include="include\terminality\Layout\VisualTreeNode.ixx" />
-    <ClCompile Include="include\terminality\Layout\VisualTree.ixx" />
-    <ClCompile Include="include\terminality\RenderStream.ixx" />
+    <ClCompile Include="include\terminality\Controls\Interactable\CheckBox.ixx" />
+    <ClCompile Include="include\terminality\Controls\Visual\Label.ixx" />
+    <ClCompile Include="include\terminality\Controls\Visual\ProgressBar.ixx" />
+    <ClCompile Include="include\terminality\Controls\Visual\Spinner.ixx" />
+    <ClCompile Include="include\terminality\Core\Color.ixx" />
+    <ClCompile Include="include\terminality\Engine\DispatchTimer.ixx" />
+    <ClCompile Include="include\terminality\Core\TextHelper.ixx" />
+    <ClCompile Include="include\terminality\Core\Geometry.ixx" />
+    <ClCompile Include="include\terminality\Controls\Layout\Grid.ixx" />
+    <ClCompile Include="include\terminality\Controls\Layout\StackPanel.ixx" />
+    <ClCompile Include="include\terminality\Core\Focus.ixx" />
+    <ClCompile Include="include\terminality\Core\Layout.ixx" />
+    <ClCompile Include="include\terminality\Core\InputEvent.ixx" />
+    <ClCompile Include="include\terminality\Engine\Navigator.ixx" />
+    <ClCompile Include="include\terminality\Engine\RenderContext.ixx" />
+    <ClCompile Include="include\terminality\Framework\ControlBase.ixx" />
+    <ClCompile Include="include\terminality\Controls\Visual\Border.ixx" />
+    <ClCompile Include="include\terminality\Controls\Interactable\Button.ixx" />
+    <ClCompile Include="include\terminality\Controls\Interactable\TextBox.ixx" />
+    <ClCompile Include="include\terminality\Controls\Layout\ItemsControl.ixx" />
+    <ClCompile Include="include\terminality\Dialogs\MessageBox.ixx" />
+    <ClCompile Include="include\terminality\Dialogs\ContextMenu.ixx" />
+    <ClCompile Include="include\terminality\Dialogs\OpenFileDialog.ixx" />
+    <ClCompile Include="include\terminality\Framework\Event.ixx" />
+    <ClCompile Include="include\terminality\Framework\Property.ixx" />
+    <ClCompile Include="include\terminality\Framework\HostApplication.ixx" />
+    <ClCompile Include="include\terminality\Engine\FocusManager.ixx" />
+    <ClCompile Include="include\terminality\Framework\VisualTreeNode.ixx" />
+    <ClCompile Include="include\terminality\Framework\VisualTree.ixx" />
+    <ClCompile Include="include\terminality\Engine\RenderStream.ixx" />
     <ClCompile Include="include\terminality\Terminality.ixx" />
-    <ClCompile Include="include\terminality\RenderBuffer.ixx" />
-    <ClCompile Include="include\terminality\Collections\ObservableCollection.ixx" />
-    <ClCompile Include="include\terminality\Collections\Queries.ixx" />
-    <ClCompile Include="src\Controls\ProgressBar.cpp" />
-    <ClCompile Include="src\Controls\Spinner.cpp" />
-    <ClCompile Include="src\DispatchTimer.cpp" />
-    <ClCompile Include="src\Navigator.cpp" />
-    <ClCompile Include="src\RenderStream.cpp" />
+    <ClCompile Include="include\terminality\Engine\RenderBuffer.ixx" />
+    <ClCompile Include="include\terminality\Framework\Collections\ObservableCollection.ixx" />
+    <ClCompile Include="include\terminality\Framework\Collections\Queries.ixx" />
+    <ClCompile Include="src\Controls\Visual\ProgressBar.cpp" />
+    <ClCompile Include="src\Controls\Visual\Spinner.cpp" />
+    <ClCompile Include="src\Engine\DispatchTimer.cpp" />
+    <ClCompile Include="src\Engine\Navigator.cpp" />
+    <ClCompile Include="src\Engine\RenderStream.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Controls\CheckBox.cpp" />
-    <ClCompile Include="src\Controls\Label.cpp" />
-    <ClCompile Include="src\Layout\TextHelper.cpp" />
-    <ClCompile Include="src\Models\Geometry.cpp" />
-    <ClCompile Include="src\Controls\Grid.cpp" />
-    <ClCompile Include="src\Controls\StackPanel.cpp" />
-    <ClCompile Include="src\EventSignal.cpp" />
-    <ClCompile Include="src\Layout\ControlBase.cpp" />
-    <ClCompile Include="src\Controls\Border.cpp" />
-    <ClCompile Include="src\Controls\Button.cpp" />
-    <ClCompile Include="src\Controls\TextBox.cpp" />
-    <ClCompile Include="src\Controls\MessageBox.cpp" />
-    <ClCompile Include="src\Controls\ContextMenu.cpp" />
-    <ClCompile Include="src\Controls\OpenFileDialog.cpp" />
-    <ClCompile Include="src\HostApplication.cpp" />
-    <ClCompile Include="src\FocusManager.cpp" />
-    <ClCompile Include="src\PlatformSpecific\HostApplication.Linux.cpp" />
-    <ClCompile Include="src\PlatformSpecific\HostApplication.Windows.cpp" />
-    <ClCompile Include="src\RenderBuffer.cpp" />
-    <ClCompile Include="src\RenderContext.cpp" />
-    <ClCompile Include="src\Layout\VisualTreeNode.cpp" />
-    <ClCompile Include="src\Layout\VisualTree.cpp" />
+    <ClCompile Include="src\Controls\Interactable\CheckBox.cpp" />
+    <ClCompile Include="src\Controls\Visual\Label.cpp" />
+    <ClCompile Include="src\Core\TextHelper.cpp" />
+    <ClCompile Include="src\Core\Geometry.cpp" />
+    <ClCompile Include="src\Controls\Layout\Grid.cpp" />
+    <ClCompile Include="src\Controls\Layout\StackPanel.cpp" />
+    <ClCompile Include="src\Framework\ControlBase.cpp" />
+    <ClCompile Include="src\Controls\Visual\Border.cpp" />
+    <ClCompile Include="src\Controls\Interactable\Button.cpp" />
+    <ClCompile Include="src\Controls\Interactable\TextBox.cpp" />
+    <ClCompile Include="src\Dialogs\MessageBox.cpp" />
+    <ClCompile Include="src\Dialogs\ContextMenu.cpp" />
+    <ClCompile Include="src\Dialogs\OpenFileDialog.cpp" />
+    <ClCompile Include="src\Framework\HostApplication.cpp" />
+    <ClCompile Include="src\Engine\FocusManager.cpp" />
+    <ClCompile Include="src\Framework\PlatformSpecific\HostApplication.Linux.cpp" />
+    <ClCompile Include="src\Framework\PlatformSpecific\HostApplication.Windows.cpp" />
+    <ClCompile Include="src\Engine\RenderBuffer.cpp" />
+    <ClCompile Include="src\Engine\RenderContext.cpp" />
+    <ClCompile Include="src\Framework\VisualTreeNode.cpp" />
+    <ClCompile Include="src\Framework\VisualTree.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />
