@@ -16,34 +16,58 @@ const wchar_t* RenderBuffer::GetAsniBg(Color color)
 {
 	switch (color)
 	{
+		// default
 		case Color::BLACK:          return L"\x1b[40m";
-		case Color::DARK_CYAN:      return L"\x1b[46m";
-		case Color::CYAN:           return L"\x1b[106m";
-		case Color::GREEN:          return L"\x1b[42m";
+		case Color::DARK_RED:       return L"\x1b[41m";
+		case Color::DARK_GREEN:     return L"\x1b[42m";
 		case Color::DARK_YELLOW:    return L"\x1b[43m";
-		case Color::YELLOW:         return L"\x1b[103m";
-		case Color::MAGENTA:        return L"\x1b[45m";
-		case Color::WHITE:          return L"\x1b[47m";
+		case Color::DARK_BLUE:      return L"\x1b[44m";
+		case Color::DARK_MAGENTA:   return L"\x1b[45m";
+		case Color::DARK_CYAN:      return L"\x1b[46m";
+		case Color::LIGHT_GRAY:     return L"\x1b[47m";
+
+		// light
 		case Color::DARK_GRAY:      return L"\x1b[100m";
+		case Color::RED:            return L"\x1b[101m";
+		case Color::GREEN:          return L"\x1b[102m";
+		case Color::YELLOW:         return L"\x1b[103m";
+		case Color::BLUE:           return L"\x1b[104m";
+		case Color::MAGENTA:        return L"\x1b[105m";
+		case Color::CYAN:           return L"\x1b[106m";
+		case Color::WHITE:          return L"\x1b[107m";
+
+		case Color::TRANSPARENT:    return L"";
 		default:                    return L"\x1b[40m";
 	}
 }
 
 const wchar_t* RenderBuffer::GetAsniFg(Color color)
 {
-    switch (color)
-    {
-        case Color::BLACK:          return L"\x1b[30m";
-        case Color::DARK_CYAN:      return L"\x1b[36m";
-        case Color::CYAN:           return L"\x1b[96m";
-        case Color::GREEN:          return L"\x1b[32m";
-        case Color::DARK_YELLOW:    return L"\x1b[33m";
-        case Color::YELLOW:         return L"\x1b[93m";
-        case Color::MAGENTA:        return L"\x1b[95m";
-        case Color::WHITE:          return L"\x1b[37m";
-        case Color::DARK_GRAY:      return L"\x1b[90m";
-        default:                    return L"\x1b[37m";
-    }
+	switch (color)
+	{
+		// default
+		case Color::BLACK:          return L"\x1b[30m";
+		case Color::DARK_RED:       return L"\x1b[31m";
+		case Color::DARK_GREEN:     return L"\x1b[32m";
+		case Color::DARK_YELLOW:    return L"\x1b[33m";
+		case Color::DARK_BLUE:      return L"\x1b[34m";
+		case Color::DARK_MAGENTA:   return L"\x1b[35m";
+		case Color::DARK_CYAN:      return L"\x1b[36m";
+		case Color::LIGHT_GRAY:     return L"\x1b[37m";
+
+		// light
+		case Color::DARK_GRAY:      return L"\x1b[90m";
+		case Color::RED:            return L"\x1b[91m";
+		case Color::GREEN:          return L"\x1b[92m";
+		case Color::YELLOW:         return L"\x1b[93m";
+		case Color::BLUE:           return L"\x1b[94m";
+		case Color::MAGENTA:        return L"\x1b[95m";
+		case Color::CYAN:           return L"\x1b[96m";
+		case Color::WHITE:          return L"\x1b[97m";
+
+		case Color::TRANSPARENT:    return L"";
+		default:                    return L"\x1b[37m";
+	}
 }
 
 RenderBuffer::RenderBuffer(uint32_t initialWidth, uint32_t initialHeight)
@@ -88,7 +112,16 @@ void RenderBuffer::SetCell(uint32_t x, uint32_t y, const CellInfo& cell)
 	CellInfo& target = buffer[GetIndex(x, y)];
 	if (target != cell)
 	{
-		target = cell;
+		if (cell.Back != Color::TRANSPARENT)
+			target.Back = cell.Back;
+
+		if (cell.Fore != Color::TRANSPARENT)
+			target.Fore = cell.Fore;
+
+		if (cell.Symbol != L'\0')
+			target.Symbol = cell.Symbol;
+
+		//target = cell;
 		MarkDirty(Rect(static_cast<int32_t>(x), static_cast<int32_t>(y), 1, 1));
 	}
 }
