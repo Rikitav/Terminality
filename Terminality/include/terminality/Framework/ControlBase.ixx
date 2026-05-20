@@ -3,6 +3,7 @@ module;
 #include <memory>
 #include <functional>
 #include <cstdint>
+#include <string>
 
 export module terminality:ControlBase;
 
@@ -76,6 +77,8 @@ export namespace terminality
 		Event<InputEvent> KeyDown;
 		Event<InputEvent> KeyUp;
 
+		Property<ControlBase, std::string> Tag { this, "Tag", "", InvalidationKind::None };
+
 		Property<ControlBase, Size> MinSize { this, "MinSize", Size::Auto, InvalidationKind::Measure };
 		Property<ControlBase, Size> MaxSize { this, "MaxSize", Size::Auto, InvalidationKind::Measure };
 		Property<ControlBase, Size> ExpSize { this, "ExpSize", Size::Auto, InvalidationKind::Measure };
@@ -125,6 +128,25 @@ export namespace terminality
 
 		// Navigation
 		void Close();
+
+		template<typename T = ControlBase>
+		T* QueryByTag(std::string_view tag)
+		{
+			if (Tag.Get() == tag)
+				return dynamic_cast<T*>(this);
+
+			for (std::size_t i = 0; i < VisualChildrenCount(); ++i)
+			{
+				VisualTreeNode* childNode = GetVisualChild(i);
+				if (auto* childControl = dynamic_cast<ControlBase*>(childNode))
+				{
+					if (auto* result = childControl->QueryByTag<T>(tag))
+						return result;
+				}
+			}
+
+			return nullptr;
+		}
 
 	protected:
 		// Layout
