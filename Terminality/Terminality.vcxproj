@@ -175,6 +175,7 @@
     <ClCompile Include="include\terminality\Dialogs\ContextMenu.ixx" />
     <ClCompile Include="include\terminality\Dialogs\OpenFileDialog.ixx" />
     <ClCompile Include="include\terminality\Framework\Event.ixx" />
+    <ClCompile Include="include\terminality\Framework\PlatformSpecific\Windows.ixx" />
     <ClCompile Include="include\terminality\Framework\Property.ixx" />
     <ClCompile Include="include\terminality\Framework\HostApplication.ixx" />
     <ClCompile Include="include\terminality\Engine\FocusManager.ixx" />
@@ -212,6 +213,7 @@
     <ClCompile Include="src\Framework\PlatformSpecific\HostApplication.Windows.cpp" />
     <ClCompile Include="src\Engine\RenderBuffer.cpp" />
     <ClCompile Include="src\Engine\RenderContext.cpp" />
+    <ClCompile Include="src\Framework\PlatformSpecific\Windows.cpp" />
     <ClCompile Include="src\Framework\VisualTreeNode.cpp" />
     <ClCompile Include="src\Framework\VisualTree.cpp" />
   </ItemGroup>

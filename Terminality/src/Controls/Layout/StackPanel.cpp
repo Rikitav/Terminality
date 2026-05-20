@@ -1,5 +1,4 @@
 module;
-
 #include <cstdint>
 #include <memory>
 #include <algorithm>
@@ -7,94 +6,140 @@ module;
 #include <vector>
 
 module terminality;
-
 using namespace terminality;
 
 void StackPanel::AddChild(std::unique_ptr<ControlBase> child)
 {
-	if (!child)
-		return;
+    if (child == nullptr)
+        return;
 
-	child->SetParent(this);
-	if (!child->IsAttached())
-		child->OnAttachedToTree();
+    child->SetParent(this);
+    if (!child->IsAttached())
+        child->OnAttachedToTree();
 
-	contents_.push_back(std::move(child));
-	InvalidateMeasure();
+    contents_.push_back(std::move(child));
+
+    if (AutoScrollToEnd.Get())
+    {
+        forceScrollToEnd_ = true;
+        focusedIndex_ = contents_.size() - 1;
+    }
+
+    InvalidateMeasure();
 }
 
 std::unique_ptr<ControlBase> StackPanel::RemoveChild(ControlPredicate predicate)
 {
-	const auto found = std::find_if(contents_.begin(), contents_.end(),
-		[&](const std::unique_ptr<ControlBase>& control) { return predicate(control.get()); });
+    const auto found = std::find_if(contents_.begin(), contents_.end(),
+        [&](const std::unique_ptr<ControlBase>& control) { return predicate(control.get()); });
 
-	if (found == contents_.end())
-		return nullptr;
+    if (found == contents_.end())
+        return nullptr;
 
-	std::unique_ptr<ControlBase> removed = std::move(*found);
-	contents_.erase(found);
+    std::unique_ptr<ControlBase> removed = std::move(*found);
+    contents_.erase(found);
 
-	if (removed)
-		removed->SetParent(nullptr);
+    if (removed)
+        removed->SetParent(nullptr);
 
-	if (focusedIndex_ >= contents_.size())
-		focusedIndex_ = contents_.empty() ? 0 : contents_.size() - 1;
+    if (focusedIndex_ >= contents_.size())
+        focusedIndex_ = contents_.empty() ? 0 : contents_.size() - 1;
 
-	InvalidateMeasure();
-	return removed;
+    InvalidateMeasure();
+    return removed;
 }
 
 void StackPanel::Insert(size_t index, std::unique_ptr<ControlBase> child)
 {
-	if (!child)
-		return;
+    if (child == nullptr)
+        return;
 
-	if (index > contents_.size())
-		index = contents_.size();
+    if (index > contents_.size())
+        index = contents_.size();
 
-	child->SetParent(this);
-	if (!child->IsAttached())
-		child->OnAttachedToTree();
+    child->SetParent(this);
+    if (!child->IsAttached())
+        child->OnAttachedToTree();
 
-	contents_.insert(contents_.begin() + index, std::move(child));
+    contents_.insert(contents_.begin() + index, std::move(child));
 
     if (focusedIndex_ >= index && focusedIndex_ < contents_.size() - 1)
         focusedIndex_++;
     else
         PushFocus(child.get());
 
-	InvalidateMeasure();
+    if (AutoScrollToEnd.Get())
+    {
+        forceScrollToEnd_ = true;
+        focusedIndex_ = contents_.size() - 1;
+    }
+
+    InvalidateMeasure();
 }
 
 std::unique_ptr<ControlBase> StackPanel::RemoveAt(size_t index)
 {
-	if (index >= contents_.size())
-		return nullptr;
+    if (index >= contents_.size())
+        return nullptr;
 
-	std::unique_ptr<ControlBase> removed = std::move(contents_[index]);
-	contents_.erase(contents_.begin() + index);
+    std::unique_ptr<ControlBase> removed = std::move(contents_[index]);
+    contents_.erase(contents_.begin() + index);
 
-	if (removed)
-		removed->SetParent(nullptr);
+    if (removed)
+        removed->SetParent(nullptr);
 
-	if (focusedIndex_ >= contents_.size())
-		focusedIndex_ = contents_.empty() ? 0 : contents_.size() - 1;
+    if (focusedIndex_ >= contents_.size())
+        focusedIndex_ = contents_.empty() ? 0 : contents_.size() - 1;
 
-	InvalidateMeasure();
-	return removed;
+    InvalidateMeasure();
+    return removed;
 }
 
 void StackPanel::Clear()
 {
-	for (auto& child : contents_)
-	{
-		if (child)
-			child->SetParent(nullptr);
-	}
-	
-	contents_.clear();
-	focusedIndex_ = 0;
-	InvalidateMeasure();
+    for (auto& child : contents_)
+    {
+        if (child)
+            child->SetParent(nullptr);
+    }
+
+    contents_.clear();
+    focusedIndex_ = 0;
+    scrollOffset_ = 0;
+    InvalidateMeasure();
+}
+
+void StackPanel::ScrollIntoView()
+{
+    if (!Scrollable || contents_.empty() || focusedIndex_ >= contents_.size())
+        return;
+
+    int32_t childStart = 0;
+    int32_t childSize = 0;
+
+    for (size_t i = 0; i <= focusedIndex_; ++i)
+    {
+        Size sz = contents_[i]->GetActualSize();
+        if (i == focusedIndex_)
+        {
+            childSize = (ContentOrientation == Orientation::Vertical) ? sz.Height : sz.Width;
+            break;
+        }
+
+        childStart += (ContentOrientation == Orientation::Vertical) ? sz.Height : sz.Width;
+    }
+
+    int32_t viewSize = (ContentOrientation == Orientation::Vertical) ? GetArrangedRect().Height : GetArrangedRect().Width;
+    if (childStart < scrollOffset_)
+    {
+        scrollOffset_ = childStart;
+        InvalidateArrange();
+    }
+    else if (childStart + childSize > scrollOffset_ + viewSize)
+    {
+        scrollOffset_ = childStart + childSize - viewSize;
+        InvalidateArrange();
+    }
 }
 
 void StackPanel::OnGotFocus()
@@ -111,6 +156,7 @@ void StackPanel::OnGotFocus()
         if (focusedControl->IsFocusable())
         {
             PushFocus(focusedControl);
+            ScrollIntoView();
             InvalidateVisual();
             return;
         }
@@ -123,6 +169,7 @@ void StackPanel::OnGotFocus()
         {
             focusedIndex_ = i;
             PushFocus(focusedControl);
+            ScrollIntoView();
             break;
         }
     }
@@ -132,8 +179,8 @@ void StackPanel::OnGotFocus()
 
 void StackPanel::OnLostFocus()
 {
-	focused_ = false;
-	InvalidateVisual();
+    focused_ = false;
+    InvalidateVisual();
 }
 
 size_t StackPanel::VisualChildrenCount() const
@@ -148,16 +195,7 @@ VisualTreeNode* StackPanel::GetVisualChild(size_t index) const
 
 void StackPanel::OnPropertyChanged(const char* propertyName)
 {
-	/*
-	if (std::strcmp(propertyName, "Content") == 0)
-	{
-		InvalidateMeasure();
-		InvalidateVisual();
-		return;
-	}
-	*/
-
-	ControlBase::OnPropertyChanged(propertyName);
+    ControlBase::OnPropertyChanged(propertyName);
 }
 
 bool StackPanel::MoveFocusNext(Direction direction, InputModifier modifiers)
@@ -175,42 +213,33 @@ bool StackPanel::MoveFocusNext(Direction direction, InputModifier modifiers)
             goBack = true;
             break;
         }
-
         case Direction::Next:
         {
             goForward = true;
             break;
         }
-
         case Direction::Up:
         {
             if (ContentOrientation == Orientation::Vertical)
                 goBack = true;
-
             break;
         }
-
         case Direction::Down:
         {
             if (ContentOrientation == Orientation::Vertical)
                 goForward = true;
-
             break;
         }
-
         case Direction::Left:
         {
             if (ContentOrientation == Orientation::Horizontal)
                 goBack = true;
-
             break;
         }
-
         case Direction::Right:
         {
             if (ContentOrientation == Orientation::Horizontal)
                 goForward = true;
-
             break;
         }
     }
@@ -224,7 +253,6 @@ bool StackPanel::MoveFocusNext(Direction direction, InputModifier modifiers)
             {
                 if (hasFlag(modifiers, InputModifier::LeftAlt) || hasFlag(modifiers, InputModifier::RightAlt))
                     return false;
-
                 focusedIndex_ = contents_.size() - 1;
             }
             else
@@ -244,6 +272,7 @@ bool StackPanel::MoveFocusNext(Direction direction, InputModifier modifiers)
             {
                 focusedIndex_ = i;
                 PushFocus(control);
+                ScrollIntoView();
                 return true;
             }
         }
@@ -256,7 +285,6 @@ bool StackPanel::MoveFocusNext(Direction direction, InputModifier modifiers)
             {
                 if (hasFlag(modifiers, InputModifier::LeftAlt) || hasFlag(modifiers, InputModifier::RightAlt))
                     return false;
-
                 focusedIndex_ = 0;
             }
             else
@@ -268,7 +296,7 @@ bool StackPanel::MoveFocusNext(Direction direction, InputModifier modifiers)
         {
             focusedIndex_ += 1;
         }
-            
+
         for (size_t i = focusedIndex_; i < contents_.size(); i++)
         {
             ControlBase* control = contents_[i].get();
@@ -276,6 +304,7 @@ bool StackPanel::MoveFocusNext(Direction direction, InputModifier modifiers)
             {
                 focusedIndex_ = i;
                 PushFocus(control);
+                ScrollIntoView();
                 return true;
             }
         }
@@ -334,6 +363,25 @@ void StackPanel::ArrangeOverride(const Rect& contentRect)
         }
     }
 
+    if (Scrollable)
+    {
+        int32_t maxScroll = std::max(0, (ContentOrientation == Orientation::Vertical)
+            ? (totalContentHeight - contentRect.Height)
+            : (totalContentWidth - contentRect.Width));
+        
+        if (AutoScrollToEnd.Get() && forceScrollToEnd_)
+        {
+            scrollOffset_ = maxScroll;
+            forceScrollToEnd_ = false;
+        }
+
+        scrollOffset_ = std::clamp(scrollOffset_, 0, maxScroll);
+    }
+    else
+    {
+        scrollOffset_ = 0;
+    }
+
     int32_t startX = 0;
     int32_t startY = 0;
 
@@ -352,8 +400,8 @@ void StackPanel::ArrangeOverride(const Rect& contentRect)
             startX = std::max(0, contentRect.Width - totalContentWidth) / 2;
     }
 
-    int32_t currentX = startX;
-    int32_t currentY = startY;
+    int32_t currentX = startX - (ContentOrientation == Orientation::Horizontal ? scrollOffset_ : 0);
+    int32_t currentY = startY - (ContentOrientation == Orientation::Vertical ? scrollOffset_ : 0);
 
     for (const std::unique_ptr<ControlBase>& child : contents_)
     {
@@ -387,10 +435,11 @@ void StackPanel::ArrangeOverride(const Rect& contentRect)
 void StackPanel::RenderOverride(RenderContext& context)
 {
     Rect allowed = context.ContextRect();
+
     for (const std::unique_ptr<ControlBase>& child : contents_)
     {
         Rect childRect = child->GetArrangedRect();
-        if (allowed.Contains(childRect))
+        if (allowed.Intersects(childRect))
         {
             RenderContext childContext = context.CreateInner(childRect);
             child->Render(childContext);

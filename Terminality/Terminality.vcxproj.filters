@@ -150,6 +150,12 @@
     <ClCompile Include="src\Controls\Layout\ScrollViewer.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="src\Framework\PlatformSpecific\Windows.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="include\terminality\Framework\PlatformSpecific\Windows.ixx">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\RenderBuffer.cpp">

@@ -21,12 +21,16 @@ export namespace terminality
 	protected:
 		std::vector<std::unique_ptr<ControlBase>> contents_;
 		std::size_t focusedIndex_ = 0;
+		int32_t scrollOffset_ = 0;
+		bool forceScrollToEnd_ = false;
 
 	public:
 		Property<StackPanel, Orientation> ContentOrientation						  { this, "ContentOrientation", Orientation::Vertical, InvalidationKind::Measure };
 		Property<StackPanel, terminality::HorizontalAlign> HorizontalContentAlignment { this, "HorizontalContentAlignment", HorizontalAlign::Stretch, InvalidationKind::Measure };
 		Property<StackPanel, terminality::VerticalAlign> VerticalContentAlignment	  { this, "VerticalContentAlignment", VerticalAlign::Stretch, InvalidationKind::Measure };
 		Property<StackPanel, bool> Looping											  { this, "Looping", false, InvalidationKind::None };
+		Property<StackPanel, bool> Scrollable                                         { this, "Scrollable", false, InvalidationKind::Arrange };
+		Property<StackPanel, bool> AutoScrollToEnd                                    { this, "AutoScrollToEnd", false, InvalidationKind::None };
 
 		StackPanel() = default;
 
@@ -49,5 +53,7 @@ export namespace terminality
 		Size MeasureOverride(const Size& availableSize) override;
 		void ArrangeOverride(const Rect& contentRect) override;
 		void RenderOverride(RenderContext& context) override;
+
+		void ScrollIntoView();
 	};
 }

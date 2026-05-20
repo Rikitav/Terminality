@@ -84,32 +84,31 @@ namespace TestApp
             {
                 chatBorder->Margin = Thickness(0, 1, 0, 0);
                 chatBorder->HeaderText = L"Чат: Tamerlan";
-                chatBorder->Content = init<ScrollViewer>([&](ScrollViewer* chatHistoryScroll)
+                chatBorder->Content = init<ItemsControl<MessageModel>>([&](ItemsControl<MessageModel>* chatHistory)
                 {
-                    chatHistoryScroll->Content = init<ItemsControl<MessageModel>>([&](ItemsControl<MessageModel>* chatList)
+                    //chatList->ContentOrientation = Orientation::Horizontal;
+                    chatHistory->SetItemsSource(&chatHistory_);
+                    chatHistory->Scrollable = true;
+                    chatHistory->AutoScrollToEnd = true;
+
+                    chatHistory->SetItemTemplate([](const MessageModel& item) -> std::unique_ptr<ControlBase>
                     {
-                        //chatList->ContentOrientation = Orientation::Horizontal;
-                        chatList->SetItemsSource(&chatHistory_);
-
-                        chatList->SetItemTemplate([](const MessageModel& item) -> std::unique_ptr<ControlBase>
+                        return init<MessageBubble>([&](MessageBubble* bubble)
                         {
-                            return init<MessageBubble>([&](MessageBubble* bubble)
+                            bubble->message_ = item;
+                            bubble->CtxMenu = init<ContextMenu>([](ContextMenu* menu)
                             {
-                                bubble->message_ = item;
-                                bubble->CtxMenu = init<ContextMenu>([](ContextMenu* menu)
-                                {
-                                    menu->AddItem(L"Test2", []() { MessageBox::Show(L"ContextMenu.Test2", L"ContextMenu.Test2"); });
+                                menu->AddItem(L"Test2", []() { MessageBox::Show(L"ContextMenu.Test2", L"ContextMenu.Test2"); });
 #ifdef _WIN32
-                                    menu->AddItem(L"Test1", []() { MessageBoxA(nullptr, "ContextMenu.Test1", nullptr, 0); });
+                                menu->AddItem(L"Test1", []() { AlertAsync(L"ContextMenu.Test1", L""); });
 #endif
-                                });
-
-                                bubble->OnHotkey(InputModifier::None, InputKey::D, [](ControlBase* self)
-                                {
-                                    self->OpenContextMenu();
-                                });
-
                             });
+
+                            bubble->OnHotkey(InputModifier::None, InputKey::D, [](ControlBase* self)
+                            {
+                                self->OpenContextMenu();
+                            });
+
                         });
                     });
                 });

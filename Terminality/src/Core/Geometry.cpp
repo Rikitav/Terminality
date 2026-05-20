@@ -101,6 +101,14 @@ bool Rect::Contains(Rect inner) const
 		&& ((Y + Height) >= (inner.Y + inner.Height));
 }
 
+bool Rect::Intersects(Rect other) const
+{
+	return !(other.X >= X + Width
+		|| other.X + other.Width <= X
+		|| other.Y >= Y + Height
+		|| other.Y + other.Height <= Y);
+}
+
 bool Rect::IsEmpty() const
 {
 	return Width <= 0 || Height <= 0;

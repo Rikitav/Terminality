@@ -49,3 +49,6 @@ export import :Property;
 export import :ControlBase;
 export import :Event;
 export import :Host;
+
+// terminality.PlatformSpecific
+export import :Windows;
