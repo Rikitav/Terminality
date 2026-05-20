@@ -203,7 +203,7 @@ export namespace terminality
         NumLockOn = 1 << 5,
         ScrollLockOn = 1 << 6,
         CapsLockOn = 1 << 7,
-        Special = 1 << 8,
+        Special = 1 << 20,
     };
 
     constexpr InputModifier operator|(InputModifier a, InputModifier b)
