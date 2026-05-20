@@ -1,8 +1,10 @@
-export module terminality:DispatchTimer;
+module;
 
-import <cstdint>;
-import <atomic>;
-import <chrono>;
+#include <cstdint>
+#include <atomic>
+#include <chrono>
+
+export module terminality:DispatchTimer;
 
 import :Event;
 

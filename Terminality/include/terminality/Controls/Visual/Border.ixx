@@ -1,8 +1,10 @@
-export module terminality:Border;
+module;
 
-import <cstdint>;
-import <string>;
-import <memory>;
+#include <cstdint>
+#include <string>
+#include <memory>
+
+export module terminality:Border;
 
 import :Color;
 import :Property;
@@ -16,13 +18,13 @@ export namespace terminality
 	{
 		LeftTopCorner,
 		LeftBottomCorner,
-		
+
 		RightTopCorner,
 		RightBottomCorner,
-		
+
 		LeftVerticalLine,
 		RightVerticalLine,
-		
+
 		TopHorizontalLine,
 		BottomHorizontalLine
 	};

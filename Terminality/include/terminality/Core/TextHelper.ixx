@@ -1,8 +1,10 @@
-export module terminality:TextHelper;
+module;
 
-import <cstdint>;
-import <vector>;
-import <string>;
+#include <cstdint>
+#include <vector>
+#include <string>
+
+export module terminality:TextHelper;
 
 import :Layout;
 

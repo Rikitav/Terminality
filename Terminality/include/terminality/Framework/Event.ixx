@@ -1,9 +1,11 @@
-export module terminality:Event;
+module;
 
-import <unordered_map>;
-import <functional>;
-import <cstdint>;
-import <memory>;
+#include <unordered_map>
+#include <functional>
+#include <cstdint>
+#include <memory>
+
+export module terminality:Event;
 
 export namespace terminality
 {
@@ -59,7 +61,7 @@ export namespace terminality
 		void operator+=(Handler<Args...> handler);
 		[[nodiscard]] EventConnection<Args...> Connect(Handler<Args...> handler);
 		void Emit(Args... args);
-		
+
 	private:
 		void Disconnect(std::size_t id);
 	};

@@ -1,6 +1,8 @@
-export module terminality:Navigator;
+module;
 
-import <memory>;
+#include <memory>
+
+export module terminality:Navigator;
 
 import :VisualTree;
 import :VisualTreeNode;
@@ -15,7 +17,7 @@ export namespace terminality
 		static Navigator& Current();
 
 		void Navigate(std::unique_ptr<VisualTreeNode> page);
-		
+
 		bool CanGoBack() const;
 		bool GoBack();
 		void GoHome();

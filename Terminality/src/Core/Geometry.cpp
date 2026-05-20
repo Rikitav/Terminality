@@ -1,7 +1,9 @@
-module terminality;
+module;
 
-import std;
-import std.compat;
+#include <cstdint>
+#include <algorithm>
+
+module terminality;
 
 using namespace terminality;
 
@@ -85,7 +87,18 @@ Size Rect::AsSize() const
 
 bool Rect::Contains(Point point) const
 {
-	return point.X >= X && point.X < X + Width && point.Y >= Y && point.Y < Y + Height;
+	return (point.X >= X)
+		&& (point.X < X + Width)
+		&& (point.Y >= Y)
+		&& (point.Y < Y + Height);
+}
+
+bool Rect::Contains(Rect inner) const
+{
+	return (X <= inner.X)
+		&& (Y <= inner.Y)
+		&& ((X + Width) >= (inner.X + inner.Width))
+		&& ((Y + Height) >= (inner.Y + inner.Height));
 }
 
 bool Rect::IsEmpty() const

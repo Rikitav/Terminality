@@ -1,8 +1,10 @@
-export module terminality:RenderBuffer;
+module;
 
-import <cstdint>;
-import <vector>;
-import <mutex>;
+#include <cstdint>
+#include <vector>
+#include <mutex>
+
+export module terminality:RenderBuffer;
 
 import :Color;
 import :Geometry;
@@ -24,7 +26,7 @@ export namespace terminality
 		{
 			return Symbol == other.Symbol && Fore == other.Fore && Back == other.Back;
 		}
-		
+
 		bool operator!=(const CellInfo& other) const
 		{
 			return !(*this == other);

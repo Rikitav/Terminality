@@ -1,7 +1,9 @@
-export module terminality:Property;
+module;
 
-import <cstdint>;
-import <xutility>;
+#include <cstdint>
+#include <functional>
+
+export module terminality:Property;
 
 import :Event;
 

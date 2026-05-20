@@ -1,8 +1,10 @@
-export module terminality:Grid;
+module;
 
-import <cstdint>;
-import <memory>;
-import <vector>;
+#include <cstdint>
+#include <memory>
+#include <vector>
+
+export module terminality:Grid;
 
 import :InputEvent;
 import :Focus;

@@ -1,7 +1,9 @@
-export module terminality:ContextMenu;
+module;
 
-import <string>;
-import <functional>;
+#include <string>
+#include <functional>
+
+export module terminality:ContextMenu;
 
 import :Geometry;
 

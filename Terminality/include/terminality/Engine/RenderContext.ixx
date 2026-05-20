@@ -1,7 +1,9 @@
-﻿export module terminality:RenderContext;
+﻿module;
 
-import <string>;
-import <cstdint>;
+#include <string>
+#include <cstdint>
+
+export module terminality:RenderContext;
 
 import :Color;
 import :Geometry;

@@ -1,6 +1,8 @@
-export module terminality:FocusManager;
+module;
 
-import <vector>;
+#include <vector>
+
+export module terminality:FocusManager;
 
 import :Focus;
 import :InputEvent;

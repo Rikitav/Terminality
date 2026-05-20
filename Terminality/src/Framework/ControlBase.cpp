@@ -1,7 +1,12 @@
+module;
+
+#include <cstdint>
+#include <algorithm>
+#include <memory>
+#include <functional>
+
 module terminality;
 
-import std;
-import std.compat;
 import :ContextMenu;
 
 using namespace terminality;

@@ -1,7 +1,9 @@
-export module terminality:TextBox;
+module;
 
-import <cstdint>;
-import <string>;
+#include <cstdint>
+#include <string>
+
+export module terminality:TextBox;
 
 import :Geometry;
 import :ControlBase;

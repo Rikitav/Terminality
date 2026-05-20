@@ -1,8 +1,10 @@
-export module terminality:RenderStream;
+module;
 
-import <cstdint>;
-import <string>;
-import <optional>;
+#include <cstdint>
+#include <string>
+#include <optional>
+
+export module terminality:RenderStream;
 
 import :Color;
 import :Layout;

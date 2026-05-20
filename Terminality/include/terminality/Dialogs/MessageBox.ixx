@@ -1,6 +1,8 @@
-export module terminality:MessageBox;
+module;
 
-import <string>;
+#include <string>
+
+export module terminality:MessageBox;
 
 export namespace terminality
 {

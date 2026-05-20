@@ -1,3 +1,9 @@
+module;
+
+#include <cstdint>
+#include <algorithm>
+#include <memory>
+
 module terminality;
 
 using namespace terminality;

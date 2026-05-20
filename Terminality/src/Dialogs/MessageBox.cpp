@@ -1,7 +1,10 @@
-module terminality;
+module;
 
-import std;
-import std.compat;
+#include <string>
+#include <memory>
+#include <functional>
+
+module terminality;
 
 using namespace terminality;
 
@@ -29,18 +32,6 @@ MessageBoxResult MessageBox::Show(const std::wstring& title, const std::wstring&
                 dialogContent->HorizontalAlignment = HorizontalAlign::Stretch;
                 dialogContent->VerticalAlignment = VerticalAlign::Top;
                 dialogContent->Margin = Thickness(2, 1, 2, 0);
-
-                /*
-                if (!title.empty())
-                {
-                    dialogContent->AddChild(init<Label>([&](Label* titleBox)
-                    {
-                        titleBox->Text = title;
-                        titleBox->SetFocusable(false);
-                        titleBox->SetTabStop(false);
-                    }));
-                }
-                */
 
                 dialogContent->AddChild(init<Label>([&](Label* messageBox)
                 {

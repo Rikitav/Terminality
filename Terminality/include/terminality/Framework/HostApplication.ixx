@@ -1,9 +1,11 @@
-export module terminality:Host;
+module;
 
-import <optional>;
-import <chrono>;
-import <thread>;
-import <memory>;
+#include <optional>
+#include <chrono>
+#include <thread>
+#include <memory>
+
+export module terminality:Host;
 
 import :Geometry;
 import :InputEvent;

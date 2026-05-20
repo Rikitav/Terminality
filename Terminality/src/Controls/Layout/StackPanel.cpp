@@ -1,7 +1,12 @@
-module terminality;
+module;
 
-import std;
-import std.compat;
+#include <cstdint>
+#include <memory>
+#include <algorithm>
+#include <functional>
+#include <vector>
+
+module terminality;
 
 using namespace terminality;
 
@@ -381,10 +386,14 @@ void StackPanel::ArrangeOverride(const Rect& contentRect)
 
 void StackPanel::RenderOverride(RenderContext& context)
 {
+    Rect allowed = context.ContextRect();
     for (const std::unique_ptr<ControlBase>& child : contents_)
     {
         Rect childRect = child->GetArrangedRect();
-        RenderContext childContext = context.CreateInner(childRect);
-        child->Render(childContext);
+        if (allowed.Contains(childRect))
+        {
+            RenderContext childContext = context.CreateInner(childRect);
+            child->Render(childContext);
+        }
     }
 }

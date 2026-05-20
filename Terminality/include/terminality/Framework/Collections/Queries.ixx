@@ -1,11 +1,13 @@
-export module terminality:Queries;
+module;
 
-import <cstdint>;
-import <vector>;
-import <type_traits>;
-import <ranges>;
-import <algorithm>;
-import <stdexcept>;
+#include <cstdint>
+#include <vector>
+#include <type_traits>
+#include <ranges>
+#include <algorithm>
+#include <stdexcept>
+
+export module terminality:Queries;
 
 export namespace terminality::queries
 {
@@ -109,7 +111,7 @@ export namespace terminality::queries
 			auto it = std::ranges::begin(range);
 			if (it != std::ranges::end(range))
 				return *it;
-			
+
 			throw std::runtime_error("Sequence contains no elements");
 		}
 	};
@@ -133,7 +135,7 @@ export namespace terminality::queries
 				if (pred(item))
 					return std::optional<ElementType>(item);
 			}
-			
+
 			return std::optional<ElementType>(std::nullopt);
 		}
 	};
@@ -153,7 +155,7 @@ export namespace terminality::queries
 			auto it = std::ranges::begin(range);
 			if (it != std::ranges::end(range))
 				return std::optional<ElementType>(*it);
-			
+
 			return std::optional<ElementType>(std::nullopt);
 		}
 	};
@@ -176,7 +178,7 @@ export namespace terminality::queries
 				if (pred(item))
 					return true;
 			}
-			
+
 			return false;
 		}
 	};
@@ -214,7 +216,7 @@ export namespace terminality::queries
 				if (!pred(item))
 					return false;
 			}
-			
+
 			return true;
 		}
 	};
@@ -253,7 +255,7 @@ export namespace terminality::queries
 				if (pred(item))
 					c++;
 			}
-			
+
 			return c;
 		}
 	};
@@ -278,12 +280,12 @@ export namespace terminality::queries
 			{
 				result.reserve(std::ranges::size(range));
 			}
-			
+
 			for (auto&& item : range)
 			{
 				result.push_back(item);
 			}
-			
+
 			std::ranges::sort(result, {}, sel);
 			return result;
 		}
@@ -305,17 +307,17 @@ export namespace terminality::queries
 		{
 			using ElementType = std::ranges::range_value_t<R>;
 			std::vector<ElementType> result;
-			
+
 			if constexpr (std::ranges::sized_range<R>)
 			{
 				result.reserve(std::ranges::size(range));
 			}
-			
+
 			for (auto&& item : range)
 			{
 				result.push_back(item);
 			}
-			
+
 			std::ranges::sort(result, std::greater<>{}, sel);
 			return result;
 		}

@@ -1,6 +1,8 @@
-export module terminality:Label;
+module;
 
-import <string>;
+#include <string>
+
+export module terminality:Label;
 
 import :Geometry;
 import :ControlBase;

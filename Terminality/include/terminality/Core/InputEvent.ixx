@@ -1,7 +1,9 @@
-export module terminality:InputEvent;
+module;
 
-import <cstdint>;
-import <xhash>;
+#include <cstdint>
+#include <functional>
+
+export module terminality:InputEvent;
 
 export namespace terminality
 {
@@ -181,10 +183,10 @@ export namespace terminality
         NONAME = 0xFC,              // Reserved
         PA1 = 0xFD,                 // PA1 key
         OEM_CLEAR = 0xFE,           // Clear key
-        
+
         CHAR = 0xFC,                // Got char (Internal)
     };
-    
+
     enum class InputModifier
     {
         None = 0,
@@ -198,26 +200,26 @@ export namespace terminality
         ScrollLockOn = 1 << 6,
         Special = 1 << 7,
     };
-    
+
     struct InputEvent
     {
     	InputModifier Modifier = InputModifier::None;
     	InputKey Key = InputKey::None;
     	wchar_t Char = L'\0';
     	bool Pressed = false;
-    
+
         InputEvent(wchar_t ch, bool pressed)
             : Key(InputKey::CHAR), Char(ch), Pressed(pressed) { }
-    
+
     	InputEvent(InputModifier modifier, InputKey key, bool pressed)
             : Modifier(modifier), Key(key), Pressed(pressed) { }
-        
+
     	InputEvent(InputModifier modifier, InputKey key, wchar_t ch, bool pressed)
             : Modifier(modifier), Key(key), Char(ch), Pressed(pressed) { }
 
         bool operator==(const InputEvent& other) const = default;
     };
-    
+
     struct InputEventHasher
     {
         std::size_t operator()(const InputEvent& e) const

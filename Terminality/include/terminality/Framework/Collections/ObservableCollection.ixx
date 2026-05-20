@@ -1,8 +1,10 @@
-export module terminality:ObservableCollection;
+module;
 
-import <cstdint>;
-import <vector>;
-import <stdexcept>;
+#include <cstdint>
+#include <vector>
+#include <stdexcept>
+
+export module terminality:ObservableCollection;
 
 import :Event;
 
@@ -58,7 +60,7 @@ export namespace terminality
 		{
 			if (items_.empty())
 				return;
-			
+
 			T removedItem = std::move(items_.back());
 			std::size_t index = items_.size() - 1;
 			items_.pop_back();

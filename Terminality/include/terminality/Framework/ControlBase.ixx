@@ -1,8 +1,10 @@
-export module terminality:ControlBase;
+module;
 
-import <memory>;
-import <functional>;
-import <cstdint>;
+#include <memory>
+#include <functional>
+#include <cstdint>
+
+export module terminality:ControlBase;
 
 import :Color;
 import :Layout;

@@ -1,7 +1,9 @@
-export module terminality:OpenFileDialog;
+module;
 
-import <string>;
-import <filesystem>;
+#include <string>
+#include <filesystem>
+
+export module terminality:OpenFileDialog;
 
 export namespace terminality
 {

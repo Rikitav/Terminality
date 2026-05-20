@@ -1,6 +1,10 @@
-module terminality;
+module;
 
-import std;
+#include <cstdint>
+#include <memory>
+#include <functional>
+
+module terminality;
 
 using namespace terminality;
 

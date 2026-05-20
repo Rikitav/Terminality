@@ -1,7 +1,10 @@
-﻿module terminality;
+﻿module;
 
-import std;
-import std.compat;
+#include <cstdint>
+#include <mutex>
+#include <algorithm>
+
+module terminality;
 
 using namespace terminality;
 

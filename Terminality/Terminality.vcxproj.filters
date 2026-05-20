@@ -144,6 +144,12 @@
     <ClCompile Include="include\terminality\Core\Color.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="include\terminality\Controls\Layout\ScrollViewer.ixx">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Controls\Layout\ScrollViewer.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\RenderBuffer.cpp">

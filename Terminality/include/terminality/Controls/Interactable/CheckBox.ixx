@@ -1,6 +1,9 @@
-export module terminality:CheckBox;
+module;
 
-import <optional>;
+#include <optional>
+#include <string>
+
+export module terminality:CheckBox;
 
 import :Layout;
 import :Color;

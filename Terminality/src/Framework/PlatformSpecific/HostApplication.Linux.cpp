@@ -8,12 +8,10 @@ module;
 #include <poll.h>
 #include <termios.h>
 #include <cstdlib>
+#include <iostream>
 #endif // __linux__ || __APPLE__
 
 module terminality;
-
-import std;
-import std.compat;
 
 using namespace terminality;
 

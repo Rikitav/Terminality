@@ -1,9 +1,12 @@
-export module terminality:VisualTree;
+module;
 
-import <cstdint>;
-import <xutility>;
-import <memory>;
-import <atomic>;
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <atomic>
+#include <vector>
+
+export module terminality:VisualTree;
 
 import :Geometry;
 import :VisualTreeNode;
@@ -51,7 +54,7 @@ export namespace terminality
 		VisualTreeNode* PeekLayer() const;
 		UILayer& PushLayer(std::unique_ptr<VisualTreeNode> layerRoot);
 		void PopLayer();
-		
+
 		FocusManager& GetFocusManager();
 
 		void Invalidate(const Rect& dirtyRect);

@@ -1,7 +1,9 @@
-module terminality;
+module;
 
-import std;
-import std.compat;
+#include <cstdint>
+#include <memory>
+
+module terminality;
 
 using namespace terminality;
 

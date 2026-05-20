@@ -1,8 +1,10 @@
-export module terminality:StackPanel;
+module;
 
-import <cstdint>;
-import <vector>;
-import <memory>;
+#include <cstdint>
+#include <vector>
+#include <memory>
+
+export module terminality:StackPanel;
 
 import :Focus;
 import :Layout;

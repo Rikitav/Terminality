@@ -1,7 +1,9 @@
-export module terminality:Geometry;
+module;
 
-import <cstdint>;
-import <algorithm>;
+#include <cstdint>
+#include <algorithm>
+
+export module terminality:Geometry;
 
 export namespace terminality
 {
@@ -77,7 +79,7 @@ export namespace terminality
 		{
 			return Left + Right;
 		}
-		
+
 		int32_t Vertical() const
 		{
 			return Top + Bottom;
@@ -102,6 +104,7 @@ export namespace terminality
 		int32_t Bottom() const;
 		Size AsSize() const;
 		bool Contains(Point point) const;
+		bool Contains(Rect inner) const;
 
 		static Rect Union(const Rect& a, const Rect& b);
 		static Rect Enclose(const Rect& into, const Rect& rect);

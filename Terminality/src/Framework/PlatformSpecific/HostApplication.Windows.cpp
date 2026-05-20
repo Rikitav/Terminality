@@ -1,14 +1,14 @@
 module;
 
 #ifdef _WIN32
+#include <chrono>
 #include <clocale>
+#include <cstdint>
+#include <iostream>
 #include <Windows.h>
 #endif
 
 module terminality;
-
-import std;
-import std.compat;
 
 using namespace terminality;
 

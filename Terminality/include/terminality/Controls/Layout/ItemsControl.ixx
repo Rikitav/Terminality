@@ -1,6 +1,13 @@
-export module terminality:ItemsControl;
+module;
 
-import <cstdint>;
+#include <cstdint>
+#include <optional>
+
+#ifndef _VCRUNTIME_H
+using size_t = std::size_t;
+#endif
+
+export module terminality:ItemsControl;
 
 import :ControlBase;
 import :StackPanel;
@@ -22,15 +29,15 @@ export namespace terminality
 		ObservableCollection<T>* itemsSource_ = nullptr;
 		ItemTemplate itemTemplate_;
 
-		std::optional<EventConnection<std::size_t, const T&>> addedConnection_;
-		std::optional<EventConnection<std::size_t, const T&>> removedConnection_;
-		std::optional<EventConnection<std::size_t, const T&, const T&>> replacedConnection_;
+		std::optional<EventConnection<size_t, const T&>> addedConnection_;
+		std::optional<EventConnection<size_t, const T&>> removedConnection_;
+		std::optional<EventConnection<size_t, const T&, const T&>> replacedConnection_;
 		std::optional<EventConnection<>> clearedConnection_;
 
 		void RebuildItems();
-		void OnItemAdded(std::size_t index, const T& item);
-		void OnItemRemoved(std::size_t index, const T& item);
-		void OnItemReplaced(std::size_t index, const T& oldItem, const T& newItem);
+		void OnItemAdded(size_t index, const T& item);
+		void OnItemRemoved(size_t index, const T& item);
+		void OnItemReplaced(size_t index, const T& oldItem, const T& newItem);
 		void OnCollectionCleared();
 
 	public:
@@ -44,108 +51,108 @@ export namespace terminality
 
 		ObservableCollection<T>* GetItemsSource() const;
 	};
+}
 
-	template<typename T>
-	bool ItemsControl<T>::MoveFocusNext(Direction direction, InputModifier modifiers)
+template<typename T>
+bool terminality::ItemsControl<T>::MoveFocusNext(Direction direction, InputModifier modifiers)
+{
+	if (modifiers == InputModifier::Special)
 	{
-		if (modifiers == InputModifier::Special)
-		{
-			focusedIndex_ = 0;
-			return true;
-		}
-
-		return StackPanel::MoveFocusNext(direction, modifiers);
+		focusedIndex_ = 0;
+		return true;
 	}
 
-	template<typename T>
-	void ItemsControl<T>::RebuildItems()
+	return StackPanel::MoveFocusNext(direction, modifiers);
+}
+
+template<typename T>
+void terminality::ItemsControl<T>::RebuildItems()
+{
+	this->Clear();
+	if (itemsSource_ && itemTemplate_)
 	{
-		this->Clear();
-		if (itemsSource_ && itemTemplate_)
+		for (const auto& item : *itemsSource_)
 		{
-			for (const auto& item : *itemsSource_)
-			{
-				this->AddChild(itemTemplate_(item));
-			}
+			this->AddChild(itemTemplate_(item));
 		}
 	}
+}
 
-	template<typename T>
-	void ItemsControl<T>::OnItemAdded(std::size_t index, const T& item)
+template<typename T>
+void terminality::ItemsControl<T>::OnItemAdded(size_t index, const T& item)
+{
+	if (itemTemplate_)
 	{
-		if (itemTemplate_)
-		{
-			this->Insert(index, itemTemplate_(item));
-		}
+		this->Insert(index, itemTemplate_(item));
 	}
+}
 
-	template<typename T>
-	void ItemsControl<T>::OnItemRemoved(std::size_t index, const T& item)
+template<typename T>
+void terminality::ItemsControl<T>::OnItemRemoved(size_t index, const T& item)
+{
+	this->RemoveAt(index);
+}
+
+template<typename T>
+void terminality::ItemsControl<T>::OnItemReplaced(size_t index, const T& oldItem, const T& newItem)
+{
+	if (itemTemplate_)
 	{
 		this->RemoveAt(index);
+		this->Insert(index, itemTemplate_(newItem));
 	}
+}
 
-	template<typename T>
-	void ItemsControl<T>::OnItemReplaced(std::size_t index, const T& oldItem, const T& newItem)
+template<typename T>
+void terminality::ItemsControl<T>::OnCollectionCleared()
+{
+	FocusManager::Current().MoveNext(Direction::Previous, InputModifier::Special);
+	this->Clear();
+}
+
+template<typename T>
+void terminality::ItemsControl<T>::SetItemTemplate(ItemTemplate itemTemplate)
+{
+	itemTemplate_ = std::move(itemTemplate);
+	RebuildItems();
+}
+
+template<typename T>
+void terminality::ItemsControl<T>::SetItemsSource(terminality::ObservableCollection<T>* itemsSource)
+{
+	if (itemsSource_ == itemsSource)
+		return;
+
+	if (itemsSource_)
 	{
-		if (itemTemplate_)
-		{
-			this->RemoveAt(index);
-			this->Insert(index, itemTemplate_(newItem));
-		}
+		addedConnection_.reset();
+		removedConnection_.reset();
+		replacedConnection_.reset();
+		clearedConnection_.reset();
 	}
 
-	template<typename T>
-	void ItemsControl<T>::OnCollectionCleared()
+	itemsSource_ = itemsSource;
+
+	if (itemsSource_)
 	{
-		FocusManager::Current().MoveNext(Direction::Previous, InputModifier::Special);
-		this->Clear();
+		addedConnection_.emplace(itemsSource_->ItemAdded.Connect(
+			[this](std::size_t index, const T& item) { OnItemAdded(index, item); }));
+
+		removedConnection_.emplace(itemsSource_->ItemRemoved.Connect(
+			[this](std::size_t index, const T& item) { OnItemRemoved(index, item); }));
+
+		replacedConnection_.emplace(itemsSource_->ItemReplaced.Connect(
+			[this](std::size_t index, const T& oldItem, const T& newItem) { OnItemReplaced(index, oldItem, newItem); }));
+
+		clearedConnection_.emplace(itemsSource_->CollectionCleared.Connect(
+			[this]() { OnCollectionCleared(); }));
 	}
 
-	template<typename T>
-	void ItemsControl<T>::SetItemTemplate(ItemTemplate itemTemplate)
-	{
-		itemTemplate_ = std::move(itemTemplate);
-		RebuildItems();
-	}
+	RebuildItems();
+}
 
-	template<typename T>
-	void ItemsControl<T>::SetItemsSource(ObservableCollection<T>* itemsSource)
-	{
-		if (itemsSource_ == itemsSource)
-			return;
-
-		if (itemsSource_)
-		{
-			addedConnection_.reset();
-			removedConnection_.reset();
-			replacedConnection_.reset();
-			clearedConnection_.reset();
-		}
-
-		itemsSource_ = itemsSource;
-
-		if (itemsSource_)
-		{
-			addedConnection_.emplace(itemsSource_->ItemAdded.Connect(
-				[this](std::size_t index, const T& item) { OnItemAdded(index, item); }));
-
-			removedConnection_.emplace(itemsSource_->ItemRemoved.Connect(
-				[this](std::size_t index, const T& item) { OnItemRemoved(index, item); }));
-
-			replacedConnection_.emplace(itemsSource_->ItemReplaced.Connect(
-				[this](std::size_t index, const T& oldItem, const T& newItem) { OnItemReplaced(index, oldItem, newItem); }));
-
-			clearedConnection_.emplace(itemsSource_->CollectionCleared.Connect(
-				[this]() { OnCollectionCleared(); }));
-		}
-
-		RebuildItems();
-	}
-
-	template<typename T>
-	ObservableCollection<T>* ItemsControl<T>::GetItemsSource() const
-	{
-		return itemsSource_;
-	}
+template<typename T>
+terminality::ObservableCollection<T>* terminality::ItemsControl<T>::GetItemsSource() const
+{
+	return itemsSource_;
 }

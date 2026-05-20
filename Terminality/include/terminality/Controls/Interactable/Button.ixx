@@ -1,6 +1,9 @@
-export module terminality:Button;
+module;
 
-import <string>;
+#include <string>
+#include <memory>
+
+export module terminality:Button;
 
 import :Color;
 import :Geometry;

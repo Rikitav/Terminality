@@ -151,6 +151,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="include\terminality\Controls\Interactable\CheckBox.ixx" />
+    <ClCompile Include="include\terminality\Controls\Layout\ScrollViewer.ixx" />
     <ClCompile Include="include\terminality\Controls\Visual\Label.ixx" />
     <ClCompile Include="include\terminality\Controls\Visual\ProgressBar.ixx" />
     <ClCompile Include="include\terminality\Controls\Visual\Spinner.ixx" />
@@ -184,6 +185,7 @@
     <ClCompile Include="include\terminality\Engine\RenderBuffer.ixx" />
     <ClCompile Include="include\terminality\Framework\Collections\ObservableCollection.ixx" />
     <ClCompile Include="include\terminality\Framework\Collections\Queries.ixx" />
+    <ClCompile Include="src\Controls\Layout\ScrollViewer.cpp" />
     <ClCompile Include="src\Controls\Visual\ProgressBar.cpp" />
     <ClCompile Include="src\Controls\Visual\Spinner.cpp" />
     <ClCompile Include="src\Engine\DispatchTimer.cpp" />

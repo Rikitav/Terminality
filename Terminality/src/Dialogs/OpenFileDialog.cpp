@@ -1,7 +1,14 @@
-module terminality;
+module;
 
-import std;
-import std.compat;
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <functional>
+#include <filesystem>
+#include <vector>
+#include <algorithm>
+
+module terminality;
 
 using namespace terminality;
 
@@ -24,13 +31,9 @@ public:
 
     Size MeasureOverride(const Size& availableSize) override
     {
-        // Выделяем место под "[ " + имя + " ]"
         return Size(static_cast<int>(Model.Name.size()) + 4, 1);
     }
 
-    // Переопределяем ТОЛЬКО отрисовку.
-    // Вся логика OnKeyDown, OnMouseDown и Clicked.Emit() 
-    // бесплатно достается нам от родительского Button!
     void RenderOverride(RenderContext& context) override
     {
         auto rin = context.BeginText();

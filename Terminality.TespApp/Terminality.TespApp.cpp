@@ -1,10 +1,11 @@
-﻿import terminality;
-
-import <string>;
-import <functional>;
-
-#include <Windows.h>
+﻿#include <Windows.h>
 #undef MessageBox
+
+#include <string>
+#include <functional>
+#include <memory>
+
+import terminality;
 
 using namespace terminality;
 
@@ -37,7 +38,7 @@ namespace TestApp
         {
             return;
         }
-        
+
         void RenderOverride(RenderContext& context) override
         {
             auto rin = context.BeginText();
@@ -81,28 +82,34 @@ namespace TestApp
 
             AddChild(0, 0, init<Border>([&](Border* chatBorder)
             {
+                chatBorder->Margin = Thickness(0, 1, 0, 0);
                 chatBorder->HeaderText = L"Чат: Tamerlan";
-                chatBorder->Content = init<ItemsControl<MessageModel>>([&](ItemsControl<MessageModel>* chatList)
+                chatBorder->Content = init<ScrollViewer>([&](ScrollViewer* chatHistoryScroll)
                 {
-                    //chatList->ContentOrientation = Orientation::Horizontal;
-                    chatList->SetItemsSource(&chatHistory_);
-
-                    chatList->SetItemTemplate([](const MessageModel& item) -> std::unique_ptr<ControlBase>
+                    chatHistoryScroll->Content = init<ItemsControl<MessageModel>>([&](ItemsControl<MessageModel>* chatList)
                     {
-                        return init<MessageBubble>([&](MessageBubble* bubble)
+                        //chatList->ContentOrientation = Orientation::Horizontal;
+                        chatList->SetItemsSource(&chatHistory_);
+
+                        chatList->SetItemTemplate([](const MessageModel& item) -> std::unique_ptr<ControlBase>
                         {
-                            bubble->message_ = item;
-                            bubble->CtxMenu = init<ContextMenu>([](ContextMenu* menu)
+                            return init<MessageBubble>([&](MessageBubble* bubble)
                             {
-                                //menu->AddItem(L"Test1", []() { MessageBoxA(nullptr, "ContextMenu.Test1", nullptr, 0); });
-                                menu->AddItem(L"Test2", []() { MessageBox::Show(L"ContextMenu.Test2", L"ContextMenu.Test2"); });
-                            });
+                                bubble->message_ = item;
+                                bubble->CtxMenu = init<ContextMenu>([](ContextMenu* menu)
+                                {
+                                    menu->AddItem(L"Test2", []() { MessageBox::Show(L"ContextMenu.Test2", L"ContextMenu.Test2"); });
+#ifdef _WIN32
+                                    menu->AddItem(L"Test1", []() { MessageBoxA(nullptr, "ContextMenu.Test1", nullptr, 0); });
+#endif
+                                });
 
-                            bubble->OnHotkey(InputModifier::None, InputKey::D, [](ControlBase* self)
-                            {
-                                self->OpenContextMenu();
-                            });
+                                bubble->OnHotkey(InputModifier::None, InputKey::D, [](ControlBase* self)
+                                {
+                                    self->OpenContextMenu();
+                                });
 
+                            });
                         });
                     });
                 });
@@ -115,7 +122,7 @@ namespace TestApp
             {
                 inputGrid->HorizontalAlignment = HorizontalAlign::Stretch;
                 inputGrid->AddColumn(ColumnDefinition{ GridLength::Auto() });
-                inputGrid->AddColumn(ColumnDefinition{ GridLength::Auto() }); 
+                inputGrid->AddColumn(ColumnDefinition{ GridLength::Auto() });
                 inputGrid->AddColumn(ColumnDefinition{ GridLength::Star(1.0f) });
 
                 inputGrid->AddChild(0, 0, init<Spinner>([&](Spinner* promptSpinner)
@@ -146,7 +153,7 @@ namespace TestApp
                     });
                 }));
             })));
-            
+
             // ==========================================
             // 3. СТАТУС-БАР (Строка 2)
             // ==========================================
@@ -188,8 +195,8 @@ namespace TestApp
                         progress->Value = current;
                     };
                 }));
-            })); 
-            
+            }));
+
             // ==========================================
             // ГОРЯЧИЕ КЛАВИШИ
             // ==========================================
@@ -217,9 +224,20 @@ namespace TestApp
 
 int main()
 {
-	HostApplication& app = HostApplication::Current();
-	app.EnterTerminal();
-    app.RunUILoop(std::make_unique<TestApp::MessangerTest>());
-	app.ExitTerminal();
-	return 0;
+    try
+    {
+        HostApplication& app = HostApplication::Current();
+        app.EnterTerminal();
+        app.RunUILoop(std::make_unique<TestApp::MessangerTest>());
+        app.ExitTerminal();
+        return 0;
+    }
+    catch (std::runtime_error rerr)
+    {
+
+    }
+    catch (...)
+    {
+
+    }
 }

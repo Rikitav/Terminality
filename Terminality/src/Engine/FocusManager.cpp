@@ -1,6 +1,11 @@
-module terminality;
+module;
 
-import std;
+#include <cstdint>
+#include <algorithm>
+#include <stdexcept>
+#include <stack>
+
+module terminality;
 
 using namespace terminality;
 

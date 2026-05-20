@@ -1,7 +1,9 @@
-export module terminality:Spinner;
+module;
 
-import <string>;
-import <vector>;
+#include <string>
+#include <vector>
+
+export module terminality:Spinner;
 
 import :Focus;
 import :Event;

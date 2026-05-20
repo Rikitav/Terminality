@@ -1,6 +1,12 @@
-export module terminality:VisualTreeNode;
+module;
 
-import <cstdint>;
+#include <cstdint>
+
+#ifndef _VCRUNTIME_H
+using size_t = std::size_t;
+#endif
+
+export module terminality:VisualTreeNode;
 
 import :Focus;
 import :Geometry;
@@ -48,8 +54,8 @@ export namespace terminality
 		virtual void SetParent(VisualTreeNode* parent) = 0;
 		virtual void SetLayer(UILayer* layer) = 0;
 
-		virtual std::size_t VisualChildrenCount() const = 0;
-		virtual VisualTreeNode* GetVisualChild(std::size_t index) const = 0;
+		virtual size_t VisualChildrenCount() const = 0;
+		virtual VisualTreeNode* GetVisualChild(size_t index) const = 0;
 
 		// Layout
 		void InvalidateMeasure();
@@ -88,7 +94,7 @@ export namespace terminality
 		virtual void OnChildInvalidated(VisualTreeNode& child);
 		virtual void OnAttachedToTree();
 		virtual void OnDettachedFromTree();
-		
+
 	//protected:
 		Size GetActualSize() const;
 		Rect GetArrangedRect() const;

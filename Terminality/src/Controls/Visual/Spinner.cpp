@@ -1,7 +1,11 @@
-module terminality;
+module;
 
-import std;
-import std.compat;
+#include <string>
+#include <cstdint>
+#include <vector>
+#include <functional>
+
+module terminality;
 
 using namespace terminality;
 
