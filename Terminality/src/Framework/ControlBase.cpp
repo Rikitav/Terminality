@@ -263,11 +263,17 @@ void ControlBase::ApplyInvalidation(InvalidationKind invalidation)
 bool ControlBase::OnKeyDown(InputEvent input)
 {
 	KeyDown.Emit(input);
-	
+
+	constexpr InputModifier EssentialModifiers =
+		InputModifier::LeftAlt | InputModifier::RightAlt |
+		InputModifier::LeftCtrl | InputModifier::RightCtrl |
+		InputModifier::Shift;
+
+	InputModifier cleanModifier = input.Modifier & EssentialModifiers;
 	for (const auto& pair : hotkeys_)
 	{
-		const InputEvent event = pair.first;
-		if (input.Modifier == event.Modifier && input.Key == event.Key)
+		const InputEvent& event = pair.first;
+		if (cleanModifier == event.Modifier && input.Key == event.Key)
 		{
 			HotkeyCallback callback = pair.second;
 			callback(this);

@@ -195,11 +195,21 @@ export namespace terminality
         LeftCtrl = 1 << 2,
         RightCtrl = 1 << 3,
         Shift = 1 << 4,
-        CapsLockOn = 1 << 7,
         NumLockOn = 1 << 5,
         ScrollLockOn = 1 << 6,
-        Special = 1 << 7,
+        CapsLockOn = 1 << 7,
+        Special = 1 << 8,
     };
+
+    constexpr InputModifier operator|(InputModifier a, InputModifier b)
+    {
+        return static_cast<InputModifier>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
+    }
+
+    constexpr InputModifier operator&(InputModifier a, InputModifier b)
+    {
+        return static_cast<InputModifier>(static_cast<uint32_t>(a) & static_cast<uint32_t>(b));
+    }
 
     struct InputEvent
     {
