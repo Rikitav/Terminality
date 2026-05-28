@@ -4,16 +4,8 @@ target_include_directories(terminality PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/includ
 file(GLOB_RECURSE MODULES ./*.ixx)
 file(GLOB_RECURSE SOURCES ./*.cpp)
 
-target_sources(terminality
-        PRIVATE
-        ${SOURCES}
-)
-
-target_sources(terminality
-        PUBLIC
-        FILE_SET CXX_MODULES FILES
-        ${MODULES}
-)
+target_sources(terminality PRIVATE ${SOURCES})
+target_sources(terminality PUBLIC FILE_SET CXX_MODULES FILES ${MODULES})
 
 if (WIN32)
   target_sources(terminality PRIVATE

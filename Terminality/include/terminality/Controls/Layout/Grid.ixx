@@ -3,6 +3,8 @@ module;
 #include <cstdint>
 #include <memory>
 #include <vector>
+#include <string>
+#include <string_view>
 
 export module terminality:Grid;
 
@@ -74,7 +76,9 @@ export namespace terminality
 
     public:
         Grid() = default;
-
+        
+        void SetRowDefinitions(std::string_view definitions);
+        void SetColumnDefinitions(std::string_view definitions);
         void AddRow(const RowDefinition& def);
         void AddColumn(const ColumnDefinition& def);
         void AddChild(int32_t row, int32_t column, int32_t rowSpan, int32_t colSpan, std::unique_ptr<ControlBase> child);

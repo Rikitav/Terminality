@@ -5,10 +5,71 @@ module;
 #include <algorithm>
 #include <vector>
 #include <limits>
+#include <string>
+#include <string_view>
+#include <charconv>
 
 module terminality;
 
 using namespace terminality;
+
+constexpr std::string_view Trim(std::string_view str)
+{
+    const auto first = str.find_first_not_of(" \t\r\n");
+    if (first == std::string_view::npos)
+        return {};
+
+    const auto last = str.find_last_not_of(" \t\r\n");
+    return str.substr(first, (last - first + 1));
+}
+
+std::vector<GridLength> ParseGridLengths(std::string_view definitions)
+{
+    std::vector<GridLength> result;
+    if (definitions.empty()) return result;
+
+    size_t start = 0;
+    size_t end = definitions.find(',');
+
+    while (start < definitions.size())
+    {
+        std::string_view token = Trim(definitions.substr(start, end - start));
+
+        if (!token.empty())
+        {
+            if (token == "Auto" || token == "auto" || token == "AUTO")
+            {
+                result.push_back(GridLength::Auto());
+            }
+            else if (token.back() == '*')
+            {
+                if (token.size() == 1)
+                {
+                    result.push_back(GridLength::Star(1.0f));
+                }
+                else
+                {
+                    float value = 1.0f;
+                    auto numPart = token.substr(0, token.size() - 1);
+                    std::from_chars(numPart.data(), numPart.data() + numPart.size(), value);
+                    result.push_back(GridLength::Star(value));
+                }
+            }
+            else
+            {
+                int value = 0;
+                std::from_chars(token.data(), token.data() + token.size(), value);
+                result.push_back(GridLength::Cell(value));
+            }
+        }
+
+        if (end == std::string_view::npos) break;
+        start = end + 1;
+        end = definitions.find(',', start);
+    }
+
+    return result;
+}
 
 GridLength GridLength::Auto()
 {
@@ -23,6 +84,24 @@ GridLength GridLength::Cell(int32_t cells)
 GridLength GridLength::Star(float weight)
 {
     return { weight, GridUnitType::Star };
+}
+
+void Grid::SetRowDefinitions(std::string_view definitions)
+{
+    rowDefs_.clear();
+    auto lengths = ParseGridLengths(definitions);
+
+    for (const auto& length : lengths)
+        AddRow(RowDefinition{ length });
+}
+
+void Grid::SetColumnDefinitions(std::string_view definitions)
+{
+    colDefs_.clear();
+    auto lengths = ParseGridLengths(definitions);
+
+    for (const auto& length : lengths)
+	    AddColumn(ColumnDefinition{ length });
 }
 
 void Grid::AddRow(const RowDefinition& def)
