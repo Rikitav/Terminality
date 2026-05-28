@@ -120,6 +120,8 @@ export namespace terminality
 		// Ownership
 		void OpenContextMenu();
 
+		static void ResetHotkeyExecutionState();
+
 		virtual std::size_t VisualChildrenCount() const override;
 		virtual VisualTreeNode* GetVisualChild(std::size_t index) const override;
 

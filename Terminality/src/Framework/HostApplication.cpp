@@ -87,12 +87,6 @@ void HostApplication::NestUILoop(UILayer& layer)
 		const InputEvent evt = HostBackend::PollInput(timer.GetRemainingFrameTime(60));
 		if (evt.Key != InputKey::None)
 		{
-			if (evt.Key == InputKey::ESCAPE)
-			{
-				layer.Running.store(false);
-				break;
-			}
-
 			FocusManager& focus = tree.GetFocusManager();
 			VisualTreeNode* focused = focus.GetFocused();
 
@@ -115,6 +109,10 @@ void HostApplication::NestUILoop(UILayer& layer)
 					renderBuffer_.DiffRender(std::wcout);
 				}
 			}
+		}
+		else
+		{
+			ControlBase::ResetHotkeyExecutionState();
 		}
 	}
 }

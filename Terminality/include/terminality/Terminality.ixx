@@ -13,6 +13,7 @@ export import :Grid;
 export import :StackPanel;
 export import :ItemsControl;
 export import :ScrollViewer;
+export import :TabControl;
 
 // terminality.Controls.Visual
 export import :Label;

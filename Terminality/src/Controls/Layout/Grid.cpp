@@ -13,7 +13,7 @@ module terminality;
 
 using namespace terminality;
 
-constexpr std::string_view Trim(std::string_view str)
+static constexpr std::string_view Trim(std::string_view str)
 {
     const auto first = str.find_first_not_of(" \t\r\n");
     if (first == std::string_view::npos)
@@ -23,7 +23,7 @@ constexpr std::string_view Trim(std::string_view str)
     return str.substr(first, (last - first + 1));
 }
 
-std::vector<GridLength> ParseGridLengths(std::string_view definitions)
+static std::vector<GridLength> ParseGridLengths(std::string_view definitions)
 {
     std::vector<GridLength> result;
     if (definitions.empty()) return result;

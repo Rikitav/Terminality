@@ -5,11 +5,20 @@ module;
 #include <memory>
 #include <functional>
 
+#include <unordered_map>
+
 module terminality;
 
 import :ContextMenu;
 
 using namespace terminality;
+
+static std::unordered_map<InputKey, bool> hotkeyExecutionState;
+
+void ControlBase::ResetHotkeyExecutionState()
+{
+	hotkeyExecutionState.clear();
+}
 
 void ControlBase::SetFocusable(bool value)
 {
@@ -264,6 +273,9 @@ bool ControlBase::OnKeyDown(InputEvent input)
 {
 	KeyDown.Emit(input);
 
+    if (input.Pressed && hotkeyExecutionState[input.Key])
+        return true;
+
 	constexpr InputModifier EssentialModifiers =
 		InputModifier::LeftAlt | InputModifier::RightAlt |
 		InputModifier::LeftCtrl | InputModifier::RightCtrl |
@@ -273,8 +285,10 @@ bool ControlBase::OnKeyDown(InputEvent input)
 	for (const auto& pair : hotkeys_)
 	{
 		const InputEvent& event = pair.first;
-		if (cleanModifier == event.Modifier && input.Key == event.Key)
+		if (cleanModifier == event.Modifier && input.Key == event.Key && input.Pressed == event.Pressed)
 		{
+            hotkeyExecutionState[input.Key] = input.Pressed;
+
 			HotkeyCallback callback = pair.second;
 			callback(this);
 			return true;
@@ -325,6 +339,26 @@ bool ControlBase::OnKeyDown(InputEvent input)
 bool ControlBase::OnKeyUp(InputEvent input)
 {
 	KeyUp.Emit(input);
+
+    hotkeyExecutionState[input.Key] = false;
+
+	constexpr InputModifier EssentialModifiers =
+		InputModifier::LeftAlt | InputModifier::RightAlt |
+		InputModifier::LeftCtrl | InputModifier::RightCtrl |
+		InputModifier::Shift;
+
+	InputModifier cleanModifier = input.Modifier & EssentialModifiers;
+	for (const auto& pair : hotkeys_)
+	{
+		const InputEvent& event = pair.first;
+		if (cleanModifier == event.Modifier && input.Key == event.Key && input.Pressed == event.Pressed)
+		{
+			HotkeyCallback callback = pair.second;
+			callback(this);
+			return true;
+		}
+	}
+
 	return false;
 }
 
