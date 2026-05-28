@@ -56,6 +56,31 @@ void ScrollViewer::RenderOverride(RenderContext& context)
         RenderContext childContext = context.CreateInner(context.ContextRect());
         Content->Render(childContext);
     }
+
+    int viewHeight = GetViewportHeight();
+    int extentHeight = GetExtentHeight();
+    
+    if (extentHeight > viewHeight && viewHeight >= 3)
+    {
+        int maxScrollY = extentHeight - viewHeight;
+        int cy = ScrollY.Get();
+        
+        float progress = (float)cy / maxScrollY;
+        int scrollArea = viewHeight - 2;
+        int indicatorPos = 1 + (int)(progress * (scrollArea - 1));
+        
+        int x = GetArrangedRect().Width - 1;
+        context.SetCell(x, 0, L'^');
+        context.SetCell(x, viewHeight - 1, L'v');
+        
+        for (int i = 1; i < viewHeight - 1; i++)
+        {
+            if (i == indicatorPos)
+                context.SetCell(x, i, L'#');
+            else
+                context.SetCell(x, i, L'|');
+        }
+    }
 }
 
 bool ScrollViewer::OnKeyDown(InputEvent input)

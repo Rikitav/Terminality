@@ -445,4 +445,66 @@ void StackPanel::RenderOverride(RenderContext& context)
             child->Render(childContext);
         }
     }
+
+    if (Scrollable)
+    {
+        int32_t totalContentWidth = 0;
+        int32_t totalContentHeight = 0;
+
+        for (const auto& child : contents_)
+        {
+            const Size childSize = child->GetActualSize();
+            if (ContentOrientation == Orientation::Vertical)
+                totalContentHeight += childSize.Height;
+            else
+                totalContentWidth += childSize.Width;
+        }
+
+        if (ContentOrientation == Orientation::Vertical)
+        {
+            int viewHeight = GetArrangedRect().Height;
+            if (totalContentHeight > viewHeight && viewHeight >= 3)
+            {
+                int maxScroll = totalContentHeight - viewHeight;
+                float progress = (float)scrollOffset_ / maxScroll;
+                int scrollArea = viewHeight - 2;
+                int indicatorPos = 1 + (int)(progress * (scrollArea - 1));
+
+                int x = GetArrangedRect().Width - 1;
+                context.SetCell(x, 0, L'^');
+                context.SetCell(x, viewHeight - 1, L'v');
+
+                for (int i = 1; i < viewHeight - 1; i++)
+                {
+                    if (i == indicatorPos)
+                        context.SetCell(x, i, L'#');
+                    else
+                        context.SetCell(x, i, L'|');
+                }
+            }
+        }
+        else
+        {
+            int viewWidth = GetArrangedRect().Width;
+            if (totalContentWidth > viewWidth && viewWidth >= 3)
+            {
+                int maxScroll = totalContentWidth - viewWidth;
+                float progress = (float)scrollOffset_ / maxScroll;
+                int scrollArea = viewWidth - 2;
+                int indicatorPos = 1 + (int)(progress * (scrollArea - 1));
+
+                int y = GetArrangedRect().Height - 1;
+                context.SetCell(0, y, L'<');
+                context.SetCell(viewWidth - 1, y, L'>');
+
+                for (int i = 1; i < viewWidth - 1; i++)
+                {
+                    if (i == indicatorPos)
+                        context.SetCell(i, y, L'#');
+                    else
+                        context.SetCell(i, y, L'-');
+                }
+            }
+        }
+    }
 }
