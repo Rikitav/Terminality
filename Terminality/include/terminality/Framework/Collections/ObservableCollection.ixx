@@ -7,6 +7,7 @@ module;
 export module terminality:ObservableCollection;
 
 import :Event;
+import :DispatchTimer;
 
 export namespace terminality
 {
@@ -33,31 +34,55 @@ export namespace terminality
 		auto cend() const { return items_.cend(); }
 
 		// Capacity
-		std::size_t size() const { return items_.size(); }
-		bool empty() const { return items_.empty(); }
+		std::size_t size() const
+		{
+			return items_.size();
+		}
+
+		bool empty() const
+		{
+			return items_.empty();
+		}
 
 		// Element access
-		T& operator[](std::size_t index) { return items_[index]; }
-		const T& operator[](std::size_t index) const { return items_[index]; }
+		T& operator[](std::size_t index)
+		{
+			return items_[index];
+		}
 
-		T& at(std::size_t index) { return items_.at(index); }
-		const T& at(std::size_t index) const { return items_.at(index); }
+		const T& operator[](std::size_t index) const
+		{
+			return items_[index];
+		}
+
+		T& at(std::size_t index)
+		{
+			return items_.at(index);
+		}
+
+		const T& at(std::size_t index) const
+		{
+			return items_.at(index);
+		}
 
 		// Modifiers
 		void push_back(const T& item)
 		{
+			DispatchTimer::Current().VerifyAccess();
 			items_.push_back(item);
 			ItemAdded.Emit(items_.size() - 1, item);
 		}
 
 		void push_back(T&& item)
 		{
+			DispatchTimer::Current().VerifyAccess();
 			items_.push_back(std::move(item));
 			ItemAdded.Emit(items_.size() - 1, items_.back());
 		}
 
 		void pop_back()
 		{
+			DispatchTimer::Current().VerifyAccess();
 			if (items_.empty())
 				return;
 
@@ -69,6 +94,7 @@ export namespace terminality
 
 		void insert(std::size_t index, const T& item)
 		{
+			DispatchTimer::Current().VerifyAccess();
 			if (index > items_.size())
 				throw std::out_of_range("Index out of range");
 
@@ -78,6 +104,7 @@ export namespace terminality
 
 		void insert(std::size_t index, T&& item)
 		{
+			DispatchTimer::Current().VerifyAccess();
 			if (index > items_.size())
 				throw std::out_of_range("Index out of range");
 
@@ -87,6 +114,7 @@ export namespace terminality
 
 		void erase(std::size_t index)
 		{
+			DispatchTimer::Current().VerifyAccess();
 			if (index >= items_.size())
 				throw std::out_of_range("Index out of range");
 
@@ -97,6 +125,7 @@ export namespace terminality
 
 		void replace(std::size_t index, const T& item)
 		{
+			DispatchTimer::Current().VerifyAccess();
 			if (index >= items_.size())
 				throw std::out_of_range("Index out of range");
 
@@ -107,6 +136,7 @@ export namespace terminality
 
 		void replace(std::size_t index, T&& item)
 		{
+			DispatchTimer::Current().VerifyAccess();
 			if (index >= items_.size())
 				throw std::out_of_range("Index out of range");
 
@@ -117,6 +147,7 @@ export namespace terminality
 
 		void clear()
 		{
+			DispatchTimer::Current().VerifyAccess();
 			if (items_.empty())
 				return;
 

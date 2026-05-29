@@ -2,6 +2,10 @@ module;
 
 #include <cstdint>
 #include <chrono>
+#include <stdexcept>
+#include <thread>
+#include <mutex>
+#include <functional>
 
 module terminality;
 
@@ -11,6 +15,57 @@ DispatchTimer& DispatchTimer::Current()
 {
 	static DispatchTimer dispatcher;
 	return dispatcher;
+}
+
+void DispatchTimer::SetUIThread()
+{
+	uiThreadId_ = std::this_thread::get_id();
+}
+
+bool DispatchTimer::CheckAccess() const
+{
+	return std::this_thread::get_id() == uiThreadId_;
+}
+
+void DispatchTimer::VerifyAccess() const
+{
+	if (!CheckAccess())
+	{
+		throw std::logic_error("Invalid cross-thread operation. You must use DispatchTimer::InvokeAsync to access this object.");
+	}
+}
+
+void DispatchTimer::InvokeAsync(std::function<void()> task)
+{
+	if (!task)
+		return;
+
+	std::lock_guard<std::mutex> lock(mutex_);
+	tasks_.push_back(std::move(task));
+}
+
+void DispatchTimer::ProcessTasks()
+{
+	std::vector<std::function<void()>> currentTasks;
+	{
+		std::lock_guard<std::mutex> lock(mutex_);
+		if (tasks_.empty())
+			return;
+
+		currentTasks = std::move(tasks_);
+	}
+
+	for (const auto& task : currentTasks)
+	{
+		try
+		{
+			task();
+		}
+		catch (const std::exception& e)
+		{
+			// ...
+		}
+	}
 }
 
 bool DispatchTimer::IsRunning() const

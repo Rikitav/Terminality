@@ -4,12 +4,9 @@ module;
 #include <algorithm>
 #include <memory>
 #include <functional>
-
 #include <unordered_map>
 
 module terminality;
-
-import :ContextMenu;
 
 using namespace terminality;
 

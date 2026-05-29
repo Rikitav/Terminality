@@ -11,7 +11,7 @@ using namespace terminality;
 
 FocusManager& FocusManager::Current()
 {
-	if (HostApplication::IsUiThread())
+	if (!DispatchTimer::Current().CheckAccess())
 		throw std::runtime_error("Cannot get FocusManager within running UI thread or Before UI thread was started.");
 
 	return VisualTree::Current().GetFocusManager();

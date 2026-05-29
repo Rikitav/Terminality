@@ -11,16 +11,6 @@ module terminality;
 
 using namespace terminality;
 
-std::optional<std::thread::id> HostApplication::uiThreadId;
-
-bool HostApplication::IsUiThread()
-{
-	if (uiThreadId.has_value())
-		return false;
-
-	return std::this_thread::get_id() == uiThreadId;
-}
-
 HostApplication& HostApplication::Current()
 {
 	static HostApplication app;
@@ -29,14 +19,21 @@ HostApplication& HostApplication::Current()
 
 void HostApplication::RunUILoop(std::unique_ptr<VisualTreeNode> root)
 {
-	if (uiThreadId.has_value())
-		throw std::runtime_error("UI loop thread was already start somewhere else");
-
-	uiThreadId = std::this_thread::get_id();
+	static bool isRunning = false;
 	if (root == nullptr)
 		throw std::runtime_error("UI root widget cannot be null or empty");
 
+	if (isRunning)
+		throw std::runtime_error("UI loop is already running. Nesting RunUILoop is not allowed. Use NestUILoop instead.");
+	
 	DispatchTimer& timer = DispatchTimer::Current();
+	/*
+	if (timer.CheckAccess())
+		throw std::runtime_error("UI loop thread was already start somewhere else");
+	*/
+	
+	isRunning = true;
+	timer.SetUIThread();
 	VisualTree& tree = VisualTree::Current();
 	UILayer& layer = tree.PushLayer(std::move(root));
 
@@ -55,6 +52,7 @@ void HostApplication::RunUILoop(std::unique_ptr<VisualTreeNode> root)
 	timer.Start();
 	NestUILoop(layer);
 	timer.Stop();
+	isRunning = false;
 }
 
 void HostApplication::NestUILoop(UILayer& layer)
@@ -66,6 +64,7 @@ void HostApplication::NestUILoop(UILayer& layer)
 	while (layer.Running.load() && timer.IsRunning())
 	{
 		timer.Tick();
+		timer.ProcessTasks();
 
 		const Size viewport = HostBackend::QueryViewportSize();
 		if (viewport.Height != renderBuffer_.Height() || viewport.Width != renderBuffer_.Width())

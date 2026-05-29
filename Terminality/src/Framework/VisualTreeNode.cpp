@@ -24,6 +24,7 @@ VisualTreeNode* VisualTreeNode::GetParent() const
 
 void VisualTreeNode::InvalidateMeasure()
 {
+	DispatchTimer::Current().VerifyAccess();
 	measureDirty_ = true;
 	arrangeDirty_ = true;
 	visualDirty_ = true;

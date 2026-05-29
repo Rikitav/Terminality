@@ -26,8 +26,6 @@ export namespace terminality
 
 	class HostApplication
 	{
-		static std::optional<std::thread::id> uiThreadId;
-
 		bool isResizing_ = false;
 		float resizeDebounceTimer_ = 0.0f;
 		float RESIZE_DELAY = 0.1f;
@@ -40,7 +38,6 @@ export namespace terminality
 
 	public:
 		static HostApplication& Current();
-		static bool IsUiThread();
 
 		void EnterTerminal();
 		void ExitTerminal();

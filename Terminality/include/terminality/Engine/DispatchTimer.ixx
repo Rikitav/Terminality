@@ -3,6 +3,9 @@ module;
 #include <cstdint>
 #include <atomic>
 #include <chrono>
+#include <thread>
+#include <mutex>
+#include <functional>
 
 export module terminality:DispatchTimer;
 
@@ -12,6 +15,10 @@ export namespace terminality
 {
 	class DispatchTimer
 	{
+		std::optional<std::thread::id> uiThreadId_;
+		std::mutex mutex_;
+		std::vector<std::function<void()>> tasks_;
+
 		float deltaTime_ = 0.0f;
 		float totalTime_ = 0.0f;
 		std::atomic<bool> running_ = false;
@@ -34,6 +41,13 @@ export namespace terminality
 		Event<> ResizeFinishedEvent;
 
 		static DispatchTimer& Current();
+
+		void SetUIThread();
+		bool CheckAccess() const;
+		void VerifyAccess() const;
+		
+		void InvokeAsync(std::function<void()> task);
+		void ProcessTasks();
 
 		bool IsRunning() const;
 		bool IsResizing() const;

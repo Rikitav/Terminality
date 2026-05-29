@@ -1,6 +1,8 @@
 ﻿#include <Windows.h>
 #undef MessageBox
 
+#include <stdexcept>
+#include <iostream>
 #include <string>
 #include <vector>
 #include <memory>
@@ -465,6 +467,7 @@ class TestingAppMainMenu : public Grid
 public:
     TestingAppMainMenu()
     {
+        DispatchTimer::Current().SetUIThread();
         HorizontalAlignment = HorizontalAlign::Stretch;
         VerticalAlignment = VerticalAlign::Stretch;
         
@@ -544,6 +547,11 @@ int main()
         app.ExitTerminal();
         return 0;
     }
+	catch (const std::exception& ex)
+	{
+		std::cerr << "Unhandled exception: " << ex.what() << std::endl;
+		return -1;
+	}
     catch (...)
     {
         return -1;
