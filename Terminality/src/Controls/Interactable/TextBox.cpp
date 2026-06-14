@@ -1,11 +1,11 @@
-module;
+#pragma once
 
 #include <cstdint>
 #include <algorithm>
 #include <vector>
 #include <string>
 
-module terminality;
+#include <terminality/Terminality.hpp>
 
 using namespace terminality;
 
@@ -69,7 +69,7 @@ void TextBox::RenderOverride(RenderContext& context)
 	bool cursorFound = false;
 
 	// First find the cursor
-	for (size_t y = 0; y < lines.size(); ++y)
+	for (std::size_t y = 0; y < lines.size(); ++y)
 	{
 		const auto& line = lines[y];
 		if (!cursorFound && cursorPosition_ >= line.StartIndex && (y + 1 == lines.size() || cursorPosition_ < lines[y + 1].StartIndex))
@@ -156,7 +156,7 @@ bool TextBox::OnKeyDown(InputEvent input)
 
 	auto getLineIndex = [&](const std::vector<LineInfo>& lines) -> size_t
 	{
-		for (size_t i = 0; i < lines.size(); ++i)
+		for (std::size_t i = 0; i < lines.size(); ++i)
 		{
 			if (cursorPosition_ >= lines[i].StartIndex && (i + 1 == lines.size() || cursorPosition_ < lines[i + 1].StartIndex))
 				return i;

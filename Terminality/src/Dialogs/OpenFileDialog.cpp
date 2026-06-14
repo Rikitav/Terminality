@@ -1,4 +1,4 @@
-module;
+#pragma once
 
 #include <cstdint>
 #include <memory>
@@ -8,7 +8,7 @@ module;
 #include <vector>
 #include <algorithm>
 
-module terminality;
+#include <terminality/Terminality.hpp>
 
 using namespace terminality;
 

@@ -1,21 +1,19 @@
-module;
-
+#pragma once
 #if defined(__linux__) || defined(__APPLE__)
+
+#include <cstdlib>
+#include <iostream>
+
+#include <terminality/Terminality.hpp>
+
+using namespace terminality;
+
 #include <sys/ioctl.h>
 #include <clocale>
 #include <termios.h>
 #include <unistd.h>
 #include <poll.h>
 #include <termios.h>
-#include <cstdlib>
-#include <iostream>
-#endif // __linux__ || __APPLE__
-
-module terminality;
-
-using namespace terminality;
-
-#if defined(__linux__) || defined(__APPLE__)
 
 static struct termios original_termios;
 

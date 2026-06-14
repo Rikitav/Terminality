@@ -1,4 +1,4 @@
-module;
+#pragma once
 
 #include <cstdint>
 #include <chrono>
@@ -7,7 +7,7 @@ module;
 #include <mutex>
 #include <functional>
 
-module terminality;
+#include <terminality/Terminality.hpp>
 
 using namespace terminality;
 

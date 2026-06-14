@@ -1,6 +1,4 @@
-﻿#include <Windows.h>
-#undef MessageBox
-
+﻿
 #include <stdexcept>
 #include <iostream>
 #include <string>
@@ -8,7 +6,12 @@
 #include <memory>
 #include <functional>
 
-import terminality;
+//#include <terminality/Terminality.hpp>
+#define TERMINALITY_IMPLEMENTATION
+#include "../out/Terminality.hpp"
+
+#include <Windows.h>
+#undef MessageBox
 
 using namespace terminality;
 

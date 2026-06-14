@@ -1,9 +1,9 @@
-module;
+#pragma once
 
 #include <cstdint>
 #include <string>
 
-module terminality;
+#include <terminality/Terminality.hpp>
 
 using namespace terminality;
 

@@ -1,11 +1,11 @@
-module;
+#pragma once
 #include <cstdint>
 #include <memory>
 #include <algorithm>
 #include <functional>
 #include <vector>
+#include <terminality/Terminality.hpp>
 
-module terminality;
 using namespace terminality;
 
 void StackPanel::AddChild(std::unique_ptr<ControlBase> child)
@@ -49,7 +49,7 @@ std::unique_ptr<ControlBase> StackPanel::RemoveChild(ControlPredicate predicate)
     return removed;
 }
 
-void StackPanel::Insert(size_t index, std::unique_ptr<ControlBase> child)
+void StackPanel::Insert(std::size_t index, std::unique_ptr<ControlBase> child)
 {
     if (child == nullptr)
         return;
@@ -77,7 +77,7 @@ void StackPanel::Insert(size_t index, std::unique_ptr<ControlBase> child)
     InvalidateMeasure();
 }
 
-std::unique_ptr<ControlBase> StackPanel::RemoveAt(size_t index)
+std::unique_ptr<ControlBase> StackPanel::RemoveAt(std::size_t index)
 {
     if (index >= contents_.size())
         return nullptr;
@@ -117,7 +117,7 @@ void StackPanel::ScrollIntoView()
     int32_t childStart = 0;
     int32_t childSize = 0;
 
-    for (size_t i = 0; i <= focusedIndex_; ++i)
+    for (std::size_t i = 0; i <= focusedIndex_; ++i)
     {
         Size sz = contents_[i]->GetActualSize();
         if (i == focusedIndex_)
@@ -162,7 +162,7 @@ void StackPanel::OnGotFocus()
         }
     }
 
-    for (size_t i = 0; i < contents_.size(); ++i)
+    for (std::size_t i = 0; i < contents_.size(); ++i)
     {
         VisualTreeNode* focusedControl = contents_[i].get();
         if (focusedControl->IsFocusable())
@@ -188,7 +188,7 @@ size_t StackPanel::VisualChildrenCount() const
     return contents_.size();
 }
 
-VisualTreeNode* StackPanel::GetVisualChild(size_t index) const
+VisualTreeNode* StackPanel::GetVisualChild(std::size_t index) const
 {
     return contents_.at(index).get();
 }
@@ -297,7 +297,7 @@ bool StackPanel::MoveFocusNext(Direction direction, InputModifier modifiers)
             focusedIndex_ += 1;
         }
 
-        for (size_t i = focusedIndex_; i < contents_.size(); i++)
+        for (std::size_t i = focusedIndex_; i < contents_.size(); i++)
         {
             ControlBase* control = contents_[i].get();
             if (control->IsFocusable() && control->IsTabStop())

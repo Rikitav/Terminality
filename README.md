@@ -19,6 +19,8 @@ The layout is built using init-lambdas and smart pointers. Here’s a basic appl
 
 ```cpp
 import terminality;
+#include <terminality/Terminality.hpp>
+
 using namespace terminality;
 
 int main()
@@ -68,12 +70,6 @@ int main()
 * Multi-layered UI — built-in support for navigation, modal windows, context menus, and overlays on top of the main content.
 * Event model — a signal and slot system for handling user input and binding shortcuts.
 * Extensibility - you can write your own custom controls if you need speciffic behaviour or styling.
-
-## Requirements
-
-The project relies heavily on C++23 features, specifically modules.
-You will need a recent compiler (tested on the latest versions of MSVC and GCC) and CMake.
-It works reliably on both Windows and modern Linux distributions.
 
 ## License
 

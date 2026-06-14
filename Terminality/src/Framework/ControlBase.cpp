@@ -1,4 +1,4 @@
-module;
+#pragma once
 
 #include <cstdint>
 #include <algorithm>
@@ -6,7 +6,7 @@ module;
 #include <functional>
 #include <unordered_map>
 
-module terminality;
+#include <terminality/Terminality.hpp>
 
 using namespace terminality;
 
@@ -249,7 +249,7 @@ size_t ControlBase::VisualChildrenCount() const
 	return 0;
 }
 
-VisualTreeNode* ControlBase::GetVisualChild(size_t index) const
+VisualTreeNode* ControlBase::GetVisualChild(std::size_t index) const
 {
 	return nullptr;
 }

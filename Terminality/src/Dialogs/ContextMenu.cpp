@@ -1,4 +1,4 @@
-module;
+#pragma once
 
 #include <functional>
 #include <string>
@@ -6,7 +6,7 @@ module;
 #include <atomic>
 #include <memory>
 
-module terminality;
+#include <terminality/Terminality.hpp>
 
 using namespace terminality;
 

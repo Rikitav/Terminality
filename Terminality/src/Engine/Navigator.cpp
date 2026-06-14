@@ -1,10 +1,10 @@
-module;
+#pragma once
 
 #include <cstdint>
 #include <memory>
 #include <functional>
 
-module terminality;
+#include <terminality/Terminality.hpp>
 
 using namespace terminality;
 

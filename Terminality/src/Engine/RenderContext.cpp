@@ -1,10 +1,10 @@
-﻿module;
+#pragma once
 
 #include <cstdint>
 #include <mutex>
 #include <algorithm>
 
-module terminality;
+#include <terminality/Terminality.hpp>
 
 using namespace terminality;
 

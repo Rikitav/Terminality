@@ -1,11 +1,11 @@
-module;
+#pragma once
 
 #include <string>
 #include <cstdint>
 #include <vector>
 #include <functional>
 
-module terminality;
+#include <terminality/Terminality.hpp>
 
 using namespace terminality;
 

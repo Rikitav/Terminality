@@ -1,4 +1,4 @@
-module;
+#pragma once
 
 #include <cstdint>
 #include <string>
@@ -8,7 +8,7 @@ module;
 #include <stdexcept>
 #include <mutex>
 
-module terminality;
+#include <terminality/Terminality.hpp>
 
 using namespace terminality;
 
@@ -269,7 +269,7 @@ void RenderBuffer::DiffRender(std::wostream& out)
 
 size_t RenderBuffer::GetIndex(uint32_t x, uint32_t y) const
 {
-	return static_cast<size_t>(y) * MAX_WIDTH + x;
+	return static_cast<std::size_t>(y) * MAX_WIDTH + x;
 }
 
 void RenderBuffer::MarkDirty(const Rect& rect)

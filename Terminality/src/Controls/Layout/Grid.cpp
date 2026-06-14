@@ -1,4 +1,4 @@
-module;
+#pragma once
 
 #include <cstdint>
 #include <memory>
@@ -9,9 +9,13 @@ module;
 #include <string_view>
 #include <charconv>
 
-module terminality;
+#include <terminality/Terminality.hpp>
 
 using namespace terminality;
+
+// ------------------------------------------------------------------
+// String helpers
+// ------------------------------------------------------------------
 
 static constexpr std::string_view Trim(std::string_view str)
 {
@@ -23,21 +27,38 @@ static constexpr std::string_view Trim(std::string_view str)
     return str.substr(first, (last - first + 1));
 }
 
+static constexpr char ToLowerAscii(char c)
+{
+    return (c >= 'A' && c <= 'Z') ? static_cast<char>(c + ('a' - 'A')) : c;
+}
+
+static constexpr bool EqualsIgnoreCase(std::string_view a, std::string_view b)
+{
+    if (a.size() != b.size())
+        return false;
+
+    for (std::size_t i = 0; i < a.size(); ++i)
+        if (ToLowerAscii(a[i]) != ToLowerAscii(b[i]))
+            return false;
+
+    return true;
+}
+
 static std::vector<GridLength> ParseGridLengths(std::string_view definitions)
 {
     std::vector<GridLength> result;
-    if (definitions.empty()) return result;
+    if (definitions.empty())
+        return result;
 
     size_t start = 0;
-    size_t end = definitions.find(',');
-
     while (start < definitions.size())
     {
+        size_t end = definitions.find(',', start);
         std::string_view token = Trim(definitions.substr(start, end - start));
 
         if (!token.empty())
         {
-            if (token == "Auto" || token == "auto" || token == "AUTO")
+            if (EqualsIgnoreCase(token, "Auto"))
             {
                 result.push_back(GridLength::Auto());
             }
@@ -63,13 +84,18 @@ static std::vector<GridLength> ParseGridLengths(std::string_view definitions)
             }
         }
 
-        if (end == std::string_view::npos) break;
+        if (end == std::string_view::npos)
+            break;
+
         start = end + 1;
-        end = definitions.find(',', start);
     }
 
     return result;
 }
+
+// ------------------------------------------------------------------
+// GridLength
+// ------------------------------------------------------------------
 
 GridLength GridLength::Auto()
 {
@@ -86,6 +112,10 @@ GridLength GridLength::Star(float weight)
     return { weight, GridUnitType::Star };
 }
 
+// ------------------------------------------------------------------
+// Grid
+// ------------------------------------------------------------------
+
 void Grid::SetRowDefinitions(std::string_view definitions)
 {
     rowDefs_.clear();
@@ -101,7 +131,7 @@ void Grid::SetColumnDefinitions(std::string_view definitions)
     auto lengths = ParseGridLengths(definitions);
 
     for (const auto& length : lengths)
-	    AddColumn(ColumnDefinition{ length });
+        AddColumn(ColumnDefinition{ length });
 }
 
 void Grid::AddRow(const RowDefinition& def)
@@ -116,47 +146,60 @@ void Grid::AddColumn(const ColumnDefinition& def)
     InvalidateMeasure();
 }
 
+static void AttachChild(ControlBase& child, Grid* parent)
+{
+    child.SetParent(parent);
+    if (!child.IsAttached())
+        child.OnAttachedToTree();
+}
+
 void Grid::AddChild(int32_t row, int32_t column, int32_t rowSpan, int32_t colSpan, std::unique_ptr<ControlBase> child)
 {
     if (!child)
         return;
 
-    child->SetParent(this);
-    if (!child->IsAttached())
-        child->OnAttachedToTree();
-
+    AttachChild(*child, this);
     children_.push_back({ std::move(child), row, column, rowSpan, colSpan });
     InvalidateMeasure();
 }
 
 void Grid::AddChild(int32_t row, int32_t column, std::unique_ptr<ControlBase> child)
 {
-    if (!child)
-        return;
-
-    child->SetParent(this);
-    if (!child->IsAttached())
-        child->OnAttachedToTree();
-
-    children_.push_back({ std::move(child), row, column, 1, 1 });
-    InvalidateMeasure();
+    AddChild(row, column, 1, 1, std::move(child));
 }
 
 void Grid::EnsureGridDefinitions()
 {
-    if (rowDefs_.empty()) 
+    if (rowDefs_.empty())
         rowDefs_.push_back(RowDefinition{});
-    
+
     if (colDefs_.empty())
         colDefs_.push_back(ColumnDefinition{});
+}
+
+template <typename T>
+static int32_t ClampIndex(int32_t index, const std::vector<T>& container)
+{
+    return std::clamp<int32_t>(index, 0, static_cast<int32_t>(container.size()) - 1);
+}
+
+template <typename T>
+static int32_t SumSpan(const std::vector<T>& defs, int32_t startIndex, int32_t span,
+                       int32_t T::* actualSize)
+{
+    int32_t sum = 0;
+    for (int32_t i = 0; i < span && (startIndex + i) < static_cast<int32_t>(defs.size()); ++i)
+        sum += defs[startIndex + i].*actualSize;
+
+    return sum;
 }
 
 Size Grid::MeasureOverride(const Size& availableSize)
 {
     EnsureGridDefinitions();
 
-    bool widthIsInfinite = availableSize.Width < 0;
-    bool heightIsInfinite = availableSize.Height < 0;
+    const bool widthIsInfinite = availableSize.Width < 0;
+    const bool heightIsInfinite = availableSize.Height < 0;
 
     for (auto& row : rowDefs_)
         row.ActualHeight = (row.Height.Type == GridUnitType::Cell) ? static_cast<int32_t>(row.Height.Value) : 0;
@@ -166,8 +209,8 @@ Size Grid::MeasureOverride(const Size& availableSize)
 
     for (auto& childWrapper : children_)
     {
-        int32_t rowIndex = std::clamp<int32_t>(childWrapper.Row, 0, static_cast<int32_t>(rowDefs_.size()) - 1);
-        int32_t columnIndex = std::clamp<int32_t>(childWrapper.Column, 0, static_cast<int32_t>(colDefs_.size()) - 1);
+        int32_t rowIndex = ClampIndex(childWrapper.Row, rowDefs_);
+        int32_t columnIndex = ClampIndex(childWrapper.Column, colDefs_);
 
         bool isRowAuto = rowDefs_[rowIndex].Height.Type == GridUnitType::Auto ||
             (rowDefs_[rowIndex].Height.Type == GridUnitType::Star && heightIsInfinite);
@@ -228,17 +271,11 @@ Size Grid::MeasureOverride(const Size& availableSize)
 
     for (auto& childWrapper : children_)
     {
-        int32_t rowIndex = std::clamp<int32_t>(childWrapper.Row, 0, static_cast<int32_t>(rowDefs_.size()) - 1);
-        int32_t columnIndex = std::clamp<int32_t>(childWrapper.Column, 0, static_cast<int32_t>(colDefs_.size()) - 1);
+        int32_t rowIndex = ClampIndex(childWrapper.Row, rowDefs_);
+        int32_t columnIndex = ClampIndex(childWrapper.Column, colDefs_);
 
-        int32_t cellWidth = 0;
-        int32_t cellHeight = 0;
-
-        for (int32_t i = 0; i < childWrapper.ColumnSpan && (columnIndex + i) < colDefs_.size(); ++i)
-            cellWidth += colDefs_[columnIndex + i].ActualWidth;
-
-        for (int32_t i = 0; i < childWrapper.RowSpan && (rowIndex + i) < rowDefs_.size(); ++i)
-            cellHeight += rowDefs_[rowIndex + i].ActualHeight;
+        int32_t cellWidth = SumSpan(colDefs_, columnIndex, childWrapper.ColumnSpan, &ColumnDefinition::ActualWidth);
+        int32_t cellHeight = SumSpan(rowDefs_, rowIndex, childWrapper.RowSpan, &RowDefinition::ActualHeight);
 
         childWrapper.Control->Measure(Size(cellWidth, cellHeight));
     }
@@ -275,17 +312,11 @@ void Grid::ArrangeOverride(const Rect& contentRect)
 
     for (auto& childWrapper : children_)
     {
-        int32_t rowIndex = std::clamp<int32_t>(childWrapper.Row, 0, static_cast<int32_t>(rowDefs_.size()) - 1);
-        int32_t columnIndex = std::clamp<int32_t>(childWrapper.Column, 0, static_cast<int32_t>(colDefs_.size()) - 1);
+        int32_t rowIndex = ClampIndex(childWrapper.Row, rowDefs_);
+        int32_t columnIndex = ClampIndex(childWrapper.Column, colDefs_);
 
-        int32_t cellWidth = 0;
-        int32_t cellHeight = 0;
-
-        for (int32_t i = 0; i < childWrapper.ColumnSpan && (columnIndex + i) < colDefs_.size(); ++i)
-            cellWidth += colDefs_[columnIndex + i].ActualWidth;
-
-        for (int32_t i = 0; i < childWrapper.RowSpan && (rowIndex + i) < rowDefs_.size(); ++i)
-            cellHeight += rowDefs_[rowIndex + i].ActualHeight;
+        int32_t cellWidth = SumSpan(colDefs_, columnIndex, childWrapper.ColumnSpan, &ColumnDefinition::ActualWidth);
+        int32_t cellHeight = SumSpan(rowDefs_, rowIndex, childWrapper.RowSpan, &RowDefinition::ActualHeight);
 
         Rect cellRect(
             contentRect.X + colDefs_[columnIndex].OffsetX,
@@ -312,7 +343,7 @@ size_t Grid::VisualChildrenCount() const
     return children_.size();
 }
 
-VisualTreeNode* Grid::GetVisualChild(size_t index) const
+VisualTreeNode* Grid::GetVisualChild(std::size_t index) const
 {
     return children_.at(index).Control.get();
 }
@@ -330,7 +361,7 @@ void Grid::OnGotFocus()
         }
     }
 
-    for (size_t i = 0; i < children_.size(); ++i)
+    for (std::size_t i = 0; i < children_.size(); ++i)
     {
         VisualTreeNode* focusedControl = children_[i].Control.get();
         if (focusedControl->IsFocusable())
@@ -338,12 +369,11 @@ void Grid::OnGotFocus()
             focusedIndex_ = i;
             PushFocus(focusedControl);
             InvalidateVisual();
-            break;
+            return;
         }
     }
 
     InvalidateVisual();
-    return;
 }
 
 void Grid::OnLostFocus()
@@ -357,41 +387,37 @@ bool Grid::MoveFocusNext(Direction direction, InputModifier modifiers)
     if (children_.empty())
         return false;
 
-    if (direction == Direction::Next || direction == Direction::Previous)
+    if (direction == Direction::Next)
     {
-        if (direction == Direction::Next)
+        for (std::size_t i = focusedIndex_ + 1; i < children_.size(); ++i)
         {
-            for (size_t i = focusedIndex_ + 1; i < children_.size(); i++)
+            ControlBase* control = children_[i].Control.get();
+            if (control->IsFocusable() && control->IsTabStop())
             {
-                ControlBase* control = children_[i].Control.get();
-                if (control->IsFocusable() && control->IsTabStop())
-                {
-                    focusedIndex_ = i;
-                    PushFocus(control);
-                    return true;
-                }
+                focusedIndex_ = i;
+                PushFocus(control);
+                return true;
             }
         }
-        else if (direction == Direction::Previous)
-        {
-            if (focusedIndex_ == 0)
-                return false;
+        return false;
+    }
 
-            for (size_t i = focusedIndex_ - 1; i < children_.size(); i--)
+    if (direction == Direction::Previous)
+    {
+        if (focusedIndex_ == 0)
+            return false;
+
+        for (std::size_t i = focusedIndex_ - 1; i < children_.size(); --i)
+        {
+            ControlBase* control = children_[i].Control.get();
+            if (control->IsFocusable() && control->IsTabStop())
             {
-                ControlBase* control = children_[i].Control.get();
-                if (control->IsFocusable() && control->IsTabStop())
-                {
-                    focusedIndex_ = i;
-                    PushFocus(control);
-                    return true;
-                }
+                focusedIndex_ = i;
+                PushFocus(control);
+                return true;
             }
         }
-        else
-        {
-            return false;
-        }
+        return false;
     }
 
     if (focusedIndex_ >= children_.size())
@@ -399,16 +425,22 @@ bool Grid::MoveFocusNext(Direction direction, InputModifier modifiers)
 
     const auto& current = children_[focusedIndex_];
 
-    int r1 = current.Row;
-    int r2 = current.Row + std::max(1, current.RowSpan) - 1;
-    int c1 = current.Column;
-    int c2 = current.Column + std::max(1, current.ColumnSpan) - 1;
+    auto GetCellBounds = [](const GridChild& child) -> std::tuple<int, int, int, int>
+    {
+        int r1 = child.Row;
+        int r2 = child.Row + std::max(1, child.RowSpan) - 1;
+        int c1 = child.Column;
+        int c2 = child.Column + std::max(1, child.ColumnSpan) - 1;
+        return { r1, r2, c1, c2 };
+    };
 
-    size_t bestIndex = std::numeric_limits<size_t>::max();
+    auto [r1, r2, c1, c2] = GetCellBounds(current);
+
+    size_t bestIndex = std::numeric_limits<std::size_t>::max();
     int minPrimary = std::numeric_limits<int>::max();
     int minSecondary = std::numeric_limits<int>::max();
 
-    for (size_t i = 0; i < children_.size(); ++i)
+    for (std::size_t i = 0; i < children_.size(); ++i)
     {
         if (i == focusedIndex_)
             continue;
@@ -419,10 +451,7 @@ bool Grid::MoveFocusNext(Direction direction, InputModifier modifiers)
         if (!ctrl->IsFocusable() || !ctrl->IsTabStop())
             continue;
 
-        int cr1 = candidate.Row;
-        int cr2 = candidate.Row + std::max(1, candidate.RowSpan) - 1;
-        int cc1 = candidate.Column;
-        int cc2 = candidate.Column + std::max(1, candidate.ColumnSpan) - 1;
+        auto [cr1, cr2, cc1, cc2] = GetCellBounds(candidate);
 
         int primaryDist = -1;
         int secondaryDist = 0;
@@ -430,48 +459,36 @@ bool Grid::MoveFocusNext(Direction direction, InputModifier modifiers)
         switch (direction)
         {
             case Direction::Right:
-            {
                 if (cc1 > c2)
                 {
                     primaryDist = cc1 - c2;
                     secondaryDist = (cr2 >= r1 && cr1 <= r2) ? 0 : std::min(std::abs(cr1 - r2), std::abs(cr2 - r1));
                 }
-
                 break;
-            }
 
             case Direction::Left:
-            {
                 if (cc2 < c1)
                 {
                     primaryDist = c1 - cc2;
                     secondaryDist = (cr2 >= r1 && cr1 <= r2) ? 0 : std::min(std::abs(cr1 - r2), std::abs(cr2 - r1));
                 }
-            
                 break;
-            }
 
             case Direction::Down:
-            {
                 if (cr1 > r2)
                 {
                     primaryDist = cr1 - r2;
                     secondaryDist = (cc2 >= c1 && cc1 <= c2) ? 0 : std::min(std::abs(cc1 - c2), std::abs(cc2 - c1));
                 }
-            
                 break;
-            }
 
             case Direction::Up:
-            {
                 if (cr2 < r1)
                 {
                     primaryDist = r1 - cr2;
                     secondaryDist = (cc2 >= c1 && cc1 <= c2) ? 0 : std::min(std::abs(cc1 - c2), std::abs(cc2 - c1));
                 }
-            
                 break;
-            }
 
             default:
                 break;
@@ -488,7 +505,7 @@ bool Grid::MoveFocusNext(Direction direction, InputModifier modifiers)
         }
     }
 
-    if (bestIndex != std::numeric_limits<size_t>::max())
+    if (bestIndex != std::numeric_limits<std::size_t>::max())
     {
         focusedIndex_ = bestIndex;
         PushFocus(children_[bestIndex].Control.get());

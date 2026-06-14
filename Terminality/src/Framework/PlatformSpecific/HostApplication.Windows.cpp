@@ -1,18 +1,16 @@
-module;
-
+#pragma once
 #ifdef _WIN32
+
 #include <chrono>
 #include <clocale>
 #include <cstdint>
 #include <iostream>
-#include <Windows.h>
-#endif
 
-module terminality;
+#include <terminality/Terminality.hpp>
+#include <Windows.h>
 
 using namespace terminality;
 
-#ifdef _WIN32
 void HostApplication::EnterTerminal()
 {
     std::setlocale(LC_ALL, ".UTF-8");

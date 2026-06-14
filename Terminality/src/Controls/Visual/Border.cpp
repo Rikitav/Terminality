@@ -1,10 +1,10 @@
-module;
+#pragma once
 
 #include <cstdint>
 #include <algorithm>
 #include <memory>
 
-module terminality;
+#include <terminality/Terminality.hpp>
 
 using namespace terminality;
 
@@ -200,7 +200,7 @@ size_t Border::VisualChildrenCount() const
 	return 1;
 }
 
-VisualTreeNode* Border::GetVisualChild(size_t index) const
+VisualTreeNode* Border::GetVisualChild(std::size_t index) const
 {
 	return Content.Get().get();
 }

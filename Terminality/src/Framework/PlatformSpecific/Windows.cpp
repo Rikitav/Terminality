@@ -1,17 +1,14 @@
-module;
-
+#pragma once
 #ifdef _WIN32
-#include <Windows.h>
+
 #include <string>
 #include <thread>
 #include <memory>
-#endif
 
-module terminality;
+#include <terminality/Terminality.hpp>
+#include <Windows.h>
 
 using namespace terminality;
-
-#ifdef _WIN32
 
 void terminality::AlertAsync(const std::wstring& text, const std::wstring& title)
 {
