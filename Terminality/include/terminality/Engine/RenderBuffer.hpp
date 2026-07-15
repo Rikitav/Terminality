@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <vector>
 #include <mutex>
+#include <optional>
 
 #include <terminality/Core/Color.hpp>
 #include <terminality/Core/Geometry.hpp>
@@ -45,8 +46,7 @@ namespace terminality
 		uint32_t height = 0;
 		std::vector<CellInfo> buffer;
 
-		bool hasDirtyRect = true;
-		Rect dirtyRect;
+		std::optional<Rect> dirtyRect;
 
 		std::size_t GetIndex(uint32_t x, uint32_t y) const;
 		void MarkDirty(const Rect& rect);

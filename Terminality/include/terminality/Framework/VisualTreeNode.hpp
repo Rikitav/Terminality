@@ -23,7 +23,7 @@ namespace terminality
 		bool attached_ = false;
 		bool focusable_ = true;
 		bool focused_ = false;
-		bool isTabStop_ = false;
+		bool isTabStop_ = true;
 		int tabIndex_ = 0;
 
 		Size actualSize_;

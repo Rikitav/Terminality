@@ -1,8 +1,8 @@
-#pragma once
 
 #include <cstdint>
 #include <algorithm>
 #include <memory>
+#include <cstring>
 
 #include <terminality/Terminality.hpp>
 

@@ -1,10 +1,10 @@
-#pragma once
 
 #include <functional>
 #include <string>
 #include <cstdint>
 #include <atomic>
 #include <memory>
+#include <optional>
 
 #include <terminality/Terminality.hpp>
 
@@ -25,7 +25,7 @@ void ContextMenu::Open(Point position)
 	HostApplication& host = HostApplication::Current();
 	VisualTree& tree = VisualTree::Current();
 
-	std::atomic<bool>* running = nullptr;
+	std::optional<std::reference_wrapper<std::atomic<bool>>> running;
 
 	if (items_.empty())
 		return;
@@ -54,7 +54,7 @@ void ContextMenu::Open(Point position)
 						if (item.Action != nullptr)
 							item.Action();
 
-						running->store(false);
+						running->get().store(false);
 					};
 				}));
 			}
@@ -62,7 +62,7 @@ void ContextMenu::Open(Point position)
 	});
 
 	UILayer& layer = tree.PushLayer(std::move(ctxMenuBody));
-	running = &layer.Running;
+	running.emplace(layer.Running);
 	
 	host.NestUILoop(layer);
 	tree.PopLayer();

@@ -1,4 +1,3 @@
-#pragma once
 #ifdef _WIN32
 
 #include <chrono>
@@ -84,10 +83,10 @@ InputEvent HostBackend::PollInput(std::chrono::milliseconds timeout)
     DWORD read;
 
     if (!ReadConsoleInputW(hInput, &record, 1, &read) || read == 0)
-        return InputEvent(InputModifier::None, InputKey::None, record.Event.KeyEvent.bKeyDown);
+        return InputEvent(InputModifier::None, InputKey::None, false);
 
     if (record.EventType != KEY_EVENT)
-        return InputEvent(InputModifier::None, InputKey::None, record.Event.KeyEvent.bKeyDown);
+        return InputEvent(InputModifier::None, InputKey::None, false);
 
     const auto& keyEvent = record.Event.KeyEvent;
     const InputKey keyCode = static_cast<InputKey>(keyEvent.wVirtualKeyCode);

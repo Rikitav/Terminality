@@ -1,9 +1,9 @@
-#pragma once
 
 #include <cstdint>
 #include <algorithm>
 #include <vector>
 #include <string>
+#include <cstring>
 
 #include <terminality/Terminality.hpp>
 

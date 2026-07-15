@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <optional>
+#include <functional>
 
 #include <terminality/Framework/ControlBase.hpp>
 #include <terminality/Controls/Layout/StackPanel.hpp>
@@ -20,7 +21,7 @@ namespace terminality
 		using ItemTemplate = std::function<std::unique_ptr<ControlBase>(const T&)>;
 
 	private:
-		ObservableCollection<T>* itemsSource_ = nullptr;
+		std::optional<std::reference_wrapper<ObservableCollection<T>>> itemsSource_;
 		ItemTemplate itemTemplate_;
 
 		std::optional<EventConnection<std::size_t, const T&>> addedConnection_;
@@ -65,7 +66,7 @@ void terminality::ItemsControl<T>::RebuildItems()
 	this->Clear();
 	if (itemsSource_ && itemTemplate_)
 	{
-		for (const auto& item : *itemsSource_)
+		for (const auto& item : itemsSource_->get())
 		{
 			this->AddChild(itemTemplate_(item));
 		}
@@ -114,31 +115,31 @@ void terminality::ItemsControl<T>::SetItemTemplate(ItemTemplate itemTemplate)
 template<typename T>
 void terminality::ItemsControl<T>::SetItemsSource(terminality::ObservableCollection<T>* itemsSource)
 {
-	if (itemsSource_ == itemsSource)
+	bool sameSource = (itemsSource == nullptr && !itemsSource_) ||
+		(itemsSource_ && &itemsSource_->get() == itemsSource);
+	if (sameSource)
 		return;
 
-	if (itemsSource_)
-	{
-		addedConnection_.reset();
-		removedConnection_.reset();
-		replacedConnection_.reset();
-		clearedConnection_.reset();
-	}
+	addedConnection_.reset();
+	removedConnection_.reset();
+	replacedConnection_.reset();
+	clearedConnection_.reset();
+	itemsSource_.reset();
 
-	itemsSource_ = itemsSource;
-
-	if (itemsSource_)
+	if (itemsSource != nullptr)
 	{
-		addedConnection_.emplace(itemsSource_->ItemAdded.Connect(
+		itemsSource_.emplace(*itemsSource);
+
+		addedConnection_.emplace(itemsSource_->get().ItemAdded.Connect(
 			[this](std::size_t index, const T& item) { OnItemAdded(index, item); }));
 
-		removedConnection_.emplace(itemsSource_->ItemRemoved.Connect(
+		removedConnection_.emplace(itemsSource_->get().ItemRemoved.Connect(
 			[this](std::size_t index, const T& item) { OnItemRemoved(index, item); }));
 
-		replacedConnection_.emplace(itemsSource_->ItemReplaced.Connect(
+		replacedConnection_.emplace(itemsSource_->get().ItemReplaced.Connect(
 			[this](std::size_t index, const T& oldItem, const T& newItem) { OnItemReplaced(index, oldItem, newItem); }));
 
-		clearedConnection_.emplace(itemsSource_->CollectionCleared.Connect(
+		clearedConnection_.emplace(itemsSource_->get().CollectionCleared.Connect(
 			[this]() { OnCollectionCleared(); }));
 	}
 
@@ -148,5 +149,5 @@ void terminality::ItemsControl<T>::SetItemsSource(terminality::ObservableCollect
 template<typename T>
 terminality::ObservableCollection<T>* terminality::ItemsControl<T>::GetItemsSource() const
 {
-	return itemsSource_;
+	return itemsSource_ ? &itemsSource_->get() : nullptr;
 }

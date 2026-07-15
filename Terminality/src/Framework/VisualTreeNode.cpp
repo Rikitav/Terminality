@@ -1,4 +1,3 @@
-#pragma once
 
 #include <cstdint>
 #include <memory>
@@ -86,7 +85,7 @@ bool VisualTreeNode::IsFocusable() const
 
 bool VisualTreeNode::IsTabStop() const
 {
-	return isTabStop_ || true;
+	return isTabStop_;
 }
 
 int VisualTreeNode::GetTabIndex() const

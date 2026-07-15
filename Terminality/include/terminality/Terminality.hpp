@@ -12,6 +12,7 @@
 #include <terminality/Controls/Layout/ItemsControl.hpp>
 #include <terminality/Controls/Layout/ScrollViewer.hpp>
 #include <terminality/Controls/Layout/TabControl.hpp>
+#include <terminality/Controls/Layout/TreeView.hpp>
 
 // terminality.Controls.Visual
 #include <terminality/Controls/Visual/Label.hpp>

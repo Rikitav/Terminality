@@ -1,4 +1,3 @@
-#pragma once
 
 #include <cstdint>
 #include <algorithm>
@@ -30,31 +29,46 @@ bool FocusManager::SetFocused(VisualTreeNode* node)
 	if (node == nullptr || !node->IsFocusable())
 		return false;
 
-	VisualTreeNode* old = nullptr;
-	if (!focusStack.empty())
+	VisualTreeNode* old = focusStack.empty() ? nullptr : focusStack.back();
+	if (old == node)
+		return false;
+
+	// Build the path from root to the requested node.
+	std::vector<VisualTreeNode*> path;
+	for (VisualTreeNode* cur = node; cur != nullptr; cur = cur->GetParent())
+		path.push_back(cur);
+	std::reverse(path.begin(), path.end());
+
+	// Find the common ancestor already present in the focus stack.
+	std::size_t common = 0;
+	while (common < focusStack.size() && common < path.size() && focusStack[common] == path[common])
+		++common;
+
+	// Pop the old focus tail and notify it lost focus.
+	for (std::size_t i = focusStack.size(); i > common; --i)
+		focusStack[i - 1]->OnLostFocus();
+	focusStack.erase(focusStack.begin() + common, focusStack.end());
+
+	// Push the new focus tail. Push before calling OnGotFocus so that
+	// containers which auto-focus a child see their parent already focused.
+	for (std::size_t i = common; i < path.size(); ++i)
 	{
-		old = focusStack.back();
-		if (old == node)
-			return false;
+		VisualTreeNode* n = path[i];
+		if (!focusStack.empty() && focusStack.back() == n)
+			continue;
+
+		focusStack.push_back(n);
+		n->OnGotFocus();
 	}
 
-	VisualTreeNode* parent = node->GetParent();
-	if (old == parent)
-	{
-		focusStack.push_back(node);
-	}
-	else
-	{
-		focusStack.clear();
-		while (parent != nullptr)
-		{
-			parent->OnGotFocus();
-			parent = parent->GetParent();
-		}
-	}
+	VisualTreeNode* newFocused = focusStack.empty() ? nullptr : focusStack.back();
 
-	FocusChanged.Emit(old, node);
-	node->OnGotFocus();
+	// If a container's OnGotFocus delegated focus to a child recursively,
+	// that recursive call already emitted FocusChanged. Emit here only when
+	// the originally requested node remains the focused one.
+	if (newFocused == node && old != newFocused)
+		FocusChanged.Emit(old, newFocused);
+
 	return true;
 }
 

@@ -1,10 +1,10 @@
-#pragma once
 
 #include <cstdint>
 #include <algorithm>
 #include <memory>
 #include <functional>
 #include <unordered_map>
+#include <cstring>
 
 #include <terminality/Terminality.hpp>
 
@@ -204,14 +204,10 @@ void ControlBase::SetLayer(UILayer* layer)
 	if (layer_ == layer)
 		return;
 
-	if (layer == nullptr)
-	{
-		layer_ = nullptr;
-		return;
-	}
-
 	layer_ = layer;
-	OnPropertyChanged("Layer");
+
+	if (layer != nullptr)
+		OnPropertyChanged("Layer");
 
 	for (auto it = child_begin(); it != child_end(); ++it)
 	{
@@ -232,7 +228,8 @@ const ChildIterator ControlBase::child_end() const
 
 void ControlBase::Close()
 {
-	layer_->Running.store(false);
+	if (layer_ != nullptr)
+		layer_->Running.store(false);
 }
 
 void ControlBase::OpenContextMenu()

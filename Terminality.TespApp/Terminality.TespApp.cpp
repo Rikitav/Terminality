@@ -6,9 +6,9 @@
 #include <memory>
 #include <functional>
 
-//#include <terminality/Terminality.hpp>
-#define TERMINALITY_IMPLEMENTATION
-#include "../out/Terminality.hpp"
+#include <terminality/Terminality.hpp>
+//#define TERMINALITY_IMPLEMENTATION
+//#include "../out/Terminality.hpp"
 
 #include <Windows.h>
 #undef MessageBox
@@ -416,6 +416,108 @@ std::unique_ptr<ControlBase> TestTabControl3()
     });
 }
 
+// --- TreeView Tests ---
+
+std::unique_ptr<ControlBase> TestTreeView1()
+{
+    return init<StackPanel>([](StackPanel* p)
+    {
+        p->ContentOrientation = Orientation::Vertical;
+        p->AddChild(init<Label>([](Label* l)
+        {
+            l->Text = L"UP/DOWN move  |  LEFT collapse/up  |  RIGHT expand/down  |  ENTER activate";
+            l->Margin = Thickness(0, 0, 0, 1);
+        }));
+
+        p->AddChild(init<TreeView>([](TreeView* tv)
+        {
+            tv->MaxSize = Size(-1, 18);
+            tv->FocusedBackgroundColor = Color::DARK_BLUE;
+            tv->FocusedForegroundColor = Color::WHITE;
+
+            auto* project = tv->AddNode(L"Project");
+            auto* src = project->AddChild(L"src");
+            src->AddChild(L"main.cpp");
+            src->AddChild(L"utils.cpp");
+            auto* include = project->AddChild(L"include");
+            include->AddChild(L"Terminality.hpp");
+            auto* docs = project->AddChild(L"docs");
+            docs->AddChild(L"README.md");
+            docs->AddChild(L"LICENSE");
+            project->AddChild(L"build");        // leaf
+
+            project->Expand();
+            src->Expand();
+
+            tv->NodeActivated += [](TreeNode* node)
+            {
+                MessageBox::Show(L"TreeView", L"Activated: " + node->GetHeader(), MessageBoxButton::Ok);
+            };
+        }));
+    });
+}
+
+std::unique_ptr<ControlBase> TestTreeView2()
+{
+    // Demonstrates runtime mutation (add/remove) and a subtree built fully
+    // outside of the TreeView before being attached.
+    return init<StackPanel>([](StackPanel* p)
+    {
+        p->ContentOrientation = Orientation::Vertical;
+        p->AddChild(init<Label>([](Label* l)
+        {
+            l->Text = L"A=add child to selected  |  R=remove selected  |  E=expand all  |  C=collapse all";
+            l->Margin = Thickness(0, 0, 0, 1);
+        }));
+
+        p->AddChild(init<TreeView>([](TreeView* tv)
+        {
+            tv->MaxSize = Size(-1, 18);
+
+            // Build a whole subtree without touching the TreeView, then attach it.
+            auto external = std::make_unique<TreeNode>(L"External root");
+            external->AddChild(L"Ext child 1");
+            TreeNode* ext2 = external->AddChild(L"Ext child 2");
+            ext2->AddChild(L"Ext grandchild");
+            external->Expand();
+            tv->AddNode(std::move(external));
+
+            tv->OnHotkey(InputModifier::None, InputKey::A, [](ControlBase* self)
+            {
+                auto* tree = static_cast<TreeView*>(self);
+                TreeNode* target = tree->GetSelected();
+                if (target == nullptr)
+                    target = tree->GetRoot();
+
+                std::size_t count = target->ChildrenCount();
+                TreeNode* added = target->AddChild(L"New item " + std::to_wstring(count));
+                target->Expand();
+                tree->Select(added);
+            });
+
+            tv->OnHotkey(InputModifier::None, InputKey::R, [](ControlBase* self)
+            {
+                auto* tree = static_cast<TreeView*>(self);
+                TreeNode* selected = tree->GetSelected();
+                if (selected == nullptr || selected == tree->GetRoot())
+                    return;
+
+                selected->GetParent()->RemoveChild(selected);
+            });
+
+            tv->OnHotkey(InputModifier::None, InputKey::E, [](ControlBase* self)
+            {
+                static_cast<TreeView*>(self)->ExpandAll();
+            });
+
+            tv->OnHotkey(InputModifier::None, InputKey::C, [](ControlBase* self)
+            {
+                static_cast<TreeView*>(self)->CollapseAll();
+            });
+        }));
+    });
+}
+
 // --- Visuals and Hotkeys ---
 
 std::unique_ptr<ControlBase> TestVisuals()
@@ -511,6 +613,9 @@ public:
         tests_.push_back({L"TabControl Test 1", L"Basic tabs", TestTabControl1});
         tests_.push_back({L"TabControl Test 2", L"Truncation/Many tabs", TestTabControl2});
         tests_.push_back({L"TabControl Test 3", L"Nested layouts in tabs", TestTabControl3});
+
+        tests_.push_back({L"TreeView Test 1", L"Static tree + activation", TestTreeView1});
+        tests_.push_back({L"TreeView Test 2", L"Runtime add/remove + external", TestTreeView2});
         
         tests_.push_back({L"Visuals Test", L"Custom colors", TestVisuals});
         tests_.push_back({L"Hotkeys Test", L"Input handling", TestHotkeys});

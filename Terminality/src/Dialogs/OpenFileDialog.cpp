@@ -1,4 +1,3 @@
-#pragma once
 
 #include <cstdint>
 #include <memory>
@@ -7,6 +6,7 @@
 #include <filesystem>
 #include <vector>
 #include <algorithm>
+#include <optional>
 
 #include <terminality/Terminality.hpp>
 
@@ -76,7 +76,7 @@ std::optional<std::filesystem::path> OpenFileDialog::Show(const std::wstring& ti
     VisualTree& tree = VisualTree::Current();
 
     std::optional<std::filesystem::path> result = std::nullopt;
-	std::atomic<bool>* running = nullptr;
+	std::optional<std::reference_wrapper<std::atomic<bool>>> running;
 
     std::filesystem::path currentDir = initialDireinity.empty()
         ? std::filesystem::current_path()
@@ -187,7 +187,7 @@ std::optional<std::filesystem::path> OpenFileDialog::Show(const std::wstring& ti
                                 else
                                 {
                                     result = currentDir / entryModel.Name;
-                                    running->store(false);
+                                    running->get().store(false);
                                 }
                             };
                         });
@@ -200,7 +200,7 @@ std::optional<std::filesystem::path> OpenFileDialog::Show(const std::wstring& ti
                     cancelBtn->HorizontalAlignment = HorizontalAlign::Right;
                     cancelBtn->Clicked += [&running]()
                     {
-                        running->store(false);
+                        running->get().store(false);
                     };
                 }));
             });
@@ -209,7 +209,7 @@ std::optional<std::filesystem::path> OpenFileDialog::Show(const std::wstring& ti
 
     loadDirectory();
     UILayer& layer = tree.PushLayer(std::move(rootGrid));
-    running = &layer.Running;
+    running.emplace(layer.Running);
 
     host.NestUILoop(layer);
     tree.PopLayer();

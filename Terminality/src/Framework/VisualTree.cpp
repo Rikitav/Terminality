@@ -1,4 +1,3 @@
-#pragma once
 
 #include <cstdint>
 #include <memory>
@@ -69,7 +68,6 @@ UILayer& VisualTree::PushLayer(std::unique_ptr<VisualTreeNode> layerRoot)
 		throw std::runtime_error("UI layer stack overflow.");
 
 	layers_.emplace_back(std::make_unique<UILayer>(std::move(layerRoot)));
-	hasDirtyVisual_ = true;
 	dirtyRect_ = Rect();
 
 	UILayer& layer = *layers_.back().get();
@@ -85,7 +83,6 @@ void VisualTree::PopLayer()
 		layer.Running.store(false);
 		layers_.pop_back();
 
-		hasDirtyVisual_ = true;
 		dirtyRect_ = Rect();
 	}
 }
@@ -100,16 +97,16 @@ FocusManager& VisualTree::GetFocusManager()
 
 void VisualTree::Invalidate(const Rect& dirtyRect)
 {
-	hasDirtyVisual_ = true;
-	dirtyRect_ = Rect::Union(dirtyRect_, dirtyRect);
+	if (!dirtyRect_)
+		dirtyRect_ = dirtyRect;
+	else
+		dirtyRect_ = Rect::Union(*dirtyRect_, dirtyRect);
 }
 
 void VisualTree::CollectDirtyNodeRect(const VisualTreeNode& node)
 {
-	if (node.IsVisualDirty())
-	{
-		hasDirtyVisual_ = true;
-	}
+	if (node.IsVisualDirty() && !dirtyRect_)
+		dirtyRect_ = Rect();
 }
 
 void VisualTree::RunLayout(const Size& viewportSize)
@@ -130,7 +127,7 @@ void VisualTree::Render(RenderBuffer& buffer)
 	if (layers_.empty())
 		return;
 
-	if (!hasDirtyVisual_)
+	if (!dirtyRect_)
 		return;
 
 	UILayer& topLayer = *layers_.back();
@@ -141,6 +138,5 @@ void VisualTree::Render(RenderBuffer& buffer)
 	RenderContext context(buffer, nodeRect);
 
 	topLayer.RootNode->Render(context);
-	hasDirtyVisual_ = false;
-	dirtyRect_ = Rect();
+	dirtyRect_.reset();
 }

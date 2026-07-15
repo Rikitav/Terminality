@@ -2,6 +2,7 @@
 
 #include <string>
 #include <filesystem>
+#include <optional>
 
 namespace terminality
 {

@@ -1,6 +1,6 @@
 # Terminality
 
-Terminality is a C++23 TUI framework that brings WPF-style layout concepts to the terminal. It was built to replace manual cursor positioning with a proper widget hierarchy — you build the UI tree, and the framework handles the sizing, alignment, and redrawing.
+Terminality is a C++20 TUI framework that brings WPF-style layout concepts to the terminal. It was built to replace manual cursor positioning with a proper widget hierarchy — you build the UI tree, and the framework handles the sizing, alignment, and redrawing.
 
 ## Quick start 🚀
 
@@ -18,7 +18,6 @@ cmake --build .
 The layout is built using init-lambdas and smart pointers. Here’s a basic application with a centered text label and exit button :
 
 ```cpp
-import terminality;
 #include <terminality/Terminality.hpp>
 
 using namespace terminality;
@@ -30,13 +29,13 @@ int main()
 
     auto root = init<StackPanel>([](auto* panel)
     {
-        panel->HorizontalAlignment = HorizaontalAllign::Stretch;
+        panel->HorizontalAlignment = HorizontalAlign::Stretch;
         panel->VerticalAlignment = VerticalAlign::Stretch;
         
         panel->AddChild(init<Label>([](auto* label)
         {
             label->Text = L"Hello, Terminality!";
-            label->HorizontalAlignment = HorizaontalAllign::Center;
+            label->HorizontalAlignment = HorizontalAlign::Center;
             label->VerticalAlignment = VerticalAlign::Center;
         }));
 

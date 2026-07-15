@@ -1,4 +1,3 @@
-#pragma once
 
 #include <cstdint>
 #include <string>
@@ -93,7 +92,6 @@ void RenderBuffer::Resize(uint32_t newWidth, uint32_t newHeight)
 	height = std::min(newHeight, static_cast<uint32_t>(MAX_HEIGHT));
 
 	dirtyRect = Rect(0, 0, static_cast<int32_t>(width), static_cast<int32_t>(height));
-	hasDirtyRect = true;
 }
 
 void RenderBuffer::Clear(const CellInfo& cell)
@@ -140,15 +138,14 @@ void RenderBuffer::Snapshot()
 	snapshotBuffer = buffer;
 	snapshotWidth = width;
 	snapshotHeight = height;
-	hasDirtyRect = false;
-	dirtyRect = Rect();
+	dirtyRect.reset();
 }
 
 void RenderBuffer::BulkRender(std::wostream& out)
 {
 	std::lock_guard<std::recursive_mutex> guard(renderMutex);
 
-	if (!hasDirtyRect)
+	if (!dirtyRect)
 		return;
 
 	std::wstring output;
@@ -192,8 +189,7 @@ void RenderBuffer::BulkRender(std::wostream& out)
 	out.flush();
 
 	Snapshot();
-	hasDirtyRect = false;
-	dirtyRect = Rect();
+	dirtyRect.reset();
 }
 
 void RenderBuffer::DiffRender(std::wostream& out)
@@ -205,13 +201,13 @@ void RenderBuffer::DiffRender(std::wostream& out)
 		return;
 	}
 
-	if (!hasDirtyRect)
+	if (!dirtyRect)
 		return;
 
-	const uint32_t startX = (hasDirtyRect) ? static_cast<uint32_t>(std::max(0, dirtyRect.X)) : 0U;
-	const uint32_t startY = (hasDirtyRect) ? static_cast<uint32_t>(std::max(0, dirtyRect.Y)) : 0U;
-	const uint32_t endX = (hasDirtyRect) ? static_cast<uint32_t>(std::min<int32_t>(width, dirtyRect.Right())) : width;
-	const uint32_t endY = (hasDirtyRect) ? static_cast<uint32_t>(std::min<int32_t>(height, dirtyRect.Bottom())) : height;
+	const uint32_t startX = static_cast<uint32_t>(std::max(0, dirtyRect->X));
+	const uint32_t startY = static_cast<uint32_t>(std::max(0, dirtyRect->Y));
+	const uint32_t endX = static_cast<uint32_t>(std::min<int32_t>(width, dirtyRect->Right()));
+	const uint32_t endY = static_cast<uint32_t>(std::min<int32_t>(height, dirtyRect->Bottom()));
 
 	std::wstring output;
 	output.reserve(8192);
@@ -263,8 +259,7 @@ void RenderBuffer::DiffRender(std::wostream& out)
 	out.flush();
 
 	Snapshot();
-	hasDirtyRect = false;
-	dirtyRect = Rect();
+	dirtyRect.reset();
 }
 
 size_t RenderBuffer::GetIndex(uint32_t x, uint32_t y) const
@@ -274,12 +269,11 @@ size_t RenderBuffer::GetIndex(uint32_t x, uint32_t y) const
 
 void RenderBuffer::MarkDirty(const Rect& rect)
 {
-	if (!hasDirtyRect)
+	if (!dirtyRect)
 	{
 		dirtyRect = rect;
-		hasDirtyRect = true;
 		return;
 	}
 
-	dirtyRect = Rect::Union(dirtyRect, rect);
+	dirtyRect = Rect::Union(*dirtyRect, rect);
 }

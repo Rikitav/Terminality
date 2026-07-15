@@ -1,4 +1,3 @@
-#pragma once
 
 #include <cstdint>
 #include <memory>
@@ -407,7 +406,7 @@ bool Grid::MoveFocusNext(Direction direction, InputModifier modifiers)
         if (focusedIndex_ == 0)
             return false;
 
-        for (std::size_t i = focusedIndex_ - 1; i < children_.size(); --i)
+        for (std::size_t i = focusedIndex_; i-- > 0;)
         {
             ControlBase* control = children_[i].Control.get();
             if (control->IsFocusable() && control->IsTabStop())

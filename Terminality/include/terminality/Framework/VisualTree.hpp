@@ -5,6 +5,7 @@
 #include <memory>
 #include <atomic>
 #include <vector>
+#include <optional>
 
 #include <terminality/Core/Geometry.hpp>
 #include <terminality/Framework/VisualTreeNode.hpp>
@@ -35,8 +36,7 @@ namespace terminality
 	class VisualTree
 	{
 		std::vector<std::unique_ptr<UILayer>> layers_;
-		bool hasDirtyVisual_ = true;
-		Rect dirtyRect_;
+		std::optional<Rect> dirtyRect_;
 
 		VisualTree();
 		VisualTree(const VisualTree&) = delete;
@@ -56,7 +56,7 @@ namespace terminality
 		FocusManager& GetFocusManager();
 
 		void Invalidate(const Rect& dirtyRect);
-		bool HasDirtyVisual() const { return hasDirtyVisual_; }
+		bool HasDirtyVisual() const { return dirtyRect_.has_value(); }
 
 		void RunLayout(const Size& viewportSize);
 		void Render(RenderBuffer& buffer);
