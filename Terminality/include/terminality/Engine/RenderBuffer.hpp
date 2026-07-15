@@ -69,7 +69,7 @@ namespace terminality
 		void DiffRender(std::wostream& out);
 		void BulkRender(std::wostream& out);
 
-		const wchar_t* GetAsniBg(Color color);
-		const wchar_t* GetAsniFg(Color color);
+		const wchar_t* GetAnsiBg(Color color);
+		const wchar_t* GetAnsiFg(Color color);
 	};
 }

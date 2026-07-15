@@ -11,7 +11,7 @@
 
 using namespace terminality;
 
-const wchar_t* RenderBuffer::GetAsniBg(Color color)
+const wchar_t* RenderBuffer::GetAnsiBg(Color color)
 {
 	switch (color)
 	{
@@ -40,7 +40,7 @@ const wchar_t* RenderBuffer::GetAsniBg(Color color)
 	}
 }
 
-const wchar_t* RenderBuffer::GetAsniFg(Color color)
+const wchar_t* RenderBuffer::GetAnsiFg(Color color)
 {
 	switch (color)
 	{
@@ -168,13 +168,13 @@ void RenderBuffer::BulkRender(std::wostream& out)
 
 			if (!currentFore.has_value() || *currentFore != cell.Fore)
 			{
-				output += GetAsniFg(cell.Fore);
+				output += GetAnsiFg(cell.Fore);
 				currentFore = cell.Fore;
 			}
 			
 			if (!currentBack.has_value() || *currentBack != cell.Back)
 			{
-				output += GetAsniBg(cell.Back);
+				output += GetAnsiBg(cell.Back);
 				currentBack = cell.Back;
 			}
 			
@@ -237,13 +237,13 @@ void RenderBuffer::DiffRender(std::wostream& out)
 
 			if (!currentFore.has_value() || *currentFore != cell.Fore)
 			{
-				output += GetAsniFg(cell.Fore);
+				output += GetAnsiFg(cell.Fore);
 				currentFore = cell.Fore;
 			}
 			
 			if (!currentBack.has_value() || *currentBack != cell.Back)
 			{
-				output += GetAsniBg(cell.Back);
+				output += GetAnsiBg(cell.Back);
 				currentBack = cell.Back;
 			}
 			

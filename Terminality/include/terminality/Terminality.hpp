@@ -13,17 +13,21 @@
 #include <terminality/Controls/Layout/ScrollViewer.hpp>
 #include <terminality/Controls/Layout/TabControl.hpp>
 #include <terminality/Controls/Layout/TreeView.hpp>
+#include <terminality/Controls/Layout/Heap.hpp>
+#include <terminality/Controls/Layout/Expander.hpp>
 
 // terminality.Controls.Visual
 #include <terminality/Controls/Visual/Label.hpp>
 #include <terminality/Controls/Visual/Border.hpp>
 #include <terminality/Controls/Visual/Spinner.hpp>
 #include <terminality/Controls/Visual/ProgressBar.hpp>
+#include <terminality/Controls/Visual/Canvas.hpp>
 
 // terminality.Controls.Interactable
 #include <terminality/Controls/Interactable/CheckBox.hpp>
 #include <terminality/Controls/Interactable/Button.hpp>
 #include <terminality/Controls/Interactable/TextBox.hpp>
+#include <terminality/Controls/Interactable/Slider.hpp>
 
 // terminality.Dialogs
 #include <terminality/Dialogs/ContextMenu.hpp>
