@@ -377,3 +377,4 @@ FodyWeavers.xsd
 /CMakeCache.txt
 /Terminality.TespApp/Terminality.TespApp
 /Terminality.TespApp/cmake_install.cmake
+/build
