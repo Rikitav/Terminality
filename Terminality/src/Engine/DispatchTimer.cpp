@@ -60,7 +60,11 @@ void DispatchTimer::ProcessTasks()
 		{
 			task();
 		}
-		catch (const std::exception& e)
+		catch (const std::exception&)
+		{
+			// ...
+		}
+		catch (...)
 		{
 			// ...
 		}
@@ -121,6 +125,9 @@ void DispatchTimer::BeginResize()
 
 std::chrono::milliseconds DispatchTimer::GetRemainingFrameTime(int targetFPS)
 {
+	if (targetFPS <= 0)
+		return std::chrono::milliseconds(0);
+
 	const auto targetFrameTime = std::chrono::milliseconds(1000 / targetFPS);
 	auto workTime = std::chrono::high_resolution_clock::now() - frameStart_;
 	auto waitTime = targetFrameTime - std::chrono::duration_cast<std::chrono::milliseconds>(workTime);

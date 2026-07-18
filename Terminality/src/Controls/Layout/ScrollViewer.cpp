@@ -1,16 +1,46 @@
 
 #include <algorithm>
 #include <memory>
+#include <cstring>
 
 #include <terminality/Terminality.hpp>
 
 using namespace terminality;
 
+ScrollViewer::ScrollViewer()
+{
+    FocusedForegroundColor = ForegroundColor;
+    FocusedBackgroundColor = BackgroundColor;
+}
+
+void ScrollViewer::OnContentChanging(const std::unique_ptr<ControlBase>& oldContent)
+{
+    if (oldContent != nullptr)
+        oldContent->SetParent(nullptr);
+}
+
+void ScrollViewer::OnPropertyChanged(const char* propertyName)
+{
+    if (std::strcmp(propertyName, "Content") == 0)
+    {
+        if (Content.Get() != nullptr)
+            Content.Get()->SetParent(this);
+
+        ScrollX = 0;
+        ScrollY = 0;
+        InvalidateMeasure();
+        InvalidateVisual();
+        return;
+    }
+
+    ControlBase::OnPropertyChanged(propertyName);
+}
+
 Size ScrollViewer::MeasureOverride(const Size& availableSize)
 {
-    if (Content)
+    if (Content.Get())
     {
-        Size desired = Content->Measure(Size::Auto);
+        Size desired = Content.Get()->Measure(Size::Auto);
         return Size(
             std::min(availableSize.Width, desired.Width),
             std::min(availableSize.Height, desired.Height)
@@ -24,9 +54,9 @@ void ScrollViewer::ArrangeOverride(const Rect& finalRect)
 {
     arrangedRect_ = finalRect;
 
-    if (Content != nullptr)
+    if (Content.Get() != nullptr)
     {
-        Size extent = Content->GetActualSize();
+        Size extent = Content.Get()->GetActualSize();
 
         int maxScrollX = std::max(0, extent.Width - finalRect.Width);
         int maxScrollY = std::max(0, extent.Height - finalRect.Height);
@@ -44,16 +74,16 @@ void ScrollViewer::ArrangeOverride(const Rect& finalRect)
             extent.Height
         );
 
-        Content->Arrange(contentRect);
+        Content.Get()->Arrange(contentRect);
     }
 }
 
 void ScrollViewer::RenderOverride(RenderContext& context)
 {
-    if (Content != nullptr)
+    if (Content.Get() != nullptr)
     {
         RenderContext childContext = context.CreateInner(context.ContextRect());
-        Content->Render(childContext);
+        Content.Get()->Render(childContext);
     }
 
     int viewHeight = GetViewportHeight();
@@ -105,12 +135,12 @@ bool ScrollViewer::OnKeyDown(InputEvent input)
 
 int ScrollViewer::GetExtentWidth() const
 {
-    return Content ? Content->GetActualSize().Width : 0;
+    return Content.Get() ? Content.Get()->GetActualSize().Width : 0;
 }
 
 int ScrollViewer::GetExtentHeight() const
 {
-    return Content ? Content->GetActualSize().Height : 0;
+    return Content.Get() ? Content.Get()->GetActualSize().Height : 0;
 }
 
 int ScrollViewer::GetViewportWidth() const

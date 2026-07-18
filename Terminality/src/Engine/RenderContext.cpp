@@ -24,7 +24,7 @@ RenderContext RenderContext::CreateInner(Rect targetRect)
 	return RenderContext(buffer_, Rect(x, y, width, height));
 }
 
-Rect RenderContext::ContextRect()
+Rect RenderContext::ContextRect() const
 {
     return rect_;
 }
@@ -41,7 +41,6 @@ void RenderContext::SetCell(uint32_t x, uint32_t y, const CellInfo& cell)
     int32_t absY = rect_.Y + y;
 
     buffer_.SetCell(absX, absY, cell);
-    buffer_.MarkDirty(Rect(absX, absY, 1, 1));
 }
 
 void RenderContext::SetCell(uint32_t x, uint32_t y, const wchar_t puts, Color fg, Color bg)
@@ -56,17 +55,15 @@ void RenderContext::SetCell(uint32_t x, uint32_t y, const wchar_t puts, Color fg
     int32_t absY = rect_.Y + y;
 
     buffer_.SetCell(absX, absY, CellInfo{ puts, fg, bg });
-    buffer_.MarkDirty(Rect(absX, absY, 1, 1));
 }
 
-const CellInfo& RenderContext::GetCell(uint32_t x, uint32_t y) const
+CellInfo RenderContext::GetCell(uint32_t x, uint32_t y) const
 {
-    static CellInfo empty;
     if (x >= static_cast<uint32_t>(rect_.Width))
-        return empty;
+        return CellInfo();
 
     if (y >= static_cast<uint32_t>(rect_.Height))
-        return empty;
+        return CellInfo();
 
     int32_t absX = rect_.X + x;
     int32_t absY = rect_.Y + y;
@@ -78,15 +75,16 @@ void RenderContext::RenderRaw(const Point& point, const std::string& rawData)
 {
     std::lock_guard<std::recursive_mutex> guard(buffer_.renderMutex);
 
-    uint32_t absX = rect_.X + point.X;
-    uint32_t absY = rect_.Y + point.Y;
+    if (point.Y < 0 || point.Y >= rect_.Height)
+        return;
 
     for (int32_t i = 0; i < static_cast<int32_t>(rawData.size()); ++i)
     {
-        if (point.X + i < rect_.Width)
-        {
-            buffer_.SetCell(absX + i, absY, CellInfo{ (wchar_t)rawData[i] });
-        }
+        int32_t localX = point.X + i;
+        if (localX < 0 || localX >= rect_.Width)
+            continue;
+
+        buffer_.SetCell(rect_.X + localX, rect_.Y + point.Y, CellInfo{ static_cast<wchar_t>(rawData[i]) });
     }
 }
 
@@ -121,8 +119,6 @@ void RenderContext::RenderText(const Point& point, const std::wstring& text, Col
         buffer_.SetCell(rect_.X + x, rect_.Y + y, CellInfo{ ch, fg, bg });
         x++;
     }
-
-    buffer_.MarkDirty(Rect(rect_.X + point.X, rect_.Y + point.Y, (int32_t)text.size(), 1));
 }
 
 void RenderContext::RenderText(const Point& point, const std::string& text, Color fg, Color bg, bool wrap)
@@ -133,11 +129,17 @@ void RenderContext::RenderText(const Point& point, const std::string& text, Colo
 
 void RenderContext::RenderText(const Point& point, const char* text, Color fg, Color bg, bool wrap)
 {
+    if (text == nullptr)
+        return;
+
     RenderText(point, std::string(text), fg, bg, wrap);
 }
 
 void RenderContext::RenderText(const Point& point, const wchar_t* text, Color fg, Color bg, bool wrap)
 {
+    if (text == nullptr)
+        return;
+
     RenderText(point, std::wstring(text), fg, bg, wrap);
 }
 
@@ -211,22 +213,43 @@ void RenderContext::RenderLine(const Vector& vector)
     RenderLine(vector.From, vector.To);
 }
 
+void RenderContext::RenderLine(const Vector& vector, Color fg, Color bg)
+{
+    RenderLine(vector.From, vector.To, fg, bg);
+}
+
 void RenderContext::RenderLine(const Vector& vector, VectorStyle style)
 {
     RenderLine(vector.From, vector.To, style);
 }
 
+void RenderContext::RenderLine(const Vector& vector, VectorStyle style, Color fg, Color bg)
+{
+    RenderLine(vector.From, vector.To, style, fg, bg);
+}
+
 void RenderContext::RenderLine(const Point& fromPoint, const Point& toPoint)
 {
-    RenderLine(fromPoint, toPoint, [](const Point& current, const Vector& v)
+    RenderLine(fromPoint, toPoint, Color::WHITE, Color::BLACK);
+}
+
+void RenderContext::RenderLine(const Point& fromPoint, const Point& toPoint, Color fg, Color bg)
+{
+    RenderLine(fromPoint, toPoint,
+        [](const Point& current, const Vector& v)
         {
             int32_t dx = std::abs(v.To.X - v.From.X);
             int32_t dy = std::abs(v.To.Y - v.From.Y);
-            return (dx > dy) ? L'─' : L'│';
-        });
+            return (dx > dy) ? L'\u2500' : L'\u2502';
+        }, fg, bg);
 }
 
 void RenderContext::RenderLine(const Point& fromPoint, const Point& toPoint, VectorStyle style)
+{
+    RenderLine(fromPoint, toPoint, style, Color::WHITE, Color::BLACK);
+}
+
+void RenderContext::RenderLine(const Point& fromPoint, const Point& toPoint, VectorStyle style, Color fg, Color bg)
 {
     std::lock_guard<std::recursive_mutex> guard(buffer_.renderMutex);
 
@@ -248,7 +271,7 @@ void RenderContext::RenderLine(const Point& fromPoint, const Point& toPoint, Vec
         wchar_t symbol = style(Point(x1, y1), v);
         if (symbol != L'\0')
         {
-            SetCell(x1, y1, CellInfo{ symbol });
+            SetCell(x1, y1, symbol, fg, bg);
         }
 
         if (x1 == x2 && y1 == y2)
@@ -271,21 +294,38 @@ void RenderContext::RenderLine(const Point& fromPoint, const Point& toPoint, Vec
 
 void RenderContext::RenderLine(const Point& point, const int32_t length, short direction)
 {
-    Point to = point;
-    if (direction == 0)
-    {
-        to.X += (length > 0 ? length - 1 : 0);
-    }
-    else
-    {
-        to.Y += (length > 0 ? length - 1 : 0);
-    }
-
-    RenderLine(point, to);
+    RenderLine(point, length, Color::WHITE, Color::BLACK, direction);
 }
 
-void RenderContext::RenderLine(const Point& point, const int32_t length, VectorStyle style)
+void RenderContext::RenderLine(const Point& point, const int32_t length, Color fg, Color bg, short direction)
 {
-    Point to(point.X + (length > 0 ? length - 1 : 0), point.Y);
-    RenderLine(point, to, style);
+    if (length <= 0)
+        return;
+
+    Point to = point;
+    if (direction == 0)
+        to.X += length - 1;
+    else
+        to.Y += length - 1;
+
+    RenderLine(point, to, fg, bg);
+}
+
+void RenderContext::RenderLine(const Point& point, const int32_t length, VectorStyle style, short direction)
+{
+    RenderLine(point, length, style, Color::WHITE, Color::BLACK, direction);
+}
+
+void RenderContext::RenderLine(const Point& point, const int32_t length, VectorStyle style, Color fg, Color bg, short direction)
+{
+    if (length <= 0)
+        return;
+
+    Point to = point;
+    if (direction == 0)
+        to.X += length - 1;
+    else
+        to.Y += length - 1;
+
+    RenderLine(point, to, style, fg, bg);
 }

@@ -8,6 +8,21 @@
 
 using namespace terminality;
 
+std::vector<std::wstring> Spinner::Dots()
+{
+    return { L"⠋", L"⠙", L"⠹", L"⠸", L"⠼", L"⠴", L"⠦", L"⠧", L"⠇", L"⠏" };
+}
+
+std::vector<std::wstring> Spinner::Line()
+{
+    return { L"-", L"\\", L"|", L"/" };
+}
+
+std::vector<std::wstring> Spinner::Arrow()
+{
+    return { L">  ", L">> ", L">>>", L" >>", L"  >", L"   " };
+}
+
 Spinner::Spinner()
 {
     SetFocusable(false);
@@ -20,7 +35,9 @@ Spinner::Spinner()
         if (accumulator_ >= 0.1f)
         {
             accumulator_ -= 0.1f;
-            frame_ = (frame_ + 1) % 4;
+            const std::size_t frameCount = Frames.Get().size();
+            if (frameCount > 0)
+                frame_ = (frame_ + 1) % static_cast<int>(frameCount);
             InvalidateVisual();
         }
     });
@@ -55,5 +72,9 @@ void Spinner::ArrangeOverride(const Rect& finalRect)
 void Spinner::RenderOverride(RenderContext& context)
 {
     std::vector<std::wstring> frames = Frames.Get();
-    context.RenderText(Point::Zero, frames.at(frame_), ForegroundColor, BackgroundColor);
+    if (frames.empty())
+        return;
+
+    frame_ = std::clamp(frame_, 0, static_cast<int>(frames.size()) - 1);
+    context.RenderText(Point::Zero, frames[frame_], ForegroundColor, BackgroundColor);
 }

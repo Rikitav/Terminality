@@ -1,4 +1,5 @@
 #pragma once
+#undef MessageBox
 
 #include <string>
 

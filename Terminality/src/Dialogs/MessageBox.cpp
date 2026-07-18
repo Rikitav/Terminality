@@ -11,12 +11,12 @@ MessageBoxResult MessageBox::Show(const std::wstring& title, const std::wstring&
 {
     MessageBoxResult result = MessageBoxResult::None;
     
-    auto rootGrid = init<Grid>([&](Grid* rootGrid)
+    auto rootGrid = init<Grid>([&](Grid* root)
     {
-        rootGrid->HorizontalAlignment = HorizontalAlign::Stretch;
-        rootGrid->VerticalAlignment = VerticalAlign::Stretch;
+        root->HorizontalAlignment = HorizontalAlign::Stretch;
+        root->VerticalAlignment = VerticalAlign::Stretch;
 
-        rootGrid->AddChild(0, 0, init<Border>([&](Border* dialogBorder)
+        root->AddChild(0, 0, init<Border>([&](Border* dialogBorder)
         {
             dialogBorder->HorizontalAlignment = HorizontalAlign::Center;
             dialogBorder->VerticalAlignment = VerticalAlign::Center;

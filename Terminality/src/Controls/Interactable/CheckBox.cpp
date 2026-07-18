@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <optional>
 #include <string>
+#include <cstring>
 
 #include <terminality/Terminality.hpp>
 
@@ -10,26 +11,36 @@ using namespace terminality;
 
 void CheckBox::Toggle(std::optional<bool> value)
 {
-	isChecked_ = value;
-	Toggled.Emit(isChecked_);
-	InvalidateVisual();
+	if (IsChecked == value)
+		return;
 
-	if (isChecked_.has_value())
-	{
-		if (isChecked_.value())
-			Checked.Emit();
-		else
-			Unchecked.Emit();
-	}
+	IsChecked = value;
 }
 
 void CheckBox::OnPropertyChanged(const char* propertyName)
 {
+	if (std::strcmp(propertyName, "IsChecked") == 0)
+	{
+		Toggled.Emit(IsChecked.Get());
+		InvalidateVisual();
+
+		if (IsChecked.Get().has_value())
+		{
+			if (IsChecked.Get().value())
+				Checked.Emit();
+			else
+				Unchecked.Emit();
+		}
+	}
+
 	ControlBase::OnPropertyChanged(propertyName);
 }
 
 bool CheckBox::OnKeyDown(InputEvent input)
 {
+	if (!IsEnabled)
+		return ControlBase::OnKeyDown(input);
+
 	switch (input.Key)
 	{
 		case InputKey::RETURN:
@@ -46,26 +57,33 @@ bool CheckBox::OnKeyDown(InputEvent input)
 
 bool CheckBox::OnKeyUp(InputEvent input)
 {
+	if (!IsEnabled)
+		return ControlBase::OnKeyUp(input);
+
 	switch (input.Key)
 	{
 		case InputKey::RETURN:
 		case InputKey::SPACE:
 		{
 			isPressed_ = false;
-			if (!isChecked_.has_value())
+
+			std::optional<bool> current = IsChecked.Get();
+			if (!current.has_value())
 			{
-				isChecked_ = true;
+				Toggle(true);
 			}
-			else if (isChecked_.value())
+			else if (IsThreeState.Get())
 			{
-				isChecked_ = false;
+				if (current.value())
+					Toggle(false);
+				else
+					Toggle(std::nullopt);
 			}
 			else
 			{
-				isChecked_ = true;
+				Toggle(!current.value());
 			}
 
-			InvalidateVisual();
 			return true;
 		}
 	}
@@ -99,11 +117,12 @@ void CheckBox::RenderOverride(RenderContext& context)
 	const Rect rect = context.ContextRect();
 	std::wstring line = L"";
 
-	if (!isChecked_.has_value())
+	std::optional<bool> checked = IsChecked.Get();
+	if (!checked.has_value())
 	{
 		line += L"[?]";
 	}
-	else if (isChecked_.value())
+	else if (checked.value())
 	{
 		line += L"[X]";
 	}
@@ -113,10 +132,11 @@ void CheckBox::RenderOverride(RenderContext& context)
 	}
 
 	line += L" [  " + Text.Get() + L"  ]";
-	Color fore = ForegroundColor;
-	Color back = BackgroundColor;
 
-	if (focused_)
+	Color fore = GetEffectiveForegroundColor();
+	Color back = GetEffectiveBackgroundColor();
+
+	if (IsEnabled && focused_)
 	{
 		if (isPressed_)
 		{

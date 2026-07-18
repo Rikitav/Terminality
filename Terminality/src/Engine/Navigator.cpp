@@ -22,6 +22,12 @@ void Navigator::Navigate(std::unique_ptr<VisualTreeNode> page)
 	VisualTree& tree = VisualTree::Current();
 	
 	UILayer& layer = tree.PushLayer(std::move(page));
+	struct LayerGuard
+	{
+		VisualTree* tree;
+		~LayerGuard() { if (tree) tree->PopLayer(); }
+	} guard{ &tree };
+
 	host.NestUILoop(layer);
 
 	if (tree.Root())
@@ -29,8 +35,6 @@ void Navigator::Navigate(std::unique_ptr<VisualTreeNode> page)
 		tree.Root()->InvalidateMeasure();
 		tree.Root()->InvalidateVisual();
 	}
-
-	tree.PopLayer();
 }
 
 bool Navigator::CanGoBack() const

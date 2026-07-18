@@ -23,6 +23,10 @@ namespace terminality
 
         Spinner();
 
+        static std::vector<std::wstring> Dots();
+        static std::vector<std::wstring> Line();
+        static std::vector<std::wstring> Arrow();
+
     protected:
         Size MeasureOverride(const Size& availableSize) override;
         void ArrangeOverride(const Rect& finalRect) override;

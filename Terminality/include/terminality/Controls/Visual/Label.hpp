@@ -12,17 +12,16 @@ namespace terminality
 {
 	class Label : public ControlBase
 	{
-		bool isPressed_ = false;
-
 	public:
 		Property<Label, std::wstring> Text		 { this, "Text", L"", InvalidationKind::Measure };
 		Property<Label, TextWrap> TextWrapping   { this, "TextWrapping", terminality::TextWrap::NoWrap, InvalidationKind::Measure };
 		Property<Label, TextAlign> TextAlignment { this, "TextAlignment", terminality::TextAlign::Left, InvalidationKind::Visual };
+		Property<Label, Thickness> Padding       { this, "Padding", Thickness::Zero, InvalidationKind::Measure };
 
 		Event<> TextChanged;
 
 		Label();
-		Label(std::wstring& text);
+		Label(const std::wstring& text);
 
 		void OnPropertyChanged(const char* propertyName) override;
 

@@ -10,27 +10,6 @@ using namespace terminality;
 
 static wchar_t DefaultBorderStyle(const RectanglePos pos)
 {
-	/*
-	
-	for (int32_t x = 0; x < rect.Width; ++x)
-	{
-		context.SetCell(x, 0,				L'\x2500', renderColor, BackgroundColor);
-		context.SetCell(x, rect.Height - 1,	L'\x2500', renderColor, BackgroundColor);
-	}
-
-	for (int32_t y = 0; y < rect.Height; ++y)
-	{
-		context.SetCell(0, y,				L'\x2502', renderColor, BackgroundColor);
-		context.SetCell(rect.Width - 1, y,	L'\x2502', renderColor, BackgroundColor);
-	}
-
-	context.SetCell(0, 0,							 L'\x256D', renderColor, BackgroundColor);
-	context.SetCell(rect.Width - 1, 0,				 L'\x256E', renderColor, BackgroundColor);
-	context.SetCell(0, rect.Height - 1,				 L'\x2570', renderColor, BackgroundColor);
-	context.SetCell(rect.Width - 1, rect.Height - 1, L'\x256F', renderColor, BackgroundColor);
-
-	*/
-
 	switch (pos)
 	{
 		case RectanglePos::TopHorizontalLine:
@@ -58,19 +37,30 @@ static wchar_t DefaultBorderStyle(const RectanglePos pos)
 	}
 }
 
+static wchar_t DefaultBackgroundStyle(const Point& point, const Size& size)
+{
+	return L' ';
+}
+
 Border::Border()
 {
 	Style = std::move(DefaultBorderStyle);
 	FocusedForegroundColor = Color::CYAN;
-	FocusedBackgroundColor = Color::CYAN;
+	FocusedBackgroundColor = BackgroundColor;
 }
 
 Border::Border(std::unique_ptr<ControlBase> content)
 {
 	Style = std::move(DefaultBorderStyle);
 	FocusedForegroundColor = Color::CYAN;
-	FocusedBackgroundColor = Color::CYAN;
+	FocusedBackgroundColor = BackgroundColor;
 	Content = std::move(content);
+}
+
+void Border::OnContentChanging(const std::unique_ptr<ControlBase>& oldContent)
+{
+	if (oldContent != nullptr)
+		oldContent->SetParent(nullptr);
 }
 
 void Border::OnPropertyChanged(const char* propertyName)
@@ -116,19 +106,20 @@ void Border::OnLostFocus()
 Size Border::MeasureOverride(const Size& availableSize)
 {
 	const int thickness = 2;
+	const Thickness padding = Padding.Get();
 	Size desiredSize(thickness, thickness);
 
 	if (Content != nullptr)
 	{
 		const Size innerSize(
-			availableSize.Width >= 0 ? std::max(0, availableSize.Width - thickness) : -1,
-			availableSize.Height >= 0 ? std::max(0, availableSize.Height - thickness) : -1
+			availableSize.Width >= 0 ? std::max(0, availableSize.Width - thickness - padding.Horizontal()) : -1,
+			availableSize.Height >= 0 ? std::max(0, availableSize.Height - thickness - padding.Vertical()) : -1
 		);
 
 		const Size childSize = Content.Get()->Measure(innerSize);
 
-		desiredSize.Width += childSize.Width;
-		desiredSize.Height += childSize.Height;
+		desiredSize.Width += childSize.Width + padding.Horizontal();
+		desiredSize.Height += childSize.Height + padding.Vertical();
 	}
 
 	if (availableSize.Width >= 0)
@@ -145,12 +136,12 @@ void Border::ArrangeOverride(const Rect& contentRect)
 	if (Content == nullptr)
 		return;
 
-	Rect arrangedRect = GetArrangedRect();
+	const Thickness padding = Padding.Get();
 	const Rect innerRect(
-		contentRect.X + 1,
-		contentRect.Y + 1,
-		std::max(0, arrangedRect.Width - 2),
-		std::max(0, arrangedRect.Height - 2));
+		contentRect.X + 1 + padding.Left,
+		contentRect.Y + 1 + padding.Top,
+		std::max(0, contentRect.Width - 2 - padding.Horizontal()),
+		std::max(0, contentRect.Height - 2 - padding.Vertical()));
 
 	Content.Get()->Arrange(innerRect);
 }
@@ -158,30 +149,37 @@ void Border::ArrangeOverride(const Rect& contentRect)
 void Border::RenderOverride(RenderContext& context)
 {
 	const Rect rect = context.ContextRect();
-	const Size size = rect.AsSize();
 	const Color renderColor = focused_ ? FocusedBorderColor : BorderColor;
+	const Color background = GetEffectiveBackgroundColor();
+	const Color foreground = GetEffectiveForegroundColor();
 	const BorderStyle style = Style;
+
+	// Background fill inside the border area.
+	if (background != Color::TRANSPARENT)
+	{
+		context.RenderRectangle(Point(1, 1), Size(rect.Width - 1, rect.Height - 1), foreground, background, DefaultBackgroundStyle);
+	}
 
 	for (int32_t x = 0; x < rect.Width; ++x)
 	{
-		context.SetCell(x, 0,				style(RectanglePos::TopHorizontalLine),    renderColor, BackgroundColor);
-		context.SetCell(x, rect.Height - 1, style(RectanglePos::BottomHorizontalLine), renderColor, BackgroundColor);
+		context.SetCell(x, 0,				style(RectanglePos::TopHorizontalLine),    renderColor, background);
+		context.SetCell(x, rect.Height - 1, style(RectanglePos::BottomHorizontalLine), renderColor, background);
 	}
 
 	for (int32_t y = 0; y < rect.Height; ++y)
 	{
-		context.SetCell(0, y,				style(RectanglePos::LeftVerticalLine),  renderColor, BackgroundColor);
-		context.SetCell(rect.Width - 1, y,	style(RectanglePos::RightVerticalLine), renderColor, BackgroundColor);
+		context.SetCell(0, y,				style(RectanglePos::LeftVerticalLine),  renderColor, background);
+		context.SetCell(rect.Width - 1, y,	style(RectanglePos::RightVerticalLine), renderColor, background);
 	}
 
-	context.SetCell(0, 0,							 style(RectanglePos::LeftTopCorner),	 renderColor, BackgroundColor);
-	context.SetCell(0, rect.Height - 1,				 style(RectanglePos::LeftBottomCorner),  renderColor, BackgroundColor);
-	context.SetCell(rect.Width - 1, 0,				 style(RectanglePos::RightTopCorner),    renderColor, BackgroundColor);
-	context.SetCell(rect.Width - 1, rect.Height - 1, style(RectanglePos::RightBottomCorner), renderColor, BackgroundColor);
+	context.SetCell(0, 0,							 style(RectanglePos::LeftTopCorner),	 renderColor, background);
+	context.SetCell(0, rect.Height - 1,				 style(RectanglePos::LeftBottomCorner),  renderColor, background);
+	context.SetCell(rect.Width - 1, 0,				 style(RectanglePos::RightTopCorner),    renderColor, background);
+	context.SetCell(rect.Width - 1, rect.Height - 1, style(RectanglePos::RightBottomCorner), renderColor, background);
 
 	if (HeaderText->size() != 0)
 	{
-		context.RenderText(Point(2, 0), HeaderText, FocusedForegroundColor, BackgroundColor);
+		context.RenderText(Point(2, 0), HeaderText, foreground, background);
 	}
 
 	if (rect.Width > 2 || rect.Height > 2)
@@ -197,7 +195,7 @@ void Border::RenderOverride(RenderContext& context)
 
 size_t Border::VisualChildrenCount() const
 {
-	return 1;
+	return Content.Get() ? 1 : 0;
 }
 
 VisualTreeNode* Border::GetVisualChild(std::size_t index) const

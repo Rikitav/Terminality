@@ -21,7 +21,15 @@ float Slider::Fraction() const
 
 bool Slider::OnKeyDown(InputEvent input)
 {
+	if (!IsEnabled)
+		return ControlBase::OnKeyDown(input);
+
 	const float step = Step.Get();
+	const float min = Minimum.Get();
+	const float max = Maximum.Get();
+	const float range = std::max(0.0f, max - min);
+	const float largeStep = std::max(step, range / 10.0f);
+
 	float v = Value.Get();
 	const bool horizontal = (Orientation.Get() == terminality::Orientation::Horizontal);
 
@@ -29,17 +37,22 @@ bool Slider::OnKeyDown(InputEvent input)
 	else if (horizontal && input.Key == InputKey::RIGHT)  v += step;
 	else if (!horizontal && input.Key == InputKey::DOWN)  v -= step;
 	else if (!horizontal && input.Key == InputKey::UP)    v += step;
+	else if (input.Key == InputKey::PRIOR)                v += largeStep;
+	else if (input.Key == InputKey::NEXT)                 v -= largeStep;
+	else if (input.Key == InputKey::HOME)                 v = min;
+	else if (input.Key == InputKey::END)                  v = max;
 	else
 		return ControlBase::OnKeyDown(input);
-
-	float min = Minimum.Get();
-	float max = Maximum.Get();
 
 	if (v < min) v = min;
 	if (v > max) v = max;
 
-	Value = v;
-	ValueChanged.Emit(v);
+	if (v != Value.Get())
+	{
+		Value = v;
+		ValueChanged.Emit(v);
+	}
+
 	return true;
 }
 

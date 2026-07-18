@@ -26,6 +26,15 @@ namespace terminality
 	{
 		const VisualTreeNode* node_;
 		std::size_t index_;
+		mutable VisualTreeNode* current_ = nullptr;
+
+		void updateCurrent() const
+		{
+			if (node_ != nullptr && index_ < node_->VisualChildrenCount())
+				current_ = node_->GetVisualChild(index_);
+			else
+				current_ = nullptr;
+		}
 
 	public:
 		using iterator_category = std::forward_iterator_tag;
@@ -35,23 +44,33 @@ namespace terminality
 		using reference = VisualTreeNode*&;
 
 		ChildIterator(const VisualTreeNode* node, std::size_t index)
-			: node_(node), index_(index) { }
-
-		VisualTreeNode* operator*() const
+			: node_(node), index_(index)
 		{
-			return node_->GetVisualChild(index_);
+			updateCurrent();
+		}
+
+		VisualTreeNode*& operator*() const
+		{
+			return current_;
+		}
+
+		VisualTreeNode** operator->() const
+		{
+			return &current_;
 		}
 
 		ChildIterator& operator++()
 		{
-			index_++;
+			++index_;
+			updateCurrent();
 			return *this;
 		}
 
 		ChildIterator operator++(int)
 		{
 			ChildIterator temp = *this;
-			index_++;
+			++index_;
+			updateCurrent();
 			return temp;
 		}
 
@@ -85,13 +104,19 @@ namespace terminality
 		Property<ControlBase, HorizontalAlign> HorizontalAlignment { this, "HorizontalAlign", HorizontalAlign::Stretch, InvalidationKind::Measure };
 		Property<ControlBase, VerticalAlign> VerticalAlignment     { this, "VerticalAlign", VerticalAlign::Stretch, InvalidationKind::Measure };
 
-		Property<ControlBase, Color> ForegroundColor	    { this, "ForegroundColor", Color::WHITE, InvalidationKind::Visual };
-		Property<ControlBase, Color> BackgroundColor	    { this, "BackgroundColor", Color::BLACK, InvalidationKind::Visual };
-		Property<ControlBase, Color> FocusedForegroundColor { this, "FocusedForegroundColor", Color::BLACK, InvalidationKind::Visual };
-		Property<ControlBase, Color> FocusedBackgroundColor { this, "FocusedBackgroundColor", Color::WHITE, InvalidationKind::Visual };
+		Property<ControlBase, Color> ForegroundColor	     { this, "ForegroundColor", Color::WHITE, InvalidationKind::Visual };
+		Property<ControlBase, Color> BackgroundColor	     { this, "BackgroundColor", Color::BLACK, InvalidationKind::Visual };
+		Property<ControlBase, Color> FocusedForegroundColor  { this, "FocusedForegroundColor", Color::BLACK, InvalidationKind::Visual };
+		Property<ControlBase, Color> FocusedBackgroundColor  { this, "FocusedBackgroundColor", Color::WHITE, InvalidationKind::Visual };
+		Property<ControlBase, Color> DisabledForegroundColor { this, "DisabledForegroundColor", Color::DARK_GRAY, InvalidationKind::Visual };
+		Property<ControlBase, Color> DisabledBackgroundColor { this, "DisabledBackgroundColor", Color::BLACK, InvalidationKind::Visual };
 
 		Property<ControlBase, bool> IsVisible                       { this, "IsVisible", true, InvalidationKind::Visual };
+		Property<ControlBase, bool> IsEnabled                       { this, "IsEnabled", true, InvalidationKind::Visual };
 		Property<ControlBase, std::unique_ptr<ContextMenu>> CtxMenu { this, "ContextMenu", nullptr, InvalidationKind::None };
+
+		virtual Color GetEffectiveForegroundColor() const;
+		virtual Color GetEffectiveBackgroundColor() const;
 
 		// Setters
 		void SetParent(VisualTreeNode* parent) override;

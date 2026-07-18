@@ -24,7 +24,7 @@ VisualTree& VisualTree::Current()
 	return visualTree;
 }
 
-size_t VisualTree::LayerCount()
+size_t VisualTree::LayerCount() const
 {
 	return layers_.size();
 }

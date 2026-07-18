@@ -11,7 +11,7 @@
 
 using namespace terminality;
 
-const wchar_t* RenderBuffer::GetAnsiBg(Color color)
+const wchar_t* RenderBuffer::GetAnsiBg(Color color) const
 {
 	switch (color)
 	{
@@ -40,7 +40,7 @@ const wchar_t* RenderBuffer::GetAnsiBg(Color color)
 	}
 }
 
-const wchar_t* RenderBuffer::GetAnsiFg(Color color)
+const wchar_t* RenderBuffer::GetAnsiFg(Color color) const
 {
 	switch (color)
 	{
@@ -73,8 +73,8 @@ RenderBuffer::RenderBuffer(uint32_t initialWidth, uint32_t initialHeight)
 {
 	std::lock_guard<std::recursive_mutex> guard(renderMutex);
 
-	buffer.assign(MAX_WIDTH * MAX_HEIGHT, CellInfo(' ', static_cast<Color>(-1), static_cast<Color>(-1)));
-	snapshotBuffer.assign(MAX_WIDTH * MAX_HEIGHT, CellInfo(' ', static_cast<Color>(-1), static_cast<Color>(-1)));
+	buffer.assign(MAX_WIDTH * MAX_HEIGHT, CellInfo(L' ', Color::TRANSPARENT, Color::TRANSPARENT));
+	snapshotBuffer.assign(MAX_WIDTH * MAX_HEIGHT, CellInfo(L' ', Color::TRANSPARENT, Color::TRANSPARENT));
 
 	width = std::min(initialWidth, static_cast<uint32_t>(MAX_WIDTH));
 	height = std::min(initialHeight, static_cast<uint32_t>(MAX_HEIGHT));
@@ -108,24 +108,33 @@ void RenderBuffer::SetCell(uint32_t x, uint32_t y, const CellInfo& cell)
 		return;
 
 	CellInfo& target = buffer[GetIndex(x, y)];
-	if (target != cell)
+	bool changed = false;
+
+	if (cell.Symbol != L'\0' && target.Symbol != cell.Symbol)
 	{
-		if (cell.Back != Color::TRANSPARENT)
-			target.Back = cell.Back;
-
-		if (cell.Fore != Color::TRANSPARENT)
-			target.Fore = cell.Fore;
-
-		if (cell.Symbol != L'\0')
-			target.Symbol = cell.Symbol;
-
-		//target = cell;
-		MarkDirty(Rect(static_cast<int32_t>(x), static_cast<int32_t>(y), 1, 1));
+		target.Symbol = cell.Symbol;
+		changed = true;
 	}
+
+	if (cell.Fore != Color::TRANSPARENT && target.Fore != cell.Fore)
+	{
+		target.Fore = cell.Fore;
+		changed = true;
+	}
+
+	if (cell.Back != Color::TRANSPARENT && target.Back != cell.Back)
+	{
+		target.Back = cell.Back;
+		changed = true;
+	}
+
+	if (changed)
+		MarkDirty(Rect(static_cast<int32_t>(x), static_cast<int32_t>(y), 1, 1));
 }
 
 const CellInfo& RenderBuffer::GetCell(uint32_t x, uint32_t y) const
 {
+	std::lock_guard<std::recursive_mutex> guard(renderMutex);
 	if (x >= width || y >= height)
 		throw std::out_of_range("RenderBuffer::GetCell coordinates out of range");
 
@@ -201,7 +210,7 @@ void RenderBuffer::DiffRender(std::wostream& out)
 		return;
 	}
 
-	if (!dirtyRect)
+	if (!dirtyRect || dirtyRect->IsEmpty())
 		return;
 
 	const uint32_t startX = static_cast<uint32_t>(std::max(0, dirtyRect->X));
@@ -269,6 +278,9 @@ size_t RenderBuffer::GetIndex(uint32_t x, uint32_t y) const
 
 void RenderBuffer::MarkDirty(const Rect& rect)
 {
+	if (rect.IsEmpty())
+		return;
+
 	if (!dirtyRect)
 	{
 		dirtyRect = rect;

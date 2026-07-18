@@ -17,7 +17,8 @@ namespace terminality
 	public:
 		Property<Expander, std::wstring> Header { this, "Header", L"", InvalidationKind::Visual };
 		Property<Expander, bool> Expanded { this, "Expanded", false, InvalidationKind::Measure };
-		Property<Expander, std::unique_ptr<ControlBase>> Content { this, "Content", nullptr, InvalidationKind::Measure };
+		Property<Expander, std::unique_ptr<ControlBase>> Content { this, "Content", nullptr, InvalidationKind::Measure,
+			[this](const std::unique_ptr<ControlBase>& old) { OnContentChanging(old); } };
 
 		Property<Expander, wchar_t> CollapsedGlyph { this, "CollapsedGlyph", L'+', InvalidationKind::Visual };
 		Property<Expander, wchar_t> ExpandedGlyph  { this, "ExpandedGlyph",  L'-', InvalidationKind::Visual };
@@ -36,6 +37,7 @@ namespace terminality
 		void OnLostFocus() override;
 
 		void OnPropertyChanged(const char* propertyName) override;
+		void OnContentChanging(const std::unique_ptr<ControlBase>& oldContent);
 
 		std::size_t VisualChildrenCount() const override;
 		VisualTreeNode* GetVisualChild(std::size_t index) const override;

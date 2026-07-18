@@ -1,10 +1,11 @@
-﻿
+
 #include <stdexcept>
 #include <iostream>
 #include <string>
 #include <vector>
 #include <memory>
 #include <functional>
+#include <cmath>
 
 #include <terminality/Terminality.hpp>
 //#define TERMINALITY_IMPLEMENTATION
@@ -58,14 +59,46 @@ std::unique_ptr<ControlBase> TestButton()
         p->ContentOrientation = Orientation::Vertical;
         p->HorizontalContentAlignment = HorizontalAlign::Center;
         p->VerticalContentAlignment = VerticalAlign::Center;
-        
+        p->ItemSpacing = 1;
+
+        p->AddChild(init<Label>([](Label* l)
+        {
+            l->Text = L"Access keys: Alt+O, Alt+C, Alt+X. Default button fires on Enter.";
+        }));
+
         p->AddChild(init<Button>([](Button* b)
         {
-            b->Text = L"Click Me!";
+            b->Text = L"&OK";
+            b->IsDefault = true;
             b->Clicked += []()
             {
-                MessageBox::Show(L"Button Test", L"Button was clicked!", MessageBoxButton::Ok);
+                MessageBox::Show(L"Button Test", L"Default/OK clicked!", MessageBoxButton::Ok);
             };
+        }));
+
+        p->AddChild(init<Button>([](Button* b)
+        {
+            b->Text = L"&Cancel";
+            b->IsCancel = true;
+            b->Clicked += []()
+            {
+                MessageBox::Show(L"Button Test", L"Cancel clicked!", MessageBoxButton::Ok);
+            };
+        }));
+
+        p->AddChild(init<Button>([](Button* b)
+        {
+            b->Text = L"E&xit";
+            b->Clicked += []()
+            {
+                MessageBox::Show(L"Button Test", L"Exit clicked!", MessageBoxButton::Ok);
+            };
+        }));
+
+        p->AddChild(init<Button>([](Button* b)
+        {
+            b->Text = L"&Disabled";
+            b->IsEnabled = false;
         }));
     });
 }
@@ -77,10 +110,31 @@ std::unique_ptr<ControlBase> TestCheckBox()
         p->ContentOrientation = Orientation::Vertical;
         p->HorizontalContentAlignment = HorizontalAlign::Center;
         p->VerticalContentAlignment = VerticalAlign::Center;
-        
-        p->AddChild(init<CheckBox>([](CheckBox* cb) { cb->Text = L"Option 1 (Unchecked)"; }));
-        p->AddChild(init<CheckBox>([](CheckBox* cb) { cb->Text = L"Option 2 (Checked)"; cb->Toggle(true); }));
-        p->AddChild(init<CheckBox>([](CheckBox* cb) { cb->Text = L"Option 3 (Disabled focus, theoretically)"; cb->SetFocusable(false); }));
+        p->ItemSpacing = 1;
+
+        p->AddChild(init<CheckBox>([](CheckBox* cb)
+        {
+            cb->Text = L"Option 1 (Unchecked)";
+        }));
+
+        p->AddChild(init<CheckBox>([](CheckBox* cb)
+        {
+            cb->Text = L"Option 2 (Checked via IsChecked)";
+            cb->IsChecked = true;
+        }));
+
+        p->AddChild(init<CheckBox>([](CheckBox* cb)
+        {
+            cb->Text = L"Option 3 (Three-state)";
+            cb->IsThreeState = true;
+        }));
+
+        p->AddChild(init<CheckBox>([](CheckBox* cb)
+        {
+            cb->Text = L"Option 4 (Disabled)";
+            cb->IsChecked = true;
+            cb->IsEnabled = false;
+        }));
     });
 }
 
@@ -91,15 +145,38 @@ std::unique_ptr<ControlBase> TestTextBox()
         p->ContentOrientation = Orientation::Vertical;
         p->HorizontalContentAlignment = HorizontalAlign::Center;
         p->VerticalContentAlignment = VerticalAlign::Center;
-        
-        p->AddChild(init<Label>([](Label* l)
-        {
-            l->Text = L"Enter some text below:";
-        }));
+        p->ItemSpacing = 1;
 
         p->AddChild(init<TextBox>([](TextBox* tb)
         {
             tb->Text = L"Default text";
+            tb->MinSize = Size(20, 1);
+        }));
+
+        p->AddChild(init<TextBox>([](TextBox* tb)
+        {
+            tb->PlaceholderText = L"Placeholder text...";
+            tb->MinSize = Size(20, 1);
+        }));
+
+        p->AddChild(init<TextBox>([](TextBox* tb)
+        {
+            tb->Text = L"Password";
+            tb->PasswordChar = L'*';
+            tb->MinSize = Size(20, 1);
+        }));
+
+        p->AddChild(init<TextBox>([](TextBox* tb)
+        {
+            tb->Text = L"Read-only text";
+            tb->IsReadOnly = true;
+            tb->MinSize = Size(20, 1);
+        }));
+
+        p->AddChild(init<TextBox>([](TextBox* tb)
+        {
+            tb->PlaceholderText = L"Max 10 chars";
+            tb->MaxLength = 10;
             tb->MinSize = Size(20, 1);
         }));
 
@@ -144,17 +221,40 @@ std::unique_ptr<ControlBase> TestProgressBarAndSpinner()
     {
         p->ContentOrientation = Orientation::Vertical;
         p->HorizontalContentAlignment = HorizontalAlign::Stretch;
-        
+        p->ItemSpacing = 1;
+
         p->AddChild(init<Label>([](Label* l)
         {
-            l->Text = L"Animated Spinner:";
+            l->Text = L"Default Spinner:";
         }));
 
         p->AddChild(init<Spinner>([](Spinner* s)
         {
             s->Margin = Thickness(0, 1, 0, 1);
         }));
-        
+
+        p->AddChild(init<Label>([](Label* l)
+        {
+            l->Text = L"Dots Spinner:";
+        }));
+
+        p->AddChild(init<Spinner>([](Spinner* s)
+        {
+            s->Frames = Spinner::Dots();
+            s->Margin = Thickness(0, 1, 0, 1);
+        }));
+
+        p->AddChild(init<Label>([](Label* l)
+        {
+            l->Text = L"Arrow Spinner:";
+        }));
+
+        p->AddChild(init<Spinner>([](Spinner* s)
+        {
+            s->Frames = Spinner::Arrow();
+            s->Margin = Thickness(0, 1, 0, 1);
+        }));
+
         p->AddChild(init<Label>([](Label* l)
         {
             l->Text = L"Animated ProgressBar:";
@@ -169,6 +269,17 @@ std::unique_ptr<ControlBase> TestProgressBarAndSpinner()
                 if (v > pb->Maximum.Get()) v = pb->Minimum.Get();
                 pb->Value = v;
             };
+        }));
+
+        p->AddChild(init<Label>([](Label* l)
+        {
+            l->Text = L"Indeterminate ProgressBar:";
+        }));
+
+        p->AddChild(init<ProgressBar>([](ProgressBar* pb)
+        {
+            pb->IsIndeterminate = true;
+            pb->Margin = Thickness(0, 1, 0, 1);
         }));
     });
 }
@@ -375,9 +486,14 @@ std::unique_ptr<ControlBase> TestTabControl1()
 {
     return init<TabControl>([](TabControl* tc)
     {
-        tc->AddTab("Tab 1", init<Label>([](Label* l) { l->Text = L"Content of Tab 1"; }));
-        tc->AddTab("Tab 2", init<Button>([](Button* b) { b->Text = L"Button in Tab 2"; }));
-        tc->AddTab("Tab 3", init<TextBox>([](TextBox* t) { t->Text = L"Text in Tab 3"; }));
+        tc->AddTab("Tab 1", init<Label>([](Label* l) { l->Text = L"Content of Tab 1"; }), true);
+        tc->AddTab("Tab 2", init<Button>([](Button* b) { b->Text = L"Button in Tab 2"; }), true);
+        tc->AddTab("Tab 3", init<TextBox>([](TextBox* t) { t->Text = L"Text in Tab 3"; }), true);
+
+        tc->TabClosed += [](int index)
+        {
+            MessageBox::Show(L"TabControl", L"Closed tab index: " + std::to_wstring(index), MessageBoxButton::Ok);
+        };
     });
 }
 
@@ -518,6 +634,128 @@ std::unique_ptr<ControlBase> TestTreeView2()
     });
 }
 
+// --- Canvas / Slider / Expander / Heap Tests ---
+
+std::unique_ptr<ControlBase> TestCanvas()
+{
+    return init<Border>([](Border* b)
+    {
+        b->HeaderText = L" Canvas - animated sine (self-rendering every frame) ";
+        b->Content = init<Canvas>([](Canvas* c)
+        {
+            c->MinSize = Size(60, 14);
+            c->BackgroundColor = Color::BLACK;
+            c->OnRender = [](RenderContext& ctx, float dt)
+            {
+                static float t = 0.0f;
+                t += dt;
+
+                const Rect r = ctx.ContextRect();
+                const int mid = r.Height / 2;
+
+                // center axis
+                for (int x = 0; x < r.Width; ++x)
+                    ctx.SetCell(x, mid, L'.', Color::DARK_GRAY, Color::BLACK);
+
+                // moving sine wave
+                for (int x = 0; x < r.Width; ++x)
+                {
+                    float nx = static_cast<float>(x) / r.Width;
+                    int y = mid - static_cast<int>((mid - 1) * sinf(nx * 6.28318f * 1.5f + t * 2.0f));
+                    if (y >= 0 && y < r.Height)
+                        ctx.SetCell(x, y, L'#', Color::GREEN, Color::BLACK);
+                }
+            };
+        });
+    });
+}
+
+std::unique_ptr<ControlBase> TestSlider()
+{
+    return init<StackPanel>([](StackPanel* p)
+    {
+        p->ContentOrientation = Orientation::Vertical;
+
+        p->AddChild(init<Label>([](Label* l)
+        {
+            l->Text = L"Focus the slider. LEFT/RIGHT, PageUp/PageDown, Home/End move it.";
+            l->Margin = Thickness(0, 0, 0, 1);
+        }));
+
+        auto valueLabel = init<Label>([](Label* l) { l->Text = L"Value: 25"; });
+        Label* labelPtr = valueLabel.get();
+
+        p->AddChild(init<Slider>([labelPtr](Slider* s)
+        {
+            s->Minimum = 0.0f;
+            s->Maximum = 100.0f;
+            s->Value = 25.0f;
+            s->Step = 5.0f;
+            s->MinSize = Size(30, 1);
+            s->FocusedBackgroundColor = Color::DARK_BLUE;
+            s->FocusedForegroundColor = Color::WHITE;
+
+            s->ValueChanged += [labelPtr](float v)
+            {
+                labelPtr->Text = L"Value: " + std::to_wstring(static_cast<int>(v));
+            };
+        }));
+
+        p->AddChild(std::move(valueLabel));
+    });
+}
+
+std::unique_ptr<ControlBase> TestExpander()
+{
+    return init<StackPanel>([](StackPanel* p)
+    {
+        p->ContentOrientation = Orientation::Vertical;
+
+        p->AddChild(init<Label>([](Label* l)
+        {
+            l->Text = L"ENTER/SPACE or LEFT/RIGHT to expand/collapse. DOWN enters content.";
+            l->Margin = Thickness(0, 0, 0, 1);
+        }));
+
+        p->AddChild(init<Expander>([](Expander* e)
+        {
+            e->Header = L"Section A";
+            e->Content = init<Label>([](Label* l)
+            {
+                l->Text = L"Expanded content for section A.";
+            });
+            e->Expand();
+        }));
+
+        p->AddChild(init<Expander>([](Expander* e)
+        {
+            e->Header = L"Section B (starts collapsed)";
+            e->Content = init<StackPanel>([](StackPanel* sp)
+            {
+                sp->ContentOrientation = Orientation::Vertical;
+                sp->AddChild(init<CheckBox>([](CheckBox* c) { c->Text = L"Option 1"; }));
+                sp->AddChild(init<CheckBox>([](CheckBox* c) { c->Text = L"Option 2"; }));
+            });
+        }));
+    });
+}
+
+std::unique_ptr<ControlBase> TestHeap()
+{
+    return init<Border>([](Border* b)
+    {
+        b->HeaderText = L" Heap - children pinned to explicit points ";
+        b->Content = init<Heap>([](Heap* h)
+        {
+            h->MinSize = Size(50, 12);
+            h->AddChild(2, 1, init<Label>([](Label* l) { l->Text = L"(2,1)"; l->ForegroundColor = Color::CYAN; }));
+            h->AddChild(22, 1, init<Label>([](Label* l) { l->Text = L"(22,1)"; l->ForegroundColor = Color::YELLOW; }));
+            h->AddChild(2, 5, init<Label>([](Label* l) { l->Text = L"(2,5)"; l->ForegroundColor = Color::GREEN; }));
+            h->AddChild(18, 8, init<Label>([](Label* l) { l->Text = L"(18,8)"; l->ForegroundColor = Color::MAGENTA; }));
+        });
+    });
+}
+
 // --- Visuals and Hotkeys ---
 
 std::unique_ptr<ControlBase> TestVisuals()
@@ -616,6 +854,11 @@ public:
 
         tests_.push_back({L"TreeView Test 1", L"Static tree + activation", TestTreeView1});
         tests_.push_back({L"TreeView Test 2", L"Runtime add/remove + external", TestTreeView2});
+
+        tests_.push_back({L"Canvas Test", L"Animated sine graph", TestCanvas});
+        tests_.push_back({L"Slider Test", L"Adjustable value range", TestSlider});
+        tests_.push_back({L"Expander Test", L"Collapsing containers", TestExpander});
+        tests_.push_back({L"Heap Test", L"Absolute positioning", TestHeap});
         
         tests_.push_back({L"Visuals Test", L"Custom colors", TestVisuals});
         tests_.push_back({L"Hotkeys Test", L"Input handling", TestHotkeys});

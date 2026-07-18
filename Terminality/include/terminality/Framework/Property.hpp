@@ -22,9 +22,10 @@ namespace terminality
 		const char* name_;
 		T value_;
 		InvalidationKind invalidation_;
+		std::function<void(const T&)> changing_;
 
 	public:
-		Property(TOwner* owner, const char* name, T defaultValue = T(), InvalidationKind invalidation = InvalidationKind::None);
+		Property(TOwner* owner, const char* name, T defaultValue = T(), InvalidationKind invalidation = InvalidationKind::None, std::function<void(const T&)> changing = nullptr);
 
 		Property& operator=(const T& value);
 		Property& operator=(T&& value);
@@ -41,14 +42,17 @@ namespace terminality
 }
 
 template<typename TOwner, typename T>
-terminality::Property<TOwner, T>::Property(TOwner* owner, const char* name, T defaultValue, InvalidationKind invalidation)
-	: owner_(owner), name_(name), value_(std::move(defaultValue)), invalidation_(invalidation) { }
+terminality::Property<TOwner, T>::Property(TOwner* owner, const char* name, T defaultValue, InvalidationKind invalidation, std::function<void(const T&)> changing)
+	: owner_(owner), name_(name), value_(std::move(defaultValue)), invalidation_(invalidation), changing_(std::move(changing)) { }
 
 template<typename TOwner, typename T>
 terminality::Property<TOwner, T>& terminality::Property<TOwner, T>::operator=(const T& value)
 {
 	if (value_ == value)
 		return *this;
+
+	if (changing_)
+		changing_(value_);
 
 	value_ = value;
 	if (owner_)
@@ -65,6 +69,9 @@ terminality::Property<TOwner, T>& terminality::Property<TOwner, T>::operator=(T&
 {
 	if (value_ == value)
 		return *this;
+
+	if (changing_)
+		changing_(value_);
 
 	value_ = std::move(value);
 	if (owner_ != nullptr)
@@ -93,6 +100,9 @@ TOwner& terminality::Property<TOwner, T>::Set(T&& value)
 {
 	if (value_ == value)
 		return *owner_;
+
+	if (changing_)
+		changing_(value_);
 
 	value_ = std::move(value);
 	if (owner_ != nullptr)

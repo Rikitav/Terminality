@@ -182,21 +182,24 @@ namespace terminality
         PA1 = 0xFD,                 // PA1 key
         OEM_CLEAR = 0xFE,           // Clear key
 
-        CHAR = 0xFC,                // Got char (Internal)
+        CHAR = 0xFF,                // Got char (Internal)
     };
 
     enum class InputModifier
     {
         None = 0,
-        
-        LeftAlt = 1 << 0,
-        RightAlt = 1 << 1,
+
+        // Aligned with Windows console constants:
+        // RIGHT_ALT_PRESSED = 0x0001, LEFT_ALT_PRESSED = 0x0002,
+        // RIGHT_CTRL_PRESSED = 0x0004, LEFT_CTRL_PRESSED = 0x0008.
+        RightAlt = 1 << 0,
+        LeftAlt = 1 << 1,
         Alt = LeftAlt | RightAlt,
-        
-        LeftCtrl = 1 << 2,
-        RightCtrl = 1 << 3,
+
+        RightCtrl = 1 << 2,
+        LeftCtrl = 1 << 3,
         Ctrl = LeftCtrl | RightCtrl,
-        
+
         Shift = 1 << 4,
         NumLockOn = 1 << 5,
         ScrollLockOn = 1 << 6,
@@ -230,18 +233,33 @@ namespace terminality
     	InputEvent(InputModifier modifier, InputKey key, wchar_t ch, bool pressed)
             : Modifier(modifier), Key(key), Char(ch), Pressed(pressed) { }
 
-        bool operator==(const InputEvent& other) const = default;
+        bool operator==(const InputEvent& other) const
+        {
+            if (Modifier != other.Modifier || Key != other.Key || Pressed != other.Pressed)
+                return false;
+
+            // Character code is only meaningful for actual character events.
+            if (Key == InputKey::CHAR)
+                return Char == other.Char;
+
+            return true;
+        }
     };
 
     struct InputEventHasher
     {
         std::size_t operator()(const InputEvent& e) const
         {
-            return
+            std::size_t hash =
                 (std::hash<int>()(static_cast<int>(e.Modifier)) << 0) ^
                 (std::hash<int>()(static_cast<int>(e.Key)) << 1) ^
-                (std::hash<wchar_t>()(e.Char) << 2) ^
-                (std::hash<bool>()(e.Pressed) << 3);
+                (std::hash<bool>()(e.Pressed) << 2);
+
+            // Only hash the character for actual character events.
+            if (e.Key == InputKey::CHAR)
+                hash ^= std::hash<wchar_t>()(e.Char) << 3;
+
+            return hash;
         }
     };
 

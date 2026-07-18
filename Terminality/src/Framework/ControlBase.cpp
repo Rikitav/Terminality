@@ -12,6 +12,17 @@ using namespace terminality;
 
 static std::unordered_map<InputKey, bool> hotkeyExecutionState;
 
+static InputModifier NormalizeModifiers(InputModifier modifier)
+{
+	if (hasFlag(modifier, InputModifier::LeftAlt) || hasFlag(modifier, InputModifier::RightAlt))
+		modifier = modifier | InputModifier::Alt;
+
+	if (hasFlag(modifier, InputModifier::LeftCtrl) || hasFlag(modifier, InputModifier::RightCtrl))
+		modifier = modifier | InputModifier::Ctrl;
+
+	return modifier;
+}
+
 void ControlBase::ResetHotkeyExecutionState()
 {
 	hotkeyExecutionState.clear();
@@ -23,6 +34,9 @@ void ControlBase::SetFocusable(bool value)
 		return;
 
 	focusable_ = value;
+	if (!value && focused_)
+		FocusManager::Current().ClearFocus(this);
+
 	OnPropertyChanged("Focusable");
 }
 
@@ -122,11 +136,10 @@ void ControlBase::Arrange(const Rect& finalRect)
 
 		case HorizontalAlign::Stretch:
 		{
-			width = std::clamp<int32_t>(slotWidth,
-				MinSize->Width  < 0 ? 0         : MinSize->Width,
-				MaxSize->Width  < 0 ? slotWidth : MaxSize->Width);
-
-			x += (slotWidth - width) / 2;
+			int32_t lo = MinSize->Width  < 0 ? 0         : MinSize->Width;
+			int32_t hi = MaxSize->Width  < 0 ? slotWidth : MaxSize->Width;
+			if (hi < lo) hi = lo; // MinSize larger than the slot: keep the minimum, let it clip
+			width = std::clamp<int32_t>(slotWidth, lo, hi);
 			break;
 		}
 	}
@@ -155,11 +168,10 @@ void ControlBase::Arrange(const Rect& finalRect)
 
 		case VerticalAlign::Stretch:
 		{
-			height = std::clamp<int32_t>(slotHeight,
-				MinSize->Height < 0 ? 0          : MinSize->Height,
-				MaxSize->Height < 0 ? slotHeight : MaxSize->Height);
-
-			y += (slotHeight - height) / 2;
+			int32_t lo = MinSize->Height < 0 ? 0          : MinSize->Height;
+			int32_t hi = MaxSize->Height < 0 ? slotHeight : MaxSize->Height;
+			if (hi < lo) hi = lo; // MinSize larger than the slot: keep the minimum, let it clip
+			height = std::clamp<int32_t>(slotHeight, lo, hi);
 			break;
 		}
 	}
@@ -174,10 +186,29 @@ static wchar_t EmptyRectangleStyle(const Point& point, const Size& size)
 	return L' ';
 }
 
+Color ControlBase::GetEffectiveForegroundColor() const
+{
+	if (!IsEnabled)
+		return DisabledForegroundColor;
+
+	return focused_ ? FocusedForegroundColor : ForegroundColor;
+}
+
+Color ControlBase::GetEffectiveBackgroundColor() const
+{
+	if (!IsEnabled)
+		return DisabledBackgroundColor;
+
+	return focused_ ? FocusedBackgroundColor : BackgroundColor;
+}
+
 void ControlBase::Render(RenderContext& context)
 {
+	if (!IsVisible)
+		return;
+
 	Rect rect = context.ContextRect();
-	context.RenderRectangle(Point::Zero, rect.AsSize(), ForegroundColor, BackgroundColor, EmptyRectangleStyle);
+	context.RenderRectangle(Point::Zero, rect.AsSize(), GetEffectiveForegroundColor(), GetEffectiveBackgroundColor(), EmptyRectangleStyle);
 
 	visualDirty_ = false;
 	RenderOverride(context);
@@ -188,14 +219,14 @@ void ControlBase::SetParent(VisualTreeNode* parent)
 	if (parent_ == parent)
 		return;
 
-	if (parent == nullptr)
-	{
+	if (parent_ != nullptr)
 		OnDettachedFromTree();
-		parent_ = nullptr;
-		return;
-	}
 
 	parent_ = parent;
+
+	if (parent_ != nullptr && !attached_)
+		OnAttachedToTree();
+
 	OnPropertyChanged("Parent");
 }
 
@@ -267,6 +298,9 @@ bool ControlBase::OnKeyDown(InputEvent input)
 {
 	KeyDown.Emit(input);
 
+	if (!IsEnabled)
+		return false;
+
     if (input.Pressed && hotkeyExecutionState[input.Key])
         return true;
 
@@ -275,11 +309,11 @@ bool ControlBase::OnKeyDown(InputEvent input)
 		InputModifier::LeftCtrl | InputModifier::RightCtrl |
 		InputModifier::Shift;
 
-	InputModifier cleanModifier = input.Modifier & EssentialModifiers;
+	InputModifier cleanModifier = NormalizeModifiers(input.Modifier & EssentialModifiers);
 	for (const auto& pair : hotkeys_)
 	{
 		const InputEvent& event = pair.first;
-		if (cleanModifier == event.Modifier && input.Key == event.Key && input.Pressed == event.Pressed)
+		if (cleanModifier == NormalizeModifiers(event.Modifier) && input.Key == event.Key && input.Pressed == event.Pressed)
 		{
             hotkeyExecutionState[input.Key] = input.Pressed;
 
@@ -298,32 +332,27 @@ bool ControlBase::OnKeyDown(InputEvent input)
 
 		case InputKey::UP:
 		{
-			PopFocus(Direction::Up, input.Modifier);
-			return true;
+			return PopFocus(Direction::Up, input.Modifier);
 		}
 
 		case InputKey::DOWN:
 		{
-			PopFocus(Direction::Down, input.Modifier);
-			return true;
+			return PopFocus(Direction::Down, input.Modifier);
 		}
 
 		case InputKey::LEFT:
 		{
-			PopFocus(Direction::Left, input.Modifier);
-			return true;
+			return PopFocus(Direction::Left, input.Modifier);
 		}
 
 		case InputKey::RIGHT:
 		{
-			PopFocus(Direction::Right, input.Modifier);
-			return true;
+			return PopFocus(Direction::Right, input.Modifier);
 		}
 
 		case InputKey::TAB:
 		{
-			PopFocus(hasFlag(input.Modifier, InputModifier::Shift) ? Direction::Previous : Direction::Next, input.Modifier);
-			return true;
+			return PopFocus(hasFlag(input.Modifier, InputModifier::Shift) ? Direction::Previous : Direction::Next, input.Modifier);
 		}
 	}
 
@@ -341,11 +370,11 @@ bool ControlBase::OnKeyUp(InputEvent input)
 		InputModifier::LeftCtrl | InputModifier::RightCtrl |
 		InputModifier::Shift;
 
-	InputModifier cleanModifier = input.Modifier & EssentialModifiers;
+	InputModifier cleanModifier = NormalizeModifiers(input.Modifier & EssentialModifiers);
 	for (const auto& pair : hotkeys_)
 	{
 		const InputEvent& event = pair.first;
-		if (cleanModifier == event.Modifier && input.Key == event.Key && input.Pressed == event.Pressed)
+		if (cleanModifier == NormalizeModifiers(event.Modifier) && input.Key == event.Key && input.Pressed == event.Pressed)
 		{
 			HotkeyCallback callback = pair.second;
 			callback(this);
@@ -370,7 +399,14 @@ void ControlBase::OnPropertyChanged(const char* propertyName)
 	if (std::strcmp(propertyName, "ExpSize") == 0)
 	{
 		Size newSize = ExpSize.Get();
-		MinSize.Set(std::move(newSize));
-		MaxSize.Set(std::move(newSize));
+		MinSize = newSize;
+		MaxSize = newSize;
 	}
+	else if (std::strcmp(propertyName, "IsEnabled") == 0)
+	{
+		if (!IsEnabled.Get() && focused_)
+			FocusManager::Current().ClearFocus(this);
+	}
+
+	PropertyChanged.Emit(propertyName);
 }

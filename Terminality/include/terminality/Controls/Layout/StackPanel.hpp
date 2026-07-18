@@ -29,6 +29,7 @@ namespace terminality
 		Property<StackPanel, bool> Looping											  { this, "Looping", false, InvalidationKind::None };
 		Property<StackPanel, bool> Scrollable                                         { this, "Scrollable", false, InvalidationKind::Arrange };
 		Property<StackPanel, bool> AutoScrollToEnd                                    { this, "AutoScrollToEnd", false, InvalidationKind::None };
+		Property<StackPanel, int32_t> ItemSpacing                                     { this, "ItemSpacing", 0, InvalidationKind::Measure };
 
 		StackPanel() = default;
 

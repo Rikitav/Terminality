@@ -1,3 +1,5 @@
+#pragma once
+
 #include <terminality/Framework/Event.hpp>
 #include <terminality/Core/Color.hpp>
 #include <terminality/Framework/ControlBase.hpp>
@@ -13,6 +15,8 @@ namespace terminality
 		Property<ProgressBar, float> Minimum { this, "Minimum", 0.0f, InvalidationKind::Visual };
 		Property<ProgressBar, float> Maximum { this, "Maximum", 100.0f, InvalidationKind::Visual };
 		Property<ProgressBar, float> Value   { this, "Value", 0.0f, InvalidationKind::Visual };
+
+		Property<ProgressBar, bool> IsIndeterminate { this, "IsIndeterminate", false, InvalidationKind::Visual };
 
 		Property<ProgressBar, Color> BarColor   { this, "BarColor", Color::GREEN, InvalidationKind::Visual };
 		Property<ProgressBar, Color> TrackColor { this, "TrackColor", Color::DARK_GRAY, InvalidationKind::Visual };

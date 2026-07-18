@@ -2,6 +2,7 @@
 
 #include <string>
 #include <functional>
+#include <vector>
 
 #include <terminality/Core/Geometry.hpp>
 

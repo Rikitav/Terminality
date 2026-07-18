@@ -20,7 +20,15 @@ void TextBox::OnPropertyChanged(const char* propertyName)
 {
 	if (std::strcmp(propertyName, "Text") == 0)
 	{
-		cursorPosition_ = std::min(cursorPosition_, Text.Get().length());
+		std::wstring text = Text.Get();
+		if (MaxLength >= 0 && text.size() > static_cast<std::size_t>(MaxLength.Get()))
+		{
+			Text = text.substr(0, static_cast<std::size_t>(MaxLength.Get()));
+			ControlBase::OnPropertyChanged(propertyName);
+			return;
+		}
+
+		cursorPosition_ = std::min(cursorPosition_, text.length());
 		TextChanged.Emit();
 	}
 
@@ -47,12 +55,32 @@ void TextBox::ArrangeOverride(const Rect& contentRect)
 	return;
 }
 
+static wchar_t GetDisplayChar(wchar_t ch, wchar_t passwordChar)
+{
+	if (passwordChar != L'\0' && ch != L'\n')
+		return passwordChar;
+	return ch;
+}
+
+static std::wstring GetDisplayLine(const std::wstring& line, wchar_t passwordChar)
+{
+	if (passwordChar == L'\0')
+		return line;
+
+	std::wstring result;
+	result.reserve(line.size());
+	for (wchar_t ch : line)
+		result.push_back(GetDisplayChar(ch, passwordChar));
+	return result;
+}
+
 void TextBox::RenderOverride(RenderContext& context)
 {
 	const Rect rect = context.ContextRect();
 
-	Color fore = FocusedForegroundColor;
-	Color back = FocusedBackgroundColor;
+	const bool isPlaceholder = Text->empty() && !PlaceholderText->empty() && !focused_;
+	Color fore = isPlaceholder ? PlaceholderForegroundColor : GetEffectiveForegroundColor();
+	Color back = isPlaceholder ? PlaceholderBackgroundColor : GetEffectiveBackgroundColor();
 
 	for (int32_t y = 0; y < rect.Height; ++y)
 	{
@@ -62,13 +90,15 @@ void TextBox::RenderOverride(RenderContext& context)
 		}
 	}
 
-	std::vector<LineInfo> lines = TextHelper::GetLines(Text.Get(), rect.Width, TextWrapping.Get());
+	const std::wstring& sourceText = isPlaceholder ? PlaceholderText.Get() : Text.Get();
+	const wchar_t passChar = PasswordChar;
+
+	std::vector<LineInfo> lines = TextHelper::GetLines(sourceText, rect.Width, TextWrapping.Get());
 
 	int32_t cursorY = 0;
 	int32_t cursorX = 0;
 	bool cursorFound = false;
 
-	// First find the cursor
 	for (std::size_t y = 0; y < lines.size(); ++y)
 	{
 		const auto& line = lines[y];
@@ -92,7 +122,6 @@ void TextBox::RenderOverride(RenderContext& context)
 		}
 	}
 
-	// Adjust cursorX based on scroll offset
 	cursorX -= offset;
 
 	for (int32_t y = 0; y < std::min(rect.Height, static_cast<int32_t>(lines.size())); ++y)
@@ -100,10 +129,10 @@ void TextBox::RenderOverride(RenderContext& context)
 		const auto& line = lines[y];
 		int32_t xOffset = 0;
 
-		std::wstring visibleText = line.Text;
-		if (offset > 0 && offset < visibleText.length())
+		std::wstring visibleText = GetDisplayLine(line.Text, passChar);
+		if (offset > 0 && offset < static_cast<int32_t>(visibleText.length()))
 			visibleText = visibleText.substr(offset);
-		else if (offset >= visibleText.length())
+		else if (offset >= static_cast<int32_t>(visibleText.length()))
 			visibleText = L"";
 
 		int32_t textLen = static_cast<int32_t>(visibleText.length());
@@ -128,19 +157,31 @@ void TextBox::RenderOverride(RenderContext& context)
 		}
 	}
 
-	if (focused_ && cursorY < rect.Height && cursorX < rect.Width && cursorX >= 0)
+	if (focused_ && cursorY < rect.Height && cursorX < rect.Width && cursorX >= 0 && !isPlaceholder)
 	{
-		wchar_t cursorChar = (cursorPosition_ < Text.Get().length() && Text.Get()[cursorPosition_] != L'\n') ? Text.Get()[cursorPosition_] : L' ';
+		wchar_t cursorChar = L' ';
+		if (cursorPosition_ < Text.Get().length())
+		{
+			wchar_t realChar = Text.Get()[cursorPosition_];
+			cursorChar = GetDisplayChar(realChar, passChar);
+		}
+
 		context.SetCell(cursorX, cursorY, cursorChar, back, fore);
 	}
 }
 
 bool TextBox::OnKeyDown(InputEvent input)
 {
+	if (!IsEnabled)
+		return ControlBase::OnKeyDown(input);
+
 	if (ControlBase::OnKeyDown(input))
 		return true;
 
 	std::wstring currentText = Text.Get();
+	const bool canModify = !IsReadOnly;
+	const bool canInsert = canModify && (MaxLength < 0 || static_cast<int32_t>(currentText.size()) < MaxLength.Get());
+
 	auto applyTextChange = [&]()
 	{
 		Text = currentText;
@@ -150,7 +191,6 @@ bool TextBox::OnKeyDown(InputEvent input)
 
 	auto applyCursorMove = [&]()
 	{
-		InvalidateMeasure();
 		InvalidateVisual();
 	};
 
@@ -172,6 +212,9 @@ bool TextBox::OnKeyDown(InputEvent input)
 			if (input.Char == L'\0' || input.Char < 32)
 				return false;
 
+			if (!canInsert)
+				return true;
+
 			currentText.insert(cursorPosition_++, 1, input.Char);
 			applyTextChange();
 			return true;
@@ -179,6 +222,9 @@ bool TextBox::OnKeyDown(InputEvent input)
 
 		case InputKey::SPACE:
 		{
+			if (!canInsert)
+				return true;
+
 			currentText.insert(cursorPosition_++, 1, L' ');
 			applyTextChange();
 			return true;
@@ -187,6 +233,9 @@ bool TextBox::OnKeyDown(InputEvent input)
 		case InputKey::RETURN:
 		{
 			if (!AcceptsReturn.Get())
+				return true;
+
+			if (!canInsert)
 				return true;
 
 			currentText.insert(cursorPosition_++, 1, L'\n');
@@ -286,6 +335,9 @@ bool TextBox::OnKeyDown(InputEvent input)
 
 		case InputKey::BACK:
 		{
+			if (!canModify)
+				return true;
+
 			if (cursorPosition_ == 0)
 				return true;
 
@@ -296,6 +348,9 @@ bool TextBox::OnKeyDown(InputEvent input)
 
 		case InputKey::DELETE:
 		{
+			if (!canModify)
+				return true;
+
 			if (cursorPosition_ >= currentText.length())
 				return true;
 

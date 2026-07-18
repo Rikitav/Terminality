@@ -13,18 +13,23 @@ namespace terminality
 {
     class ScrollViewer : public ControlBase
     {
+        void OnContentChanging(const std::unique_ptr<ControlBase>& oldContent);
+
     public:
-        std::unique_ptr<ControlBase> Content;
+        Property<ScrollViewer, std::unique_ptr<ControlBase>> Content { this, "Content", nullptr, InvalidationKind::Measure,
+            [this](const std::unique_ptr<ControlBase>& old) { OnContentChanging(old); } };
 
         Property<ScrollViewer, int> ScrollX{ this, "ScrollX", 0, InvalidationKind::Arrange };
         Property<ScrollViewer, int> ScrollY{ this, "ScrollY", 0, InvalidationKind::Arrange };
 
-        ScrollViewer() = default;
+        ScrollViewer();
 
         bool IsFocusable() const override
         {
             return true;
         }
+
+        void OnPropertyChanged(const char* propertyName) override;
 
         Size MeasureOverride(const Size& availableSize) override;
         void ArrangeOverride(const Rect& finalRect) override;

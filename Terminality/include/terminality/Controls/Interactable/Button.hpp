@@ -17,14 +17,28 @@ namespace terminality
 	{
 		bool isPressed_ = false;
 
+		std::wstring displayText_;
+		wchar_t accessKey_ = L'\0';
+		int32_t accessKeyIndex_ = -1;
+
+		void UpdateAccessKey();
+
 	public:
 		Property<Button, std::wstring> Text  { this, "Text", L"", InvalidationKind::Measure };
 		Property<Button, Color> PressedForegroundColor { this, "PressedForegroundColor", Color::BLACK, InvalidationKind::Visual };
 		Property<Button, Color> PressedBackgroundColor { this, "PressedBackgroundColor", Color::CYAN, InvalidationKind::Visual };
+		Property<Button, Color> AccessKeyForegroundColor { this, "AccessKeyForegroundColor", Color::YELLOW, InvalidationKind::Visual };
+		Property<Button, Color> AccessKeyBackgroundColor { this, "AccessKeyBackgroundColor", Color::BLACK, InvalidationKind::Visual };
+
+		Property<Button, bool> IsDefault { this, "IsDefault", false, InvalidationKind::Visual };
+		Property<Button, bool> IsCancel  { this, "IsCancel",  false, InvalidationKind::Visual };
 
 		Event<> Clicked;
 
 		void Click();
+
+		wchar_t GetAccessKey() const { return accessKey_; }
+		const std::wstring& GetDisplayText() const { return displayText_; }
 
 		void OnPropertyChanged(const char* propertyName) override;
 

@@ -6,9 +6,9 @@
 
 using namespace terminality;
 
-void VisualTreeNode::PopFocus(Direction direction, InputModifier modifiers)
+bool VisualTreeNode::PopFocus(Direction direction, InputModifier modifiers)
 {
-	FocusManager::Current().MoveNext(direction, modifiers);
+	return FocusManager::Current().MoveNext(direction, modifiers);
 }
 
 void VisualTreeNode::PushFocus(VisualTreeNode* focused)
@@ -27,7 +27,7 @@ void VisualTreeNode::InvalidateMeasure()
 	measureDirty_ = true;
 	arrangeDirty_ = true;
 	visualDirty_ = true;
-	
+
 	if (parent_ != nullptr)
 	{
 		parent_->OnChildInvalidated(*this);
@@ -37,9 +37,10 @@ void VisualTreeNode::InvalidateMeasure()
 
 void VisualTreeNode::InvalidateArrange()
 {
+	DispatchTimer::Current().VerifyAccess();
 	arrangeDirty_ = true;
 	visualDirty_ = true;
-	
+
 	if (parent_ != nullptr)
 	{
 		parent_->OnChildInvalidated(*this);
@@ -49,8 +50,9 @@ void VisualTreeNode::InvalidateArrange()
 
 void VisualTreeNode::InvalidateVisual()
 {
+	DispatchTimer::Current().VerifyAccess();
 	visualDirty_ = true;
-	
+
 	if (parent_ != nullptr)
 	{
 		//parent_->OnChildInvalidated(*this);
@@ -117,7 +119,6 @@ bool VisualTreeNode::MoveFocusNext(Direction direction, InputModifier modifiers)
 void VisualTreeNode::OnChildInvalidated(VisualTreeNode& child)
 {
 	InvalidateMeasure();
-	InvalidateVisual();
 }
 
 void VisualTreeNode::OnAttachedToTree()
@@ -131,8 +132,16 @@ void VisualTreeNode::OnDettachedFromTree()
 {
 	attached_ = false;
 	FocusManager::Current().ClearFocus(this);
-	InvalidateMeasure();
-	InvalidateVisual();
+
+	VisualTreeNode* parent = parent_;
+	parent_ = nullptr;
+	layer_ = nullptr;
+
+	if (parent != nullptr)
+	{
+		parent->InvalidateMeasure();
+		parent->InvalidateVisual();
+	}
 }
 
 void VisualTreeNode::OnGotFocus()

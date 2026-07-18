@@ -35,7 +35,11 @@ namespace terminality
 		~EventConnection();
 
 		void Disconnect();
+		bool IsConnected() const { return id_ != 0; }
 	};
+
+	template<typename... Args>
+	using EventConnectionHolder = EventConnection<Args...>;
 
 	template<typename... Args>
 	class Event

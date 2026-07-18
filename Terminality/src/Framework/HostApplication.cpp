@@ -5,10 +5,75 @@
 #include <stdexcept>
 #include <optional>
 #include <iostream>
+#include <cwctype>
 
 #include <terminality/Terminality.hpp>
 
 using namespace terminality;
+
+namespace
+{
+	static bool KeyMatchesAccessKey(InputKey key, wchar_t accessKey)
+	{
+		if (accessKey == L'\0')
+			return false;
+
+		if (key < InputKey::A || key > InputKey::Z)
+			return false;
+
+		wchar_t keyChar = static_cast<wchar_t>(static_cast<int>(key));
+		return std::towlower(keyChar) == std::towlower(accessKey);
+	}
+
+	static bool TryExecuteDefaultOrCancel(VisualTreeNode* node, InputKey key)
+	{
+		if (node == nullptr)
+			return false;
+
+		if (auto* button = dynamic_cast<Button*>(node))
+		{
+			if (button->IsVisible && button->IsEnabled &&
+			    ((key == InputKey::RETURN && button->IsDefault) || (key == InputKey::ESCAPE && button->IsCancel)))
+			{
+				button->Click();
+				return true;
+			}
+		}
+
+		for (std::size_t i = 0; i < node->VisualChildrenCount(); ++i)
+		{
+			if (TryExecuteDefaultOrCancel(node->GetVisualChild(i), key))
+				return true;
+		}
+
+		return false;
+	}
+
+	static bool TryExecuteAccessKey(VisualTreeNode* node, InputEvent input)
+	{
+		if (node == nullptr)
+			return false;
+
+		if (auto* button = dynamic_cast<Button*>(node))
+		{
+			if (button->IsVisible && button->IsEnabled &&
+			    KeyMatchesAccessKey(input.Key, button->GetAccessKey()))
+			{
+				VisualTree::Current().GetFocusManager().SetFocused(button);
+				button->Click();
+				return true;
+			}
+		}
+
+		for (std::size_t i = 0; i < node->VisualChildrenCount(); ++i)
+		{
+			if (TryExecuteAccessKey(node->GetVisualChild(i), input))
+				return true;
+		}
+
+		return false;
+	}
+}
 
 HostApplication& HostApplication::Current()
 {
@@ -83,6 +148,13 @@ void HostApplication::NestUILoop(UILayer& layer)
 		}
 
 		const InputEvent evt = HostBackend::PollInput(timer.GetRemainingFrameTime(60));
+		if (evt.Key == InputKey::CHAR && evt.Char == L'\x03')
+		{
+			// Ctrl+C forced shutdown - ensure terminal state is restored.
+			RequestStop();
+			break;
+		}
+
 		if (evt.Key != InputKey::None)
 		{
 			FocusManager& focus = tree.GetFocusManager();
@@ -98,6 +170,18 @@ void HostApplication::NestUILoop(UILayer& layer)
 				focused = focused->GetParent();
 			}
 
+			if (!success && evt.Pressed)
+			{
+				if (evt.Key == InputKey::RETURN || evt.Key == InputKey::ESCAPE)
+				{
+					success = TryExecuteDefaultOrCancel(layer.RootNode.get(), evt.Key);
+				}
+				else if (hasFlag(evt.Modifier, InputModifier::Alt))
+				{
+					success = TryExecuteAccessKey(layer.RootNode.get(), evt);
+				}
+			}
+
 			if (!timer.IsResizing())
 			{
 				tree.RunLayout(viewport);
@@ -107,10 +191,6 @@ void HostApplication::NestUILoop(UILayer& layer)
 					renderBuffer_.DiffRender(std::wcout);
 				}
 			}
-		}
-		else
-		{
-			ControlBase::ResetHotkeyExecutionState();
 		}
 	}
 }

@@ -13,8 +13,6 @@ void StackPanel::AddChild(std::unique_ptr<ControlBase> child)
         return;
 
     child->SetParent(this);
-    if (!child->IsAttached())
-        child->OnAttachedToTree();
 
     contents_.push_back(std::move(child));
 
@@ -57,15 +55,12 @@ void StackPanel::Insert(std::size_t index, std::unique_ptr<ControlBase> child)
         index = contents_.size();
 
     child->SetParent(this);
-    if (!child->IsAttached())
-        child->OnAttachedToTree();
 
+    std::size_t oldSize = contents_.size();
     contents_.insert(contents_.begin() + index, std::move(child));
 
-    if (focusedIndex_ >= index && focusedIndex_ < contents_.size() - 1)
+    if (focusedIndex_ >= index && focusedIndex_ < oldSize)
         focusedIndex_++;
-    else
-        PushFocus(child.get());
 
     if (AutoScrollToEnd.Get())
     {
@@ -113,6 +108,7 @@ void StackPanel::ScrollIntoView()
     if (!Scrollable || contents_.empty() || focusedIndex_ >= contents_.size())
         return;
 
+    int32_t spacing = std::max(0, ItemSpacing.Get());
     int32_t childStart = 0;
     int32_t childSize = 0;
 
@@ -126,6 +122,7 @@ void StackPanel::ScrollIntoView()
         }
 
         childStart += (ContentOrientation == Orientation::Vertical) ? sz.Height : sz.Width;
+        childStart += spacing;
     }
 
     int32_t viewSize = (ContentOrientation == Orientation::Vertical) ? GetArrangedRect().Height : GetArrangedRect().Width;
@@ -318,6 +315,7 @@ Size StackPanel::MeasureOverride(const Size& availableSize)
     int32_t totalWidth = 0;
     int32_t totalHeight = 0;
 
+    int32_t spacing = std::max(0, ItemSpacing.Get());
     for (const auto& child : contents_)
     {
         Size childAvailable = availableSize;
@@ -339,6 +337,14 @@ Size StackPanel::MeasureOverride(const Size& availableSize)
         }
     }
 
+    if (!contents_.empty())
+    {
+        if (ContentOrientation == Orientation::Vertical)
+            totalHeight += static_cast<int32_t>(contents_.size() - 1) * spacing;
+        else
+            totalWidth += static_cast<int32_t>(contents_.size() - 1) * spacing;
+    }
+
     return Size(totalWidth, totalHeight);
 }
 
@@ -347,6 +353,7 @@ void StackPanel::ArrangeOverride(const Rect& contentRect)
     int32_t totalContentWidth = 0;
     int32_t totalContentHeight = 0;
 
+    int32_t spacing = std::max(0, ItemSpacing.Get());
     for (const auto& child : contents_)
     {
         const Size childSize = child->GetActualSize();
@@ -360,6 +367,14 @@ void StackPanel::ArrangeOverride(const Rect& contentRect)
             totalContentWidth += childSize.Width;
             totalContentHeight = std::max(totalContentHeight, childSize.Height);
         }
+    }
+
+    if (!contents_.empty())
+    {
+        if (ContentOrientation == Orientation::Vertical)
+            totalContentHeight += static_cast<int32_t>(contents_.size() - 1) * spacing;
+        else
+            totalContentWidth += static_cast<int32_t>(contents_.size() - 1) * spacing;
     }
 
     if (Scrollable)
@@ -402,8 +417,9 @@ void StackPanel::ArrangeOverride(const Rect& contentRect)
     int32_t currentX = startX - (ContentOrientation == Orientation::Horizontal ? scrollOffset_ : 0);
     int32_t currentY = startY - (ContentOrientation == Orientation::Vertical ? scrollOffset_ : 0);
 
-    for (const std::unique_ptr<ControlBase>& child : contents_)
+    for (std::size_t i = 0; i < contents_.size(); ++i)
     {
+        const std::unique_ptr<ControlBase>& child = contents_[i];
         const Size childSize = child->GetActualSize();
 
         if (ContentOrientation == Orientation::Vertical)
@@ -416,6 +432,8 @@ void StackPanel::ArrangeOverride(const Rect& contentRect)
 
             child->Arrange(childRect);
             currentY += childSize.Height;
+            if (i + 1 < contents_.size())
+                currentY += spacing;
         }
         else
         {
@@ -427,6 +445,8 @@ void StackPanel::ArrangeOverride(const Rect& contentRect)
 
             child->Arrange(childRect);
             currentX += childSize.Width;
+            if (i + 1 < contents_.size())
+                currentX += spacing;
         }
     }
 }
@@ -447,6 +467,7 @@ void StackPanel::RenderOverride(RenderContext& context)
 
     if (Scrollable)
     {
+        int32_t spacing = std::max(0, ItemSpacing.Get());
         int32_t totalContentWidth = 0;
         int32_t totalContentHeight = 0;
 
@@ -457,6 +478,14 @@ void StackPanel::RenderOverride(RenderContext& context)
                 totalContentHeight += childSize.Height;
             else
                 totalContentWidth += childSize.Width;
+        }
+
+        if (!contents_.empty())
+        {
+            if (ContentOrientation == Orientation::Vertical)
+                totalContentHeight += static_cast<int32_t>(contents_.size() - 1) * spacing;
+            else
+                totalContentWidth += static_cast<int32_t>(contents_.size() - 1) * spacing;
         }
 
         if (ContentOrientation == Orientation::Vertical)

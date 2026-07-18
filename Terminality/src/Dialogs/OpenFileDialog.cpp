@@ -15,8 +15,8 @@ using namespace terminality;
 struct FileSystemEntry
 {
     std::wstring Name;
-    bool IsDirectory;
-    bool IsParentDir;
+    bool IsDirectory = false;
+    bool IsParentDir = false;
 };
 
 class FileSystemEntryView : public Button
@@ -68,7 +68,7 @@ public:
     }
 };
 
-std::optional<std::filesystem::path> OpenFileDialog::Show(const std::wstring& title, const std::filesystem::path& initialDireinity)
+std::optional<std::filesystem::path> OpenFileDialog::Show(const std::wstring& title, const std::filesystem::path& initialDirectory)
 {
     // WIP
     //*
@@ -78,9 +78,9 @@ std::optional<std::filesystem::path> OpenFileDialog::Show(const std::wstring& ti
     std::optional<std::filesystem::path> result = std::nullopt;
 	std::optional<std::reference_wrapper<std::atomic<bool>>> running;
 
-    std::filesystem::path currentDir = initialDireinity.empty()
+    std::filesystem::path currentDir = initialDirectory.empty()
         ? std::filesystem::current_path()
-        : initialDireinity;
+        : initialDirectory;
 
     ObservableCollection<FileSystemEntry> currentFiles;
     TextBox* pathBoxPtr = nullptr;
@@ -143,6 +143,9 @@ std::optional<std::filesystem::path> OpenFileDialog::Show(const std::wstring& ti
             dialogBorder->BorderColor = Color::WHITE;
             dialogBorder->MaxSize = Size(60, 20);
             dialogBorder->MinSize = Size(40, 10);
+
+            if (!title.empty())
+                dialogBorder->HeaderText = title;
 
             dialogBorder->Content = init<Grid>([&](Grid* dialogContent)
             {
@@ -207,9 +210,10 @@ std::optional<std::filesystem::path> OpenFileDialog::Show(const std::wstring& ti
         }));
     });
 
-    loadDirectory();
     UILayer& layer = tree.PushLayer(std::move(rootGrid));
     running.emplace(layer.Running);
+
+    loadDirectory();
 
     host.NestUILoop(layer);
     tree.PopLayer();

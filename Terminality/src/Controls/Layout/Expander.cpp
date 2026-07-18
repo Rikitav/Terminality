@@ -33,6 +33,12 @@ void Expander::Toggle()
 		Expand();
 }
 
+void Expander::OnContentChanging(const std::unique_ptr<ControlBase>& oldContent)
+{
+	if (oldContent != nullptr)
+		oldContent->SetParent(nullptr);
+}
+
 void Expander::OnPropertyChanged(const char* propertyName)
 {
 	if (std::strcmp(propertyName, "Content") == 0)

@@ -6,6 +6,7 @@
 #include <thread>
 #include <mutex>
 #include <functional>
+#include <optional>
 
 #include <terminality/Framework/Event.hpp>
 
@@ -19,7 +20,7 @@ namespace terminality
 
 		float deltaTime_ = 0.0f;
 		float totalTime_ = 0.0f;
-		std::atomic<bool> running_ = false;
+		std::atomic<bool> running_{ false };
 
 		// ticking
 		std::chrono::time_point<std::chrono::high_resolution_clock> lastTime_;

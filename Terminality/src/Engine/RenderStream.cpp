@@ -12,7 +12,22 @@ RenderStream& RenderStream::operator<<(const std::wstring& text)
         return *this;
 
     context_.RenderText(pos_, text, fg_, bg_, wrap_);
-    pos_.X += static_cast<int32_t>(text.length());
+
+    Rect bounds = context_.ContextRect();
+    if (wrap_)
+    {
+        pos_.X += static_cast<int32_t>(text.length());
+        while (pos_.X >= bounds.Width && bounds.Width > 0)
+        {
+            pos_.X -= bounds.Width;
+            pos_.Y += 1;
+        }
+    }
+    else
+    {
+        pos_.X = std::min(pos_.X + static_cast<int32_t>(text.length()), bounds.Width);
+    }
+
     return *this;
 }
 
@@ -23,11 +38,17 @@ RenderStream& RenderStream::operator<<(const std::string& text)
 
 RenderStream& RenderStream::operator<<(const wchar_t* text)
 {
+    if (text == nullptr)
+        return *this;
+
     return *this << std::wstring(text);
 }
 
 RenderStream& RenderStream::operator<<(const char* text)
 {
+    if (text == nullptr)
+        return *this;
+
     return *this << std::string(text);
 }
 

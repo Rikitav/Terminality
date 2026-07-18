@@ -11,7 +11,7 @@ using namespace terminality;
 FocusManager& FocusManager::Current()
 {
 	if (!DispatchTimer::Current().CheckAccess())
-		throw std::runtime_error("Cannot get FocusManager within running UI thread or Before UI thread was started.");
+		throw std::runtime_error("Cannot get FocusManager outside the UI thread or before the UI thread was started.");
 
 	return VisualTree::Current().GetFocusManager();
 }
@@ -77,33 +77,20 @@ bool FocusManager::MoveNext(Direction direction, InputModifier modifiers)
 	if (focusStack.empty())
 		return false;
 
+	// Save the current focus so we can restore it if no container is able to
+	// handle the move. A successful handler updates the focus stack itself.
+	std::vector<VisualTreeNode*> originalStack = focusStack;
 	std::vector<VisualTreeNode*> focusStackCopy = focusStack;
-	for (auto i = focusStackCopy.rbegin(); i != focusStackCopy.rend(); i++)
+
+	for (auto it = focusStackCopy.rbegin(); it != focusStackCopy.rend(); ++it)
 	{
-		// Check if node can move focus
-		VisualTreeNode* searchNode = *i;
-		if (!searchNode->MoveFocusNext(direction, modifiers))
-		{
-			// Cannot move, continue
-			focusStack.pop_back();
-			continue;
-		}
-
-		// Can move, disfocussing all popped nodes
-		for (auto i = focusStackCopy.rbegin(); i != focusStackCopy.rend(); i++)
-		{
-			VisualTreeNode* disfocusNode = *i;
-			if (disfocusNode == searchNode)
-				break; // Cutting edge
-
-			disfocusNode->OnLostFocus();
-		}
-
-		// Success
-		return true;
+		VisualTreeNode* searchNode = *it;
+		if (searchNode->MoveFocusNext(direction, modifiers))
+			return true;
 	}
 
-	focusStack = focusStackCopy;
+	// No one handled the move - keep focus exactly where it was.
+	focusStack = std::move(originalStack);
 	return false;
 }
 
@@ -116,7 +103,7 @@ void FocusManager::ClearFocus(VisualTreeNode* node)
 	if (it != focusStack.end())
 	{
 		VisualTreeNode* oldFocused = focusStack.back();
-		for (auto& dropIt = it; dropIt != focusStack.end(); ++dropIt)
+		for (auto dropIt = it; dropIt != focusStack.end(); ++dropIt)
 			(*dropIt)->OnLostFocus();
 
 		focusStack.erase(it, focusStack.end());

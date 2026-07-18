@@ -201,10 +201,20 @@ Size Grid::MeasureOverride(const Size& availableSize)
     const bool heightIsInfinite = availableSize.Height < 0;
 
     for (auto& row : rowDefs_)
-        row.ActualHeight = (row.Height.Type == GridUnitType::Cell) ? static_cast<int32_t>(row.Height.Value) : 0;
+    {
+        if (row.Height.Type == GridUnitType::Cell)
+            row.ActualHeight = std::clamp(static_cast<int32_t>(row.Height.Value), row.MinHeight, row.MaxHeight);
+        else
+            row.ActualHeight = 0;
+    }
 
     for (auto& col : colDefs_)
-        col.ActualWidth = (col.Width.Type == GridUnitType::Cell) ? static_cast<int32_t>(col.Width.Value) : 0;
+    {
+        if (col.Width.Type == GridUnitType::Cell)
+            col.ActualWidth = std::clamp(static_cast<int32_t>(col.Width.Value), col.MinWidth, col.MaxWidth);
+        else
+            col.ActualWidth = 0;
+    }
 
     for (auto& childWrapper : children_)
     {
@@ -222,10 +232,16 @@ Size Grid::MeasureOverride(const Size& availableSize)
             Size childDesired = childWrapper.Control->Measure(availableSize);
 
             if (isColAuto)
-                colDefs_[columnIndex].ActualWidth = std::max(colDefs_[columnIndex].ActualWidth, childDesired.Width);
+            {
+                int32_t clampedWidth = std::clamp(childDesired.Width, colDefs_[columnIndex].MinWidth, colDefs_[columnIndex].MaxWidth);
+                colDefs_[columnIndex].ActualWidth = std::max(colDefs_[columnIndex].ActualWidth, clampedWidth);
+            }
 
             if (isRowAuto)
-                rowDefs_[rowIndex].ActualHeight = std::max(rowDefs_[rowIndex].ActualHeight, childDesired.Height);
+            {
+                int32_t clampedHeight = std::clamp(childDesired.Height, rowDefs_[rowIndex].MinHeight, rowDefs_[rowIndex].MaxHeight);
+                rowDefs_[rowIndex].ActualHeight = std::max(rowDefs_[rowIndex].ActualHeight, clampedHeight);
+            }
         }
     }
 
@@ -254,7 +270,10 @@ Size Grid::MeasureOverride(const Size& availableSize)
         for (auto& col : colDefs_)
         {
             if (col.Width.Type == GridUnitType::Star)
-                col.ActualWidth = static_cast<int32_t>((col.Width.Value / totalStarWidth) * remainingWidth);
+            {
+                int32_t starWidth = static_cast<int32_t>((col.Width.Value / totalStarWidth) * remainingWidth);
+                col.ActualWidth = std::clamp(starWidth, col.MinWidth, col.MaxWidth);
+            }
         }
     }
 
@@ -264,7 +283,10 @@ Size Grid::MeasureOverride(const Size& availableSize)
         for (auto& row : rowDefs_)
         {
             if (row.Height.Type == GridUnitType::Star)
-                row.ActualHeight = static_cast<int32_t>((row.Height.Value / totalStarHeight) * remainingHeight);
+            {
+                int32_t starHeight = static_cast<int32_t>((row.Height.Value / totalStarHeight) * remainingHeight);
+                row.ActualHeight = std::clamp(starHeight, row.MinHeight, row.MaxHeight);
+            }
         }
     }
 

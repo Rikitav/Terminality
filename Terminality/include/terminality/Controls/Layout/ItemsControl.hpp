@@ -51,12 +51,6 @@ namespace terminality
 template<typename T>
 bool terminality::ItemsControl<T>::MoveFocusNext(Direction direction, InputModifier modifiers)
 {
-	if (modifiers == InputModifier::Special)
-	{
-		focusedIndex_ = 0;
-		return true;
-	}
-
 	return StackPanel::MoveFocusNext(direction, modifiers);
 }
 

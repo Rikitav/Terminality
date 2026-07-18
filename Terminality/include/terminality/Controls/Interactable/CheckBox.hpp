@@ -18,12 +18,14 @@ namespace terminality
 	class CheckBox : public ControlBase
 	{
 		bool isPressed_ = false;
-		std::optional<bool> isChecked_ = false;
 
 	public:
 		Property<CheckBox, std::wstring> Text{ this, "Text", L"", InvalidationKind::Measure };
 		Property<CheckBox, Color> PressedForegroundColor{ this, "PressedForegroundColor", Color::BLACK, InvalidationKind::Visual };
 		Property<CheckBox, Color> PressedBackgroundColor{ this, "PressedBackgroundColor", Color::CYAN, InvalidationKind::Visual };
+
+		Property<CheckBox, std::optional<bool>> IsChecked{ this, "IsChecked", false, InvalidationKind::Visual };
+		Property<CheckBox, bool> IsThreeState{ this, "IsThreeState", false, InvalidationKind::Visual };
 
 		Event<std::optional<bool>> Toggled;
 		Event<> Checked;

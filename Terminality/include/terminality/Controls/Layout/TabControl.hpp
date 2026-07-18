@@ -20,9 +20,10 @@ namespace terminality
     public:
         std::string Header;
         std::unique_ptr<ControlBase> Content;
+        bool IsCloseable = false;
         
-        TabItem(std::string header, std::unique_ptr<ControlBase> content) 
-            : Header(std::move(header)), Content(std::move(content)) {}
+        TabItem(std::string header, std::unique_ptr<ControlBase> content, bool closeable = false)
+            : Header(std::move(header)), Content(std::move(content)), IsCloseable(closeable) {}
     };
 
     class TabControl : public ControlBase
@@ -34,9 +35,12 @@ namespace terminality
     public:
         Property<TabControl, int> SelectedIndex { this, "SelectedIndex", 0, InvalidationKind::Arrange };
 
+        Event<int> TabClosed;
+
         TabControl() = default;
 
         void AddTab(const std::string& header, std::unique_ptr<ControlBase> content);
+        void AddTab(const std::string& header, std::unique_ptr<ControlBase> content, bool closeable);
         void RemoveTab(int index);
         void ClearTabs();
 

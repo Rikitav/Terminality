@@ -24,6 +24,13 @@ namespace terminality
 		Property<TextBox, TextAlign> TextAlignment { this, "TextAlignment", terminality::TextAlign::Left, InvalidationKind::Visual };
 		Property<TextBox, bool> AcceptsReturn	   { this, "AcceptsReturn", false, InvalidationKind::Measure };
 
+		Property<TextBox, wchar_t> PasswordChar		{ this, "PasswordChar", L'\0', InvalidationKind::Visual };
+		Property<TextBox, std::wstring> PlaceholderText { this, "PlaceholderText", L"", InvalidationKind::Visual };
+		Property<TextBox, Color> PlaceholderForegroundColor { this, "PlaceholderForegroundColor", Color::DARK_GRAY, InvalidationKind::Visual };
+		Property<TextBox, Color> PlaceholderBackgroundColor { this, "PlaceholderBackgroundColor", Color::BLACK, InvalidationKind::Visual };
+		Property<TextBox, bool> IsReadOnly		{ this, "IsReadOnly", false, InvalidationKind::None };
+		Property<TextBox, int32_t> MaxLength	{ this, "MaxLength", -1, InvalidationKind::None };
+
 		Event<> TextChanged;
 
 		TextBox();

@@ -29,10 +29,10 @@ namespace terminality
 		Size actualSize_;
 		Rect arrangedRect_;
 
-		UILayer* layer_;
+		UILayer* layer_ = nullptr;
 		VisualTreeNode* parent_ = nullptr;
 
-		static void PopFocus(Direction direction, InputModifier modifiers);
+		static bool PopFocus(Direction direction, InputModifier modifiers);
 		static void PushFocus(VisualTreeNode* focused);
 
 	public:

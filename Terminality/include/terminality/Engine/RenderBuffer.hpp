@@ -36,7 +36,7 @@ namespace terminality
 	{
 		friend class RenderContext;
 
-		std::recursive_mutex renderMutex;
+		mutable std::recursive_mutex renderMutex;
 
 		uint32_t snapshotWidth = 0;
 		uint32_t snapshotHeight = 0;
@@ -69,7 +69,7 @@ namespace terminality
 		void DiffRender(std::wostream& out);
 		void BulkRender(std::wostream& out);
 
-		const wchar_t* GetAnsiBg(Color color);
-		const wchar_t* GetAnsiFg(Color color);
+		const wchar_t* GetAnsiBg(Color color) const;
+		const wchar_t* GetAnsiFg(Color color) const;
 	};
 }

@@ -48,6 +48,13 @@ void HostApplication::EnterTerminal()
     if (GetConsoleMode(hInput, &inMode))
         SetConsoleMode(hInput, inMode | ENABLE_WINDOW_INPUT);
 
+    SetConsoleCtrlHandler([](DWORD) -> BOOL
+    {
+        HostApplication::Current().ExitTerminal();
+        ExitProcess(0);
+        return TRUE;
+    }, TRUE);
+
     std::ios_base::sync_with_stdio(false);
     std::wcout.tie(nullptr);
     std::wcout << L"\x1b[?1049h\x1b[0m\x1b[40m\x1b[?7l\x1b[2J\x1b[?25l";
