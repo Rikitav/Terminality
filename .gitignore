@@ -379,3 +379,4 @@ FodyWeavers.xsd
 /Terminality.TespApp/cmake_install.cmake
 /build
 /Terminality/build
+/diff.txt
