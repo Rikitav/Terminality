@@ -21,6 +21,7 @@
 #include <terminality/Controls/Visual/Border.hpp>
 #include <terminality/Controls/Visual/Spinner.hpp>
 #include <terminality/Controls/Visual/ProgressBar.hpp>
+#include <terminality/Controls/Visual/DataGrid.hpp>
 #include <terminality/Controls/Visual/Canvas.hpp>
 
 // terminality.Controls.Interactable

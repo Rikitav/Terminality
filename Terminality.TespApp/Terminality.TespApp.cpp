@@ -801,6 +801,48 @@ std::unique_ptr<ControlBase> TestHotkeys()
     });
 }
 
+std::unique_ptr<ControlBase> TestDataGrid()
+{
+    return init<StackPanel>([](StackPanel* p)
+    {
+        p->ContentOrientation = Orientation::Vertical;
+        p->ItemSpacing = 1;
+
+        p->AddChild(init<Label>([](Label* l)
+        {
+            l->Text = L"UP/DOWN/PageUp/PageDown/Home/End move selection. LEFT/RIGHT scroll.";
+        }));
+
+        p->AddChild(init<DataGrid>([](DataGrid* dg)
+        {
+            dg->AddColumn("Name", 14);
+            dg->AddColumn("Role", 16);
+            dg->AddColumn("Age", 5);
+
+            dg->ItemsSource = std::vector<std::vector<std::wstring>>{
+                { L"Alice",   L"Engineer",       L"29" },
+                { L"Bob",     L"Designer",       L"34" },
+                { L"Charlie", L"Manager",        L"41" },
+                { L"Diana",   L"Engineer",       L"27" },
+                { L"Eve",     L"QA Lead",        L"32" },
+                { L"Frank",   L"DevOps",         L"38" },
+                { L"Grace",   L"Architect",      L"45" },
+                { L"Hank",    L"Intern",         L"22" }
+            };
+
+            dg->MinSize = Size(40, 8);
+            dg->HorizontalAlignment = HorizontalAlign::Stretch;
+            dg->SelectedForegroundColor = Color::BLACK;
+            dg->SelectedBackgroundColor = Color::CYAN;
+
+            dg->SelectionChanged += [](int row)
+            {
+                MessageBox::Show(L"DataGrid", L"Selected row: " + std::to_wstring(row), MessageBoxButton::Ok);
+            };
+        }));
+    });
+}
+
 // --- Main App ---
 
 class TestingAppMainMenu : public Grid
@@ -862,6 +904,7 @@ public:
         
         tests_.push_back({L"Visuals Test", L"Custom colors", TestVisuals});
         tests_.push_back({L"Hotkeys Test", L"Input handling", TestHotkeys});
+        tests_.push_back({L"DataGrid Test", L"Tabular data", TestDataGrid});
         
         AddChild(1, 0, init<ItemsControl<TestModalDef>>([&](ItemsControl<TestModalDef>* ic)
         {

@@ -182,6 +182,16 @@ static int32_t ClampIndex(int32_t index, const std::vector<T>& container)
     return std::clamp<int32_t>(index, 0, static_cast<int32_t>(container.size()) - 1);
 }
 
+static int32_t ClampGridDimension(int32_t value, int32_t min, int32_t max)
+{
+    int32_t lo = (min >= 0) ? min : value;
+    int32_t hi = (max >= 0) ? max : value;
+    if (hi < lo)
+        hi = lo;
+
+    return std::clamp(value, lo, hi);
+}
+
 template <typename T>
 static int32_t SumSpan(const std::vector<T>& defs, int32_t startIndex, int32_t span,
                        int32_t T::* actualSize)
@@ -203,7 +213,7 @@ Size Grid::MeasureOverride(const Size& availableSize)
     for (auto& row : rowDefs_)
     {
         if (row.Height.Type == GridUnitType::Cell)
-            row.ActualHeight = std::clamp(static_cast<int32_t>(row.Height.Value), row.MinHeight, row.MaxHeight);
+            row.ActualHeight = ClampGridDimension(static_cast<int32_t>(row.Height.Value), row.MinHeight, row.MaxHeight);
         else
             row.ActualHeight = 0;
     }
@@ -211,7 +221,7 @@ Size Grid::MeasureOverride(const Size& availableSize)
     for (auto& col : colDefs_)
     {
         if (col.Width.Type == GridUnitType::Cell)
-            col.ActualWidth = std::clamp(static_cast<int32_t>(col.Width.Value), col.MinWidth, col.MaxWidth);
+            col.ActualWidth = ClampGridDimension(static_cast<int32_t>(col.Width.Value), col.MinWidth, col.MaxWidth);
         else
             col.ActualWidth = 0;
     }
@@ -233,13 +243,13 @@ Size Grid::MeasureOverride(const Size& availableSize)
 
             if (isColAuto)
             {
-                int32_t clampedWidth = std::clamp(childDesired.Width, colDefs_[columnIndex].MinWidth, colDefs_[columnIndex].MaxWidth);
+                int32_t clampedWidth = ClampGridDimension(childDesired.Width, colDefs_[columnIndex].MinWidth, colDefs_[columnIndex].MaxWidth);
                 colDefs_[columnIndex].ActualWidth = std::max(colDefs_[columnIndex].ActualWidth, clampedWidth);
             }
 
             if (isRowAuto)
             {
-                int32_t clampedHeight = std::clamp(childDesired.Height, rowDefs_[rowIndex].MinHeight, rowDefs_[rowIndex].MaxHeight);
+                int32_t clampedHeight = ClampGridDimension(childDesired.Height, rowDefs_[rowIndex].MinHeight, rowDefs_[rowIndex].MaxHeight);
                 rowDefs_[rowIndex].ActualHeight = std::max(rowDefs_[rowIndex].ActualHeight, clampedHeight);
             }
         }
@@ -272,7 +282,7 @@ Size Grid::MeasureOverride(const Size& availableSize)
             if (col.Width.Type == GridUnitType::Star)
             {
                 int32_t starWidth = static_cast<int32_t>((col.Width.Value / totalStarWidth) * remainingWidth);
-                col.ActualWidth = std::clamp(starWidth, col.MinWidth, col.MaxWidth);
+                col.ActualWidth = ClampGridDimension(starWidth, col.MinWidth, col.MaxWidth);
             }
         }
     }
@@ -285,7 +295,7 @@ Size Grid::MeasureOverride(const Size& availableSize)
             if (row.Height.Type == GridUnitType::Star)
             {
                 int32_t starHeight = static_cast<int32_t>((row.Height.Value / totalStarHeight) * remainingHeight);
-                row.ActualHeight = std::clamp(starHeight, row.MinHeight, row.MaxHeight);
+                row.ActualHeight = ClampGridDimension(starHeight, row.MinHeight, row.MaxHeight);
             }
         }
     }

@@ -268,7 +268,7 @@ static wchar_t DefaultUnderlineStyle(const Point& point, const Vector& vector)
 
 static wchar_t FocusedUnderlineStyle(const Point& point, const Vector& vector)
 {
-	return L' ';
+	return L'\u2500';
 }
 
 void TabControl::RenderOverride(RenderContext& context)
@@ -338,10 +338,10 @@ void TabControl::RenderOverride(RenderContext& context)
 	{
 		Color lineFg = Color::DARK_GRAY;
 		if (selectedStart > 0)
-			context.RenderLine(Point(0, 1), selectedStart, DefaultUnderlineStyle, defaultFg, defaultBg);
+			context.RenderLine(Point(0, 1), selectedStart, DefaultUnderlineStyle, UnderlineForegroundColor.Get(), UnderlineBackgroundColor.Get());
 
-		context.RenderLine(Point(selectedStart, 1), selectedEnd - selectedStart + 1, FocusedUnderlineStyle, FocusedForegroundColor.Get(), FocusedBackgroundColor.Get());
-		context.RenderLine(Point(selectedEnd + 1, 1), bounds.Width - selectedEnd, DefaultUnderlineStyle, defaultFg, defaultBg);
+		context.RenderLine(Point(selectedStart, 1), selectedEnd - selectedStart + 1, FocusedUnderlineStyle, FocusedUnderlineForegroundColor.Get(), FocusedUnderlineBackgroundColor.Get());
+		context.RenderLine(Point(selectedEnd + 1, 1), bounds.Width - selectedEnd, DefaultUnderlineStyle, UnderlineForegroundColor.Get(), UnderlineBackgroundColor.Get());
 	}
 
 	if (in_bounds(idx, tabs_))

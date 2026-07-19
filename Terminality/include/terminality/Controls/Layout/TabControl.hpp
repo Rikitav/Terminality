@@ -34,6 +34,10 @@ namespace terminality
 
     public:
         Property<TabControl, int> SelectedIndex { this, "SelectedIndex", 0, InvalidationKind::Arrange };
+        Property<ControlBase, Color> UnderlineForegroundColor        { this, "UnderlineForegroundColor",        Color::WHITE, InvalidationKind::Visual };
+        Property<ControlBase, Color> UnderlineBackgroundColor        { this, "UnderlineBackgroundColor",        Color::BLACK, InvalidationKind::Visual };
+        Property<ControlBase, Color> FocusedUnderlineForegroundColor { this, "FocusedUnderlineForegroundColor", Color::RED,   InvalidationKind::Visual };
+        Property<ControlBase, Color> FocusedUnderlineBackgroundColor { this, "FocusedUnderlineBackgroundColor", Color::BLACK, InvalidationKind::Visual };
 
         Event<int> TabClosed;
 
