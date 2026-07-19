@@ -167,6 +167,102 @@ void Grid::AddChild(int32_t row, int32_t column, std::unique_ptr<ControlBase> ch
     AddChild(row, column, 1, 1, std::move(child));
 }
 
+void Grid::AddChild(std::unique_ptr<ControlBase> child)
+{
+    AddChild(0, 0, 1, 1, std::move(child));
+}
+
+bool Grid::IsUniformMode() const
+{
+    return UniformColumns.Get() > 0 || UniformRows.Get() > 0;
+}
+
+void Grid::GetUniformGrid(int32_t& columns, int32_t& rows) const
+{
+    int32_t count = static_cast<int32_t>(children_.size());
+    columns = UniformColumns.Get();
+    rows = UniformRows.Get();
+
+    if (columns > 0 && rows > 0)
+    {
+        // Both explicit - keep as-is.
+    }
+    else if (columns > 0)
+    {
+        rows = count > 0 ? (count + columns - 1) / columns : 0;
+    }
+    else if (rows > 0)
+    {
+        columns = count > 0 ? (count + rows - 1) / rows : 0;
+    }
+
+    if (columns < 1) columns = 1;
+    if (rows < 1) rows = 1;
+}
+
+Size Grid::MeasureUniform(const Size& availableSize)
+{
+    int32_t columns = 0, rows = 0;
+    GetUniformGrid(columns, rows);
+
+    if (children_.empty())
+        return Size(0, 0);
+
+    const bool widthIsInfinite = availableSize.Width < 0;
+    const bool heightIsInfinite = availableSize.Height < 0;
+
+    int32_t cellWidth = widthIsInfinite ? 0 : availableSize.Width / columns;
+    int32_t cellHeight = heightIsInfinite ? 0 : availableSize.Height / rows;
+
+    // Determine natural cell sizes when the grid size is unconstrained.
+    for (const auto& childWrapper : children_)
+    {
+        Size probeSize(
+            widthIsInfinite ? -1 : cellWidth,
+            heightIsInfinite ? -1 : cellHeight);
+
+        Size desired = childWrapper.Control->Measure(probeSize);
+
+        if (widthIsInfinite)
+            cellWidth = std::max(cellWidth, desired.Width);
+
+        if (heightIsInfinite)
+            cellHeight = std::max(cellHeight, desired.Height);
+    }
+
+    Size finalCell(cellWidth, cellHeight);
+    for (const auto& childWrapper : children_)
+        childWrapper.Control->Measure(finalCell);
+
+    return Size(cellWidth * columns, cellHeight * rows);
+}
+
+void Grid::ArrangeUniform(const Rect& contentRect)
+{
+    int32_t columns = 0, rows = 0;
+    GetUniformGrid(columns, rows);
+
+    if (children_.empty())
+        return;
+
+    int32_t cellWidth = contentRect.Width / columns;
+    int32_t cellHeight = contentRect.Height / rows;
+
+    for (std::size_t i = 0; i < children_.size(); ++i)
+    {
+        int32_t col = static_cast<int32_t>(i) % columns;
+        int32_t row = static_cast<int32_t>(i) / columns;
+
+        Rect cellRect(
+            contentRect.X + col * cellWidth,
+            contentRect.Y + row * cellHeight,
+            cellWidth,
+            cellHeight);
+
+        children_[i].Control->Arrange(cellRect);
+    }
+}
+
 void Grid::EnsureGridDefinitions()
 {
     if (rowDefs_.empty())
@@ -205,6 +301,9 @@ static int32_t SumSpan(const std::vector<T>& defs, int32_t startIndex, int32_t s
 
 Size Grid::MeasureOverride(const Size& availableSize)
 {
+    if (IsUniformMode())
+        return MeasureUniform(availableSize);
+
     EnsureGridDefinitions();
 
     const bool widthIsInfinite = availableSize.Width < 0;
@@ -325,6 +424,12 @@ Size Grid::MeasureOverride(const Size& availableSize)
 
 void Grid::ArrangeOverride(const Rect& contentRect)
 {
+    if (IsUniformMode())
+    {
+        ArrangeUniform(contentRect);
+        return;
+    }
+
     EnsureGridDefinitions();
 
     int32_t currentX = 0;

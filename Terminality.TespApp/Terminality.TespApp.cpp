@@ -334,6 +334,26 @@ std::unique_ptr<ControlBase> TestGrid3()
     });
 }
 
+std::unique_ptr<ControlBase> TestUniformGrid()
+{
+    return init<Grid>([](Grid* g)
+    {
+        g->UniformColumns = 3;
+
+        for (int i = 0; i < 9; ++i)
+        {
+            g->AddChild(init<Border>([i](Border* b)
+            {
+                b->Content = init<Label>([i](Label* l)
+                {
+                    l->Text = L"Cell " + std::to_wstring(i + 1);
+                    l->HorizontalAlignment = HorizontalAlign::Center;
+                });
+            }));
+        }
+    });
+}
+
 std::unique_ptr<ControlBase> TestStackPanel1()
 {
     return init<StackPanel>([](StackPanel* p)
@@ -877,6 +897,7 @@ public:
         tests_.push_back({L"Grid Test 1", L"Star and Cell lengths", TestGrid1});
         tests_.push_back({L"Grid Test 2", L"Column Spans", TestGrid2});
         tests_.push_back({L"Grid Test 3", L"Row Spans", TestGrid3});
+        tests_.push_back({L"UniformGrid Test", L"Uniform cell grid", TestUniformGrid});
         
         tests_.push_back({L"StackPanel Test 1", L"Vertical stack", TestStackPanel1});
         tests_.push_back({L"StackPanel Test 2", L"Horizontal stack", TestStackPanel2});
