@@ -22,48 +22,14 @@ void ContextMenu::Clear()
 
 void ContextMenu::Open(Point position)
 {
-	HostApplication& host = HostApplication::Current();
-	VisualTree& tree = VisualTree::Current();
-
-	std::optional<std::reference_wrapper<std::atomic<bool>>> running;
-
 	if (items_.empty())
 		return;
 
-	auto ctxMenuBody = init<Border>([&](Border* ctxMenuBody)
+	auto menu = std::shared_ptr<Menu>(init<Menu>([&](Menu* menu)
 	{
-		ctxMenuBody->HorizontalAlignment = HorizontalAlign::Left;
-		ctxMenuBody->VerticalAlignment = VerticalAlign::Top;
-		ctxMenuBody->Margin = Thickness(position.X, position.Y, 0, 0);
-		ctxMenuBody->BorderColor = Color::YELLOW;
-		ctxMenuBody->FocusedBorderColor = Color::YELLOW;
+		for (const ContextMenuItem& item : items_)
+			menu->AddItem(item.Text, item.Action);
+	}).release());
 
-		ctxMenuBody->Content = init<StackPanel>([&](StackPanel* panel)
-		{
-			panel->HorizontalAlignment = HorizontalAlign::Stretch;
-			panel->VerticalAlignment = VerticalAlign::Stretch;
-
-			for (const ContextMenuItem& item : items_)
-			{
-				panel->AddChild(init<Button>([&](Button* itemButton)
-				{
-					itemButton->Text = item.Text;
-					itemButton->HorizontalAlignment = HorizontalAlign::Stretch;
-					itemButton->Clicked += [&running, item]()
-					{
-						if (item.Action != nullptr)
-							item.Action();
-
-						running->get().store(false);
-					};
-				}));
-			}
-		});
-	});
-
-	UILayer& layer = tree.PushLayer(std::move(ctxMenuBody));
-	running.emplace(layer.Running);
-	
-	host.NestUILoop(layer);
-	tree.PopLayer();
+	menu->Open(position);
 }

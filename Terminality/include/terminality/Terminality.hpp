@@ -29,6 +29,8 @@
 #include <terminality/Controls/Interactable/Button.hpp>
 #include <terminality/Controls/Interactable/TextBox.hpp>
 #include <terminality/Controls/Interactable/Slider.hpp>
+#include <terminality/Controls/Interactable/Menu.hpp>
+#include <terminality/Controls/Interactable/MenuBar.hpp>
 
 // terminality.Dialogs
 #include <terminality/Dialogs/ContextMenu.hpp>

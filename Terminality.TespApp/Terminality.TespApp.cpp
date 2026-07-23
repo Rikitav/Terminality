@@ -863,6 +863,62 @@ std::unique_ptr<ControlBase> TestDataGrid()
     });
 }
 
+std::unique_ptr<ControlBase> TestMenu()
+{
+    return init<StackPanel>([](StackPanel* p)
+    {
+        p->ContentOrientation = Orientation::Vertical;
+        p->ItemSpacing = 1;
+
+        p->AddChild(init<Label>([](Label* l)
+        {
+            l->Text = L"Focus the menu bar. LEFT/RIGHT move, DOWN/ENTER open. ESC closes.";
+        }));
+
+        p->AddChild(init<MenuBar>([](MenuBar* bar)
+        {
+            auto fileMenu = init<Menu>([](Menu* m)
+            {
+                m->AddItem(L"&New",  []() { MessageBox::Show(L"Menu", L"New", MessageBoxButton::Ok); });
+                m->AddItem(L"&Open", []() { MessageBox::Show(L"Menu", L"Open", MessageBoxButton::Ok); });
+                m->AddSeparator();
+                m->AddItem(L"E&xit", []() { HostApplication::Current().RequestStop(); });
+            });
+
+            auto editMenu = init<Menu>([](Menu* m)
+            {
+                m->AddCheckableItem(L"&Word Wrap", false, [](bool checked)
+                {
+                    MessageBox::Show(L"Menu", checked ? L"Word wrap ON" : L"Word wrap OFF", MessageBoxButton::Ok);
+                });
+                m->AddCheckableItem(L"Show &Line Numbers", true, [](bool checked)
+                {
+                    MessageBox::Show(L"Menu", checked ? L"Line numbers ON" : L"Line numbers OFF", MessageBoxButton::Ok);
+                });
+                m->AddSeparator();
+                m->AddItem(L"&Preferences", []() { MessageBox::Show(L"Menu", L"Preferences", MessageBoxButton::Ok); });
+            });
+
+            auto helpMenu = init<Menu>([](Menu* m)
+            {
+                auto sub = init<Menu>([](Menu* sm)
+                {
+                    sm->AddItem(L"&Online Docs", []() { MessageBox::Show(L"Menu", L"Online Docs", MessageBoxButton::Ok); });
+                    sm->AddItem(L"&Local Docs",  []() { MessageBox::Show(L"Menu", L"Local Docs", MessageBoxButton::Ok); });
+                });
+
+                m->AddSubMenu(L"&Documentation", std::move(sub));
+                m->AddSeparator();
+                m->AddItem(L"&About", []() { MessageBox::Show(L"Menu", L"Terminality Framework", MessageBoxButton::Ok); });
+            });
+
+            bar->AddMenu(L"&File", std::move(fileMenu));
+            bar->AddMenu(L"&Edit", std::move(editMenu));
+            bar->AddMenu(L"&Help", std::move(helpMenu));
+        }));
+    });
+}
+
 // --- Main App ---
 
 class TestingAppMainMenu : public Grid
@@ -926,6 +982,7 @@ public:
         tests_.push_back({L"Visuals Test", L"Custom colors", TestVisuals});
         tests_.push_back({L"Hotkeys Test", L"Input handling", TestHotkeys});
         tests_.push_back({L"DataGrid Test", L"Tabular data", TestDataGrid});
+        tests_.push_back({L"Menu Test", L"Menu bar + submenus", TestMenu});
         
         AddChild(1, 0, init<ItemsControl<TestModalDef>>([&](ItemsControl<TestModalDef>* ic)
         {
