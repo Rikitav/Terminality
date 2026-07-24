@@ -1,5 +1,5 @@
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Controls/Slider.hpp>
 
 using namespace terminality;
 
@@ -33,20 +33,69 @@ bool Slider::OnKeyDown(InputEvent input)
 	float v = Value.Get();
 	const bool horizontal = (Orientation.Get() == terminality::Orientation::Horizontal);
 
-	if (horizontal && input.Key == InputKey::LEFT)        v -= step;
-	else if (horizontal && input.Key == InputKey::RIGHT)  v += step;
-	else if (!horizontal && input.Key == InputKey::DOWN)  v -= step;
-	else if (!horizontal && input.Key == InputKey::UP)    v += step;
-	else if (input.Key == InputKey::PRIOR)                v += largeStep;
-	else if (input.Key == InputKey::NEXT)                 v -= largeStep;
-	else if (input.Key == InputKey::HOME)                 v = min;
-	else if (input.Key == InputKey::END)                  v = max;
-	else
-		return ControlBase::OnKeyDown(input);
+	switch (input.Key)
+	{
+		case InputKey::LEFT:
+		{
+			if (horizontal)
+				v -= step;
 
-	if (v < min) v = min;
-	if (v > max) v = max;
+			break;
+		}
 
+		case InputKey::RIGHT:
+		{
+			if (horizontal)
+				v += step;
+
+			break;
+		}
+
+		case InputKey::DOWN:
+		{
+			if (!horizontal)
+				v -= step;
+
+			break;
+		}
+
+		case InputKey::UP:
+		{
+			if (!horizontal)
+				v += step;
+
+			break;
+		}
+
+		case InputKey::PRIOR:
+		{
+			v += largeStep;
+			break;
+		}
+
+		case InputKey::NEXT:
+		{
+			v -= largeStep;
+			break;
+		}
+
+		case InputKey::HOME:
+		{
+			v = min;
+			break;
+		}
+
+		case InputKey::END:
+		{
+			v = max;
+			break;
+		}
+
+		default:
+			return ControlBase::OnKeyDown(input);
+	}
+
+	v = std::clamp(v, min, max);
 	if (v != Value.Get())
 	{
 		Value = v;

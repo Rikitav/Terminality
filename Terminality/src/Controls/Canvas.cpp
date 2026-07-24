@@ -1,5 +1,5 @@
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Controls/Canvas.hpp>
 
 using namespace terminality;
 
@@ -23,8 +23,8 @@ void Canvas::RenderOverride(RenderContext& context)
 {
 	auto now = std::chrono::steady_clock::now();
 	float dt = hasLastTime_
-		? std::chrono::duration<float>(now - lastTime_).count()
-		: 0.0f;
+		? std::chrono::duration<float>(now - lastTime_).count() : 0.0f;
+
 	lastTime_ = now;
 	hasLastTime_ = true;
 

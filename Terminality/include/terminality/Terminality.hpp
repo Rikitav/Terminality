@@ -1,3 +1,13 @@
+#pragma once
+#ifndef _TERMINALITY_
+
+#ifdef _WINDOWS_
+  #ifndef TERMINALITY_EMMITED_WINDOWS_ERROR
+    #error Include Windows.h after Terminality.hpp
+    #define TERMINALITY_EMMITED_WINDOWS_ERROR
+  #endif // #ifndef TERMINALITY
+#endif // #ifdef _WINDOWS_
+
 // terminality.Core
 #include <terminality/Core/Color.hpp>
 #include <terminality/Core/Focus.hpp>
@@ -7,30 +17,30 @@
 #include <terminality/Core/TextHelper.hpp>
 
 // terminality.Controls.Layout
-#include <terminality/Controls/Layout/Grid.hpp>
-#include <terminality/Controls/Layout/StackPanel.hpp>
-#include <terminality/Controls/Layout/ItemsControl.hpp>
-#include <terminality/Controls/Layout/ScrollViewer.hpp>
-#include <terminality/Controls/Layout/TabControl.hpp>
-#include <terminality/Controls/Layout/TreeView.hpp>
-#include <terminality/Controls/Layout/Heap.hpp>
-#include <terminality/Controls/Layout/Expander.hpp>
+#include <terminality/Controls/Grid.hpp>
+#include <terminality/Controls/StackPanel.hpp>
+#include <terminality/Controls/ItemsControl.hpp>
+#include <terminality/Controls/ScrollViewer.hpp>
+#include <terminality/Controls/TabControl.hpp>
+#include <terminality/Controls/TreeView.hpp>
+#include <terminality/Controls/Heap.hpp>
+#include <terminality/Controls/Expander.hpp>
 
 // terminality.Controls.Visual
-#include <terminality/Controls/Visual/Label.hpp>
-#include <terminality/Controls/Visual/Border.hpp>
-#include <terminality/Controls/Visual/Spinner.hpp>
-#include <terminality/Controls/Visual/ProgressBar.hpp>
-#include <terminality/Controls/Visual/DataGrid.hpp>
-#include <terminality/Controls/Visual/Canvas.hpp>
+#include <terminality/Controls/Label.hpp>
+#include <terminality/Controls/Border.hpp>
+#include <terminality/Controls/Spinner.hpp>
+#include <terminality/Controls/ProgressBar.hpp>
+#include <terminality/Controls/DataGrid.hpp>
+#include <terminality/Controls/Canvas.hpp>
 
 // terminality.Controls.Interactable
-#include <terminality/Controls/Interactable/CheckBox.hpp>
-#include <terminality/Controls/Interactable/Button.hpp>
-#include <terminality/Controls/Interactable/TextBox.hpp>
-#include <terminality/Controls/Interactable/Slider.hpp>
-#include <terminality/Controls/Interactable/Menu.hpp>
-#include <terminality/Controls/Interactable/MenuBar.hpp>
+#include <terminality/Controls/CheckBox.hpp>
+#include <terminality/Controls/Button.hpp>
+#include <terminality/Controls/TextBox.hpp>
+#include <terminality/Controls/Slider.hpp>
+#include <terminality/Controls/Menu.hpp>
+#include <terminality/Controls/MenuBar.hpp>
 
 // terminality.Dialogs
 #include <terminality/Dialogs/ContextMenu.hpp>
@@ -57,7 +67,4 @@
 #include <terminality/Framework/Event.hpp>
 #include <terminality/Framework/HostApplication.hpp>
 
-// terminality.PlatformSpecific
-#ifdef _WIN32
-	#include <terminality/Framework/PlatformSpecific/Windows.hpp>
-#endif // _WIN32
+#endif // #ifndef TERMINALITY

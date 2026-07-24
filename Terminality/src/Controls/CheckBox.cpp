@@ -5,7 +5,7 @@
 #include <string>
 #include <cstring>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Controls/CheckBox.hpp>
 
 using namespace terminality;
 

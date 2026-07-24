@@ -2,7 +2,9 @@
 #include <cstdint>
 #include <memory>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Framework/VisualTreeNode.hpp>
+#include <terminality/Engine/DispatchTimer.hpp>
+#include <terminality/Engine/FocusManager.hpp>
 
 using namespace terminality;
 

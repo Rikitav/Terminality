@@ -4,42 +4,45 @@
 #include <memory>
 #include <cstring>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Controls/Border.hpp>
 
 using namespace terminality;
 
-static wchar_t DefaultBorderStyle(const RectanglePos pos)
+namespace
 {
-	switch (pos)
+	static wchar_t DefaultBorderStyle(const RectanglePos pos)
 	{
-		case RectanglePos::TopHorizontalLine:
-		case RectanglePos::BottomHorizontalLine:
-			return L'\x2500';
+		switch (pos)
+		{
+			case RectanglePos::TopHorizontalLine:
+			case RectanglePos::BottomHorizontalLine:
+				return L'\x2500';
 
-		case RectanglePos::LeftVerticalLine:
-		case RectanglePos::RightVerticalLine:
-			return L'\x2502';
+			case RectanglePos::LeftVerticalLine:
+			case RectanglePos::RightVerticalLine:
+				return L'\x2502';
 
-		case RectanglePos::LeftTopCorner:
-			return L'\x256D';
+			case RectanglePos::LeftTopCorner:
+				return L'\x256D';
 
-		case RectanglePos::LeftBottomCorner:
-			return L'\x2570';
+			case RectanglePos::LeftBottomCorner:
+				return L'\x2570';
 
-		case RectanglePos::RightTopCorner:
-			return L'\x256E';
+			case RectanglePos::RightTopCorner:
+				return L'\x256E';
 
-		case RectanglePos::RightBottomCorner:
-			return L'\x256F';
+			case RectanglePos::RightBottomCorner:
+				return L'\x256F';
 
-		default:
-			return L'#';
+			default:
+				return L'#';
+		}
 	}
-}
 
-static wchar_t DefaultBackgroundStyle(const Point& point, const Size& size)
-{
-	return L' ';
+	static wchar_t DefaultBackgroundStyle(const Point& point, const Size& size)
+	{
+		return L' ';
+	}
 }
 
 Border::Border()

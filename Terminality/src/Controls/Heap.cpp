@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <memory>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Controls/Heap.hpp>
 
 using namespace terminality;
 

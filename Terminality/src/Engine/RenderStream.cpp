@@ -2,7 +2,8 @@
 #include <cstdint>
 #include <string>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Engine/RenderContext.hpp>
+#include <terminality/Engine/RenderStream.hpp>
 
 using namespace terminality;
 

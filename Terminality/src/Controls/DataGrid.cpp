@@ -4,13 +4,16 @@
 #include <string>
 #include <vector>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Controls/DataGrid.hpp>
 
 using namespace terminality;
 
-static std::wstring ToWString(const std::string& text)
+namespace
 {
-	return std::wstring(text.begin(), text.end());
+	static std::wstring ToWString(const std::string& text)
+	{
+		return std::wstring(text.begin(), text.end());
+	}
 }
 
 void DataGrid::AddColumn(const std::wstring& header, int32_t width)

@@ -4,7 +4,8 @@
 #include <algorithm>
 #include <cstring>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Controls/Label.hpp>
+#include <terminality/Core/TextHelper.hpp>
 
 using namespace terminality;
 

@@ -6,64 +6,68 @@
 #include <cwctype>
 #include <cstring>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Controls/MenuBar.hpp>
 
 using namespace terminality;
 
-static std::wstring ToWString(const std::string& text)
+namespace
 {
-	return std::wstring(text.begin(), text.end());
-}
-
-static wchar_t ToLower(wchar_t ch)
-{
-	if (ch >= L'A' && ch <= L'Z')
-		return ch - L'A' + L'a';
-	return std::towlower(ch);
-}
-
-static bool KeyMatchesAccessKey(InputKey key, wchar_t accessKey)
-{
-	if (accessKey == L'\0')
-		return false;
-
-	if (key < InputKey::A || key > InputKey::Z)
-		return false;
-
-	wchar_t keyChar = static_cast<wchar_t>(static_cast<int>(key));
-	return ToLower(keyChar) == ToLower(accessKey);
-}
-
-static std::wstring GetDisplayText(const std::wstring& text, wchar_t& accessKey)
-{
-	std::wstring result;
-	accessKey = L'\0';
-
-	for (std::size_t i = 0; i < text.size(); ++i)
+	static std::wstring ToWString(const std::string& text)
 	{
-		wchar_t ch = text[i];
-		if (ch == L'&' && i + 1 < text.size())
-		{
-			wchar_t next = text[i + 1];
-			if (next == L'&')
-			{
-				result.push_back(L'&');
-				++i;
-			}
-			else if (accessKey == L'\0')
-			{
-				accessKey = next;
-				result.push_back(next);
-				++i;
-			}
-		}
-		else
-		{
-			result.push_back(ch);
-		}
+		return std::wstring(text.begin(), text.end());
 	}
 
-	return result;
+	static wchar_t ToLower(wchar_t ch)
+	{
+		if (ch >= L'A' && ch <= L'Z')
+			return ch - L'A' + L'a';
+
+		return std::towlower(ch);
+	}
+
+	static bool KeyMatchesAccessKey(InputKey key, wchar_t accessKey)
+	{
+		if (accessKey == L'\0')
+			return false;
+
+		if (key < InputKey::A || key > InputKey::Z)
+			return false;
+
+		wchar_t keyChar = static_cast<wchar_t>(static_cast<int>(key));
+		return ToLower(keyChar) == ToLower(accessKey);
+	}
+
+	static std::wstring GetDisplayText(const std::wstring& text, wchar_t& accessKey)
+	{
+		std::wstring result;
+		accessKey = L'\0';
+
+		for (std::size_t i = 0; i < text.size(); ++i)
+		{
+			wchar_t ch = text[i];
+			if (ch == L'&' && i + 1 < text.size())
+			{
+				wchar_t next = text[i + 1];
+				if (next == L'&')
+				{
+					result.push_back(L'&');
+					++i;
+				}
+				else if (accessKey == L'\0')
+				{
+					accessKey = next;
+					result.push_back(next);
+					++i;
+				}
+			}
+			else
+			{
+				result.push_back(ch);
+			}
+		}
+
+		return result;
+	}
 }
 
 void MenuBar::AddMenu(const std::wstring& header, std::shared_ptr<Menu> menu)

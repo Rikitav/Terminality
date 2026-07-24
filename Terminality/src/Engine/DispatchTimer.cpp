@@ -6,7 +6,7 @@
 #include <mutex>
 #include <functional>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Engine/DispatchTimer.hpp>
 
 using namespace terminality;
 

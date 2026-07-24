@@ -4,7 +4,7 @@
 #include <vector>
 #include <functional>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Controls/Spinner.hpp>
 
 using namespace terminality;
 

@@ -8,10 +8,8 @@
 #include <cmath>
 
 #include <terminality/Terminality.hpp>
-//#define TERMINALITY_IMPLEMENTATION
-//#include "../out/Terminality.hpp"
-
 #include <Windows.h>
+
 #undef MessageBox
 
 using namespace terminality;

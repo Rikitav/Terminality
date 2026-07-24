@@ -4,6 +4,7 @@
 #include <chrono>
 #include <thread>
 #include <memory>
+#include <string>
 
 #include <terminality/Core/Geometry.hpp>
 #include <terminality/Core/InputEvent.hpp>
@@ -44,4 +45,8 @@ namespace terminality
 		void NestUILoop(UILayer& layer);
 		void RequestStop();
 	};
+
+#ifdef _WIN32
+	void AlertAsync(const std::wstring& text, const std::wstring& title);
+#endif // _WIN32
 }

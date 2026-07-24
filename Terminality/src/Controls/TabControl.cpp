@@ -5,7 +5,7 @@
 #include <memory>
 #include <cstring>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Controls/TabControl.hpp>
 
 using namespace terminality;
 

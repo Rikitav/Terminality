@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <mutex>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Engine/RenderBuffer.hpp>
 
 using namespace terminality;
 

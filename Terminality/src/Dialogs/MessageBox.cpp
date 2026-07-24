@@ -3,7 +3,15 @@
 #include <memory>
 #include <functional>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Dialogs/MessageBox.hpp>
+#include <terminality/Framework/HostApplication.hpp>
+#include <terminality/Engine/Navigator.hpp>
+
+#include <terminality/Controls/Grid.hpp>
+#include <terminality/Controls/Border.hpp>
+#include <terminality/Controls/StackPanel.hpp>
+#include <terminality/Controls/Label.hpp>
+#include <terminality/Controls/Button.hpp>
 
 using namespace terminality;
 

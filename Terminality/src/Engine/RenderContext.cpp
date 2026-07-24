@@ -3,7 +3,8 @@
 #include <mutex>
 #include <algorithm>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Core/Geometry.hpp>
+#include <terminality/Engine/RenderContext.hpp>
 
 using namespace terminality;
 

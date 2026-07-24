@@ -3,7 +3,7 @@
 #include <memory>
 #include <cstring>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Controls/ScrollViewer.hpp>
 
 using namespace terminality;
 

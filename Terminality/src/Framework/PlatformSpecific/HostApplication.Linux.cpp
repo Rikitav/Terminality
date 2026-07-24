@@ -3,9 +3,8 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <terminality/Terminality.hpp>
-
-using namespace terminality;
+#include <terminality/Framework/HostApplication.hpp>
+#include <terminality/Core/InputEvent.hpp>
 
 #include <sys/ioctl.h>
 #include <clocale>
@@ -13,6 +12,8 @@ using namespace terminality;
 #include <unistd.h>
 #include <poll.h>
 #include <termios.h>
+
+using namespace terminality;
 
 static struct termios original_termios;
 

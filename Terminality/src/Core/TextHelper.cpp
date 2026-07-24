@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <vector>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Core/TextHelper.hpp>
 
 using namespace terminality;
 

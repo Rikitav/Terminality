@@ -5,28 +5,31 @@
 #include <cwctype>
 #include <cstring>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Controls/Button.hpp>
 
 using namespace terminality;
 
-static wchar_t ToLowerKey(wchar_t ch)
+namespace
 {
-	if (ch >= L'A' && ch <= L'Z')
-		return ch - L'A' + L'a';
-	return ch;
-}
+	static wchar_t ToLowerKey(wchar_t ch)
+	{
+		if (ch >= L'A' && ch <= L'Z')
+			return ch - L'A' + L'a';
+		return ch;
+	}
 
-static bool KeyMatchesAccessKey(InputKey key, wchar_t accessKey)
-{
-	if (accessKey == L'\0')
-		return false;
+	static bool KeyMatchesAccessKey(InputKey key, wchar_t accessKey)
+	{
+		if (accessKey == L'\0')
+			return false;
 
-	// A-Z InputKey values are 0x41-0x5A.
-	if (key < InputKey::A || key > InputKey::Z)
-		return false;
+		// A-Z InputKey values are 0x41-0x5A.
+		if (key < InputKey::A || key > InputKey::Z)
+			return false;
 
-	wchar_t keyChar = static_cast<wchar_t>(static_cast<int>(key));
-	return ToLowerKey(keyChar) == ToLowerKey(accessKey);
+		wchar_t keyChar = static_cast<wchar_t>(static_cast<int>(key));
+		return ToLowerKey(keyChar) == ToLowerKey(accessKey);
+	}
 }
 
 void Button::UpdateAccessKey()

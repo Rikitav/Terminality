@@ -3,7 +3,8 @@
 #include <memory>
 #include <functional>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Engine/Navigator.hpp>
+#include <terminality/Framework/HostApplication.hpp>
 
 using namespace terminality;
 

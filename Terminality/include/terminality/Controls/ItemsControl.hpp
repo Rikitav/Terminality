@@ -5,7 +5,7 @@
 #include <functional>
 
 #include <terminality/Framework/ControlBase.hpp>
-#include <terminality/Controls/Layout/StackPanel.hpp>
+#include <terminality/Controls/StackPanel.hpp>
 #include <terminality/Framework/Collections/ObservableCollection.hpp>
 #include <terminality/Engine/FocusManager.hpp>
 #include <terminality/Core/InputEvent.hpp>

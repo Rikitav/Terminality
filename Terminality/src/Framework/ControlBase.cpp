@@ -6,7 +6,9 @@
 #include <unordered_map>
 #include <cstring>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Core/InputEvent.hpp>
+#include <terminality/Engine/FocusManager.hpp>
+#include <terminality/Framework/ControlBase.hpp>
 
 using namespace terminality;
 

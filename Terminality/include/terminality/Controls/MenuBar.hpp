@@ -12,6 +12,7 @@
 #include <terminality/Framework/ControlBase.hpp>
 #include <terminality/Framework/Property.hpp>
 #include <terminality/Engine/RenderContext.hpp>
+#include <terminality/Controls/Menu.hpp>
 
 namespace terminality
 {

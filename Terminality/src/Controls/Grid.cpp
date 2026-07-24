@@ -8,88 +8,90 @@
 #include <string_view>
 #include <charconv>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Controls/Grid.hpp>
 
 using namespace terminality;
 
 // ------------------------------------------------------------------
 // String helpers
 // ------------------------------------------------------------------
-
-static constexpr std::string_view Trim(std::string_view str)
+namespace
 {
-    const auto first = str.find_first_not_of(" \t\r\n");
-    if (first == std::string_view::npos)
-        return {};
+    static constexpr std::string_view Trim(std::string_view str)
+    {
+        const auto first = str.find_first_not_of(" \t\r\n");
+        if (first == std::string_view::npos)
+            return {};
 
-    const auto last = str.find_last_not_of(" \t\r\n");
-    return str.substr(first, (last - first + 1));
-}
+        const auto last = str.find_last_not_of(" \t\r\n");
+        return str.substr(first, (last - first + 1));
+    }
 
-static constexpr char ToLowerAscii(char c)
-{
-    return (c >= 'A' && c <= 'Z') ? static_cast<char>(c + ('a' - 'A')) : c;
-}
+    static constexpr char ToLowerAscii(char c)
+    {
+        return (c >= 'A' && c <= 'Z') ? static_cast<char>(c + ('a' - 'A')) : c;
+    }
 
-static constexpr bool EqualsIgnoreCase(std::string_view a, std::string_view b)
-{
-    if (a.size() != b.size())
-        return false;
-
-    for (std::size_t i = 0; i < a.size(); ++i)
-        if (ToLowerAscii(a[i]) != ToLowerAscii(b[i]))
+    static constexpr bool EqualsIgnoreCase(std::string_view a, std::string_view b)
+    {
+        if (a.size() != b.size())
             return false;
 
-    return true;
-}
+        for (std::size_t i = 0; i < a.size(); ++i)
+            if (ToLowerAscii(a[i]) != ToLowerAscii(b[i]))
+                return false;
 
-static std::vector<GridLength> ParseGridLengths(std::string_view definitions)
-{
-    std::vector<GridLength> result;
-    if (definitions.empty())
-        return result;
+        return true;
+    }
 
-    size_t start = 0;
-    while (start < definitions.size())
+    static std::vector<GridLength> ParseGridLengths(std::string_view definitions)
     {
-        size_t end = definitions.find(',', start);
-        std::string_view token = Trim(definitions.substr(start, end - start));
+        std::vector<GridLength> result;
+        if (definitions.empty())
+            return result;
 
-        if (!token.empty())
+        size_t start = 0;
+        while (start < definitions.size())
         {
-            if (EqualsIgnoreCase(token, "Auto"))
+            size_t end = definitions.find(',', start);
+            std::string_view token = Trim(definitions.substr(start, end - start));
+
+            if (!token.empty())
             {
-                result.push_back(GridLength::Auto());
-            }
-            else if (token.back() == '*')
-            {
-                if (token.size() == 1)
+                if (EqualsIgnoreCase(token, "Auto"))
                 {
-                    result.push_back(GridLength::Star(1.0f));
+                    result.push_back(GridLength::Auto());
+                }
+                else if (token.back() == '*')
+                {
+                    if (token.size() == 1)
+                    {
+                        result.push_back(GridLength::Star(1.0f));
+                    }
+                    else
+                    {
+                        float value = 1.0f;
+                        auto numPart = token.substr(0, token.size() - 1);
+                        std::from_chars(numPart.data(), numPart.data() + numPart.size(), value);
+                        result.push_back(GridLength::Star(value));
+                    }
                 }
                 else
                 {
-                    float value = 1.0f;
-                    auto numPart = token.substr(0, token.size() - 1);
-                    std::from_chars(numPart.data(), numPart.data() + numPart.size(), value);
-                    result.push_back(GridLength::Star(value));
+                    int value = 0;
+                    std::from_chars(token.data(), token.data() + token.size(), value);
+                    result.push_back(GridLength::Cell(value));
                 }
             }
-            else
-            {
-                int value = 0;
-                std::from_chars(token.data(), token.data() + token.size(), value);
-                result.push_back(GridLength::Cell(value));
-            }
+
+            if (end == std::string_view::npos)
+                break;
+
+            start = end + 1;
         }
 
-        if (end == std::string_view::npos)
-            break;
-
-        start = end + 1;
+        return result;
     }
-
-    return result;
 }
 
 // ------------------------------------------------------------------

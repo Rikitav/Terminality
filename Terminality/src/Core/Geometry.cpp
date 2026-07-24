@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <algorithm>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Core/Geometry.hpp>
 
 using namespace terminality;
 

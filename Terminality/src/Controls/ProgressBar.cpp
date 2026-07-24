@@ -4,7 +4,7 @@
 #include <cmath>
 #include <chrono>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Controls/ProgressBar.hpp>
 
 using namespace terminality;
 

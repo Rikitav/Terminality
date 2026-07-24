@@ -4,7 +4,9 @@
 #include <stdexcept>
 #include <stack>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Engine/FocusManager.hpp>
+#include <terminality/Engine/DispatchTimer.hpp>
+#include <terminality/Framework/VisualTree.hpp>
 
 using namespace terminality;
 
@@ -37,6 +39,7 @@ bool FocusManager::SetFocused(VisualTreeNode* node)
 	std::vector<VisualTreeNode*> path;
 	for (VisualTreeNode* cur = node; cur != nullptr; cur = cur->GetParent())
 		path.push_back(cur);
+	
 	std::reverse(path.begin(), path.end());
 
 	// Find the common ancestor already present in the focus stack.
@@ -47,6 +50,7 @@ bool FocusManager::SetFocused(VisualTreeNode* node)
 	// Pop the old focus tail and notify it lost focus.
 	for (std::size_t i = focusStack.size(); i > common; --i)
 		focusStack[i - 1]->OnLostFocus();
+	
 	focusStack.erase(focusStack.begin() + common, focusStack.end());
 
 	// Push the new focus tail. Push before calling OnGotFocus so that

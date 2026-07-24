@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <string>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Controls/TreeView.hpp>
 
 using namespace terminality;
 

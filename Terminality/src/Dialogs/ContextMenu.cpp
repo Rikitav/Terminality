@@ -6,7 +6,9 @@
 #include <memory>
 #include <optional>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Dialogs/ContextMenu.hpp>
+
+#include <terminality/Controls/Menu.hpp>
 
 using namespace terminality;
 

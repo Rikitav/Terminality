@@ -7,7 +7,9 @@
 #include <iostream>
 #include <cwctype>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Framework/HostApplication.hpp>
+#include <terminality/Controls/Button.hpp>
+#include <terminality/Engine/DispatchTimer.hpp>
 
 using namespace terminality;
 

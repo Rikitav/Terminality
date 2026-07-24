@@ -8,7 +8,15 @@
 #include <algorithm>
 #include <optional>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Dialogs/OpenFileDialog.hpp>
+#include <terminality/Framework/HostApplication.hpp>
+#include <terminality/Engine/RenderContext.hpp>
+
+#include <terminality/Controls/Button.hpp>
+#include <terminality/Controls/TextBox.hpp>
+#include <terminality/Controls/Grid.hpp>
+#include <terminality/Controls/ItemsControl.hpp>
+#include <terminality/Controls/Border.hpp>
 
 using namespace terminality;
 

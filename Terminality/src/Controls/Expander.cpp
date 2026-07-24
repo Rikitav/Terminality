@@ -3,7 +3,7 @@
 #include <cstring>
 #include <string>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Controls/Expander.hpp>
 
 using namespace terminality;
 

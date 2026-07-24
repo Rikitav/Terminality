@@ -3,7 +3,8 @@
 #include <algorithm>
 #include <functional>
 #include <vector>
-#include <terminality/Terminality.hpp>
+
+#include <terminality/Controls/StackPanel.hpp>
 
 using namespace terminality;
 

@@ -6,7 +6,8 @@
 #include <stdexcept>
 #include <stack>
 
-#include <terminality/Terminality.hpp>
+#include <terminality/Framework/VisualTree.hpp>
+#include <terminality/Engine/DispatchTimer.hpp>
 
 using namespace terminality;
 
