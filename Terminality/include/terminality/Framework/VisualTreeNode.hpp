@@ -10,6 +10,7 @@
 namespace terminality
 {
 	struct UILayer;
+	class VisualTree;
 
 	class VisualTreeNode
 	{
