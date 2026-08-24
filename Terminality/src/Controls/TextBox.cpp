@@ -176,9 +176,6 @@ bool TextBox::OnKeyDown(InputEvent input)
 	if (!IsEnabled)
 		return ControlBase::OnKeyDown(input);
 
-	if (ControlBase::OnKeyDown(input))
-		return true;
-
 	std::wstring currentText = Text.Get();
 	const bool canModify = !IsReadOnly;
 	const bool canInsert = canModify && (MaxLength < 0 || static_cast<int32_t>(currentText.size()) < MaxLength.Get());
@@ -381,7 +378,7 @@ bool TextBox::OnKeyDown(InputEvent input)
 		}
 	}
 
-	return false;
+	return ControlBase::OnKeyDown(input);
 }
 
 bool TextBox::OnKeyUp(InputEvent input)
@@ -406,10 +403,9 @@ bool TextBox::MoveFocusNext(Direction direction, InputModifier modifiers)
 	if (!focusable_)
 		return false;
 
-	if (!focused_)
-		return true;
-
-	if (modifiers == InputModifier::None && (direction == Direction::Left || direction == Direction::Right))
+	// Consume Left/Right for cursor movement when focused and no modifier is held.
+	if (focused_ && modifiers == InputModifier::None &&
+	    (direction == Direction::Left || direction == Direction::Right))
 		return true;
 
 	return false;

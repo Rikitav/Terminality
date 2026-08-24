@@ -1,5 +1,6 @@
 #pragma once
 #ifndef _TERMINALITY_
+#define _TERMINALITY_
 
 #ifdef _WINDOWS_
   #ifndef TERMINALITY_EMMITED_WINDOWS_ERROR

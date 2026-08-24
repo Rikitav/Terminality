@@ -9,6 +9,7 @@
 #include <charconv>
 
 #include <terminality/Controls/Grid.hpp>
+#include <terminality/Engine/FocusManager.hpp>
 
 using namespace terminality;
 
@@ -486,14 +487,83 @@ VisualTreeNode* Grid::GetVisualChild(std::size_t index) const
     return children_.at(index).Control.get();
 }
 
+static bool IsFocusableCellContent(VisualTreeNode* node)
+{
+    if (node == nullptr)
+        return false;
+
+    if (auto* control = dynamic_cast<ControlBase*>(node))
+    {
+        if (control->IsFocusable() && control->IsTabStop())
+        {
+            // Leaf controls that are focusable always count.
+            if (node->VisualChildrenCount() == 0)
+                return true;
+
+            // Focusable containers only count if they actually contain something
+            // focusable, so empty cells are skipped.
+            for (std::size_t i = 0; i < node->VisualChildrenCount(); ++i)
+            {
+                if (IsFocusableCellContent(node->GetVisualChild(i)))
+                    return true;
+            }
+
+            return false;
+        }
+    }
+
+    for (std::size_t i = 0; i < node->VisualChildrenCount(); ++i)
+    {
+        if (IsFocusableCellContent(node->GetVisualChild(i)))
+            return true;
+    }
+
+    return false;
+}
+
+static VisualTreeNode* FindFirstFocusableDescendant(VisualTreeNode* node)
+{
+    if (node == nullptr)
+        return nullptr;
+
+    if (auto* control = dynamic_cast<ControlBase*>(node))
+    {
+        if (control->IsFocusable() && control->IsTabStop())
+            return node;
+    }
+
+    for (std::size_t i = 0; i < node->VisualChildrenCount(); ++i)
+    {
+        if (VisualTreeNode* found = FindFirstFocusableDescendant(node->GetVisualChild(i)))
+            return found;
+    }
+
+    return nullptr;
+}
+
+static void FocusCellContent(ControlBase* cellContent)
+{
+    if (cellContent == nullptr)
+        return;
+
+    if (cellContent->IsFocusable() && cellContent->IsTabStop())
+    {
+        FocusManager::Current().SetFocused(cellContent);
+        return;
+    }
+
+    if (VisualTreeNode* target = FindFirstFocusableDescendant(cellContent))
+        FocusManager::Current().SetFocused(target);
+}
+
 void Grid::OnGotFocus()
 {
     if (focusedIndex_ < children_.size())
     {
         VisualTreeNode* focusedControl = children_[focusedIndex_].Control.get();
-        if (focusedControl->IsFocusable())
+        if (IsFocusableCellContent(focusedControl))
         {
-            PushFocus(focusedControl);
+            FocusCellContent(children_[focusedIndex_].Control.get());
             InvalidateVisual();
             return;
         }
@@ -502,10 +572,10 @@ void Grid::OnGotFocus()
     for (std::size_t i = 0; i < children_.size(); ++i)
     {
         VisualTreeNode* focusedControl = children_[i].Control.get();
-        if (focusedControl->IsFocusable())
+        if (IsFocusableCellContent(focusedControl))
         {
             focusedIndex_ = i;
-            PushFocus(focusedControl);
+            FocusCellContent(children_[focusedIndex_].Control.get());
             InvalidateVisual();
             return;
         }
@@ -530,10 +600,10 @@ bool Grid::MoveFocusNext(Direction direction, InputModifier modifiers)
         for (std::size_t i = focusedIndex_ + 1; i < children_.size(); ++i)
         {
             ControlBase* control = children_[i].Control.get();
-            if (control->IsFocusable() && control->IsTabStop())
+            if (IsFocusableCellContent(control))
             {
                 focusedIndex_ = i;
-                PushFocus(control);
+                FocusCellContent(control);
                 return true;
             }
         }
@@ -548,10 +618,10 @@ bool Grid::MoveFocusNext(Direction direction, InputModifier modifiers)
         for (std::size_t i = focusedIndex_; i-- > 0;)
         {
             ControlBase* control = children_[i].Control.get();
-            if (control->IsFocusable() && control->IsTabStop())
+            if (IsFocusableCellContent(control))
             {
                 focusedIndex_ = i;
-                PushFocus(control);
+                FocusCellContent(control);
                 return true;
             }
         }
@@ -586,7 +656,7 @@ bool Grid::MoveFocusNext(Direction direction, InputModifier modifiers)
         const auto& candidate = children_[i];
         ControlBase* ctrl = candidate.Control.get();
 
-        if (!ctrl->IsFocusable() || !ctrl->IsTabStop())
+        if (!IsFocusableCellContent(ctrl))
             continue;
 
         auto [cr1, cr2, cc1, cc2] = GetCellBounds(candidate);
@@ -646,7 +716,7 @@ bool Grid::MoveFocusNext(Direction direction, InputModifier modifiers)
     if (bestIndex != std::numeric_limits<std::size_t>::max())
     {
         focusedIndex_ = bestIndex;
-        PushFocus(children_[bestIndex].Control.get());
+        FocusCellContent(children_[bestIndex].Control.get());
         return true;
     }
 

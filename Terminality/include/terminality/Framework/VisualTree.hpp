@@ -55,6 +55,9 @@ namespace terminality
 
 		FocusManager& GetFocusManager();
 
+		void StopCurrentLayer();
+		void StopNestedLayers();
+
 		void Invalidate(const Rect& dirtyRect);
 		bool HasDirtyVisual() const { return dirtyRect_.has_value(); }
 

@@ -14,14 +14,14 @@ static constexpr bool in_bounds(int index, const std::vector<TabItem>& tabs)
 	return index >= 0 && index < tabs.size();
 }
 
-static std::wstring ToWString(const std::string& text)
+static std::wstring TabControlToWString(const std::string& text)
 {
 	return std::wstring(text.begin(), text.end());
 }
 
 static int32_t HeaderWidth(const TabItem& tab)
 {
-	std::wstring header = ToWString(tab.Header);
+	std::wstring header = TabControlToWString(tab.Header);
 	int32_t width = 1 + static_cast<int32_t>(header.length()); // trailing space + header
 	if (tab.IsCloseable)
 		width += 4; // L"[x] "
@@ -286,7 +286,7 @@ void TabControl::RenderOverride(RenderContext& context)
 	for (int i = 0; i < static_cast<int>(tabs_.size()); ++i)
 	{
 		const auto& tab = tabs_[i];
-		std::wstring header = ToWString(tab.Header);
+		std::wstring header = TabControlToWString(tab.Header);
 
 		std::wstring body = header + L" ";
 		if (tab.IsCloseable)

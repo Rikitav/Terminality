@@ -160,7 +160,7 @@ void Border::RenderOverride(RenderContext& context)
 	// Background fill inside the border area.
 	if (background != Color::TRANSPARENT)
 	{
-		context.RenderRectangle(Point(1, 1), Size(rect.Width - 1, rect.Height - 1), foreground, background, DefaultBackgroundStyle);
+		context.RenderRectangle(Point(1, 1), Size(rect.Width - 2, rect.Height - 2), foreground, background, DefaultBackgroundStyle);
 	}
 
 	for (int32_t x = 0; x < rect.Width; ++x)
@@ -185,7 +185,7 @@ void Border::RenderOverride(RenderContext& context)
 		context.RenderText(Point(2, 0), HeaderText, foreground, background);
 	}
 
-	if (rect.Width > 2 || rect.Height > 2)
+	if (rect.Width > 2 && rect.Height > 2)
 	{
 		if (Content != nullptr)
 		{

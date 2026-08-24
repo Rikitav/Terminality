@@ -9,20 +9,13 @@
 using namespace terminality;
 
 RenderContext::RenderContext(RenderBuffer& buffer, Rect targetRect)
-    : buffer_(buffer), rect_(targetRect) {}
+    : buffer_(buffer), rect_(targetRect), clipRect_(targetRect) {}
 
 RenderContext RenderContext::CreateInner(Rect targetRect)
 {
-	int32_t x = targetRect.X;
-	int32_t y = targetRect.Y;
-	
-	int32_t right = std::clamp<int32_t>(x + targetRect.Width, rect_.X, rect_.Right());
-    int32_t bottom = std::clamp<int32_t>(y + targetRect.Height, rect_.Y, rect_.Bottom());
-
-	int32_t width = std::max(0, right - x);
-	int32_t height = std::max(0, bottom - y);
-
-	return RenderContext(buffer_, Rect(x, y, width, height));
+    RenderContext inner(buffer_, targetRect);
+    inner.clipRect_ = Rect::Clip(clipRect_, targetRect);
+    return inner;
 }
 
 Rect RenderContext::ContextRect() const
@@ -30,62 +23,46 @@ Rect RenderContext::ContextRect() const
     return rect_;
 }
 
-void RenderContext::SetCell(uint32_t x, uint32_t y, const CellInfo& cell)
+void RenderContext::SetCell(int32_t x, int32_t y, const CellInfo& cell)
 {
-    if (x >= static_cast<uint32_t>(rect_.Width))
-        return;
-
-    if (y >= static_cast<uint32_t>(rect_.Height))
+    if (x < 0 || y < 0 || x >= rect_.Width || y >= rect_.Height)
         return;
 
     int32_t absX = rect_.X + x;
     int32_t absY = rect_.Y + y;
 
-    buffer_.SetCell(absX, absY, cell);
-}
-
-void RenderContext::SetCell(uint32_t x, uint32_t y, const wchar_t puts, Color fg, Color bg)
-{
-    if (x >= static_cast<uint32_t>(rect_.Width))
+    if (!clipRect_.Contains(Point(absX, absY)))
         return;
 
-    if (y >= static_cast<uint32_t>(rect_.Height))
-        return;
-
-    int32_t absX = rect_.X + x;
-    int32_t absY = rect_.Y + y;
-
-    buffer_.SetCell(absX, absY, CellInfo{ puts, fg, bg });
+    buffer_.SetCell(static_cast<uint32_t>(absX), static_cast<uint32_t>(absY), cell);
 }
 
-CellInfo RenderContext::GetCell(uint32_t x, uint32_t y) const
+void RenderContext::SetCell(int32_t x, int32_t y, const wchar_t puts, Color fg, Color bg)
 {
-    if (x >= static_cast<uint32_t>(rect_.Width))
-        return CellInfo();
+    SetCell(x, y, CellInfo{ puts, fg, bg });
+}
 
-    if (y >= static_cast<uint32_t>(rect_.Height))
+CellInfo RenderContext::GetCell(int32_t x, int32_t y) const
+{
+    if (x < 0 || y < 0 || x >= rect_.Width || y >= rect_.Height)
         return CellInfo();
 
     int32_t absX = rect_.X + x;
     int32_t absY = rect_.Y + y;
 
-    return buffer_.GetCell(absX, absY);
+    if (!clipRect_.Contains(Point(absX, absY)))
+        return CellInfo();
+
+    return buffer_.GetCell(static_cast<uint32_t>(absX), static_cast<uint32_t>(absY));
 }
 
 void RenderContext::RenderRaw(const Point& point, const std::string& rawData)
 {
     std::lock_guard<std::recursive_mutex> guard(buffer_.renderMutex);
 
-    if (point.Y < 0 || point.Y >= rect_.Height)
-        return;
-
     for (int32_t i = 0; i < static_cast<int32_t>(rawData.size()); ++i)
     {
-        int32_t localX = point.X + i;
-        if (localX < 0 || localX >= rect_.Width)
-            continue;
-
-        buffer_.SetCell(rect_.X + localX, rect_.Y + point.Y, CellInfo{ static_cast<wchar_t>(rawData[i]) });
+        SetCell(point.X + i, point.Y, CellInfo{ static_cast<wchar_t>(rawData[i]) });
     }
 }
 
@@ -96,16 +73,17 @@ RenderStream RenderContext::BeginText(Point startPos)
 
 void RenderContext::RenderText(const Point& point, const std::wstring& text, Color fg, Color bg, bool wrap)
 {
-    if (text.empty() || point.Y >= rect_.Height || point.X >= rect_.Width) return;
+    if (text.empty())
+        return;
 
     std::lock_guard<std::recursive_mutex> guard(buffer_.renderMutex);
 
-    uint32_t x = point.X;
-    uint32_t y = point.Y;
+    int32_t x = point.X;
+    int32_t y = point.Y;
 
     for (wchar_t ch : text)
     {
-        if (x >= static_cast<uint32_t>(rect_.Width))
+        if (x >= rect_.Width)
         {
             if (!wrap)
                 break;
@@ -114,10 +92,12 @@ void RenderContext::RenderText(const Point& point, const std::wstring& text, Col
             y++;
         }
 
-        if (y >= static_cast<uint32_t>(rect_.Height))
+        if (y < 0 || y >= rect_.Height)
             break;
 
-        buffer_.SetCell(rect_.X + x, rect_.Y + y, CellInfo{ ch, fg, bg });
+        if (x >= 0)
+            SetCell(x, y, CellInfo{ ch, fg, bg });
+
         x++;
     }
 }

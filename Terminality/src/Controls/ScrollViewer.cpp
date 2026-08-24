@@ -82,7 +82,7 @@ void ScrollViewer::RenderOverride(RenderContext& context)
 {
     if (Content.Get() != nullptr)
     {
-        RenderContext childContext = context.CreateInner(context.ContextRect());
+        RenderContext childContext = context.CreateInner(Content.Get()->GetArrangedRect());
         Content.Get()->Render(childContext);
     }
 

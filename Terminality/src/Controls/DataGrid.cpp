@@ -10,7 +10,7 @@ using namespace terminality;
 
 namespace
 {
-	static std::wstring ToWString(const std::string& text)
+	static std::wstring DataGridToWString(const std::string& text)
 	{
 		return std::wstring(text.begin(), text.end());
 	}
@@ -24,7 +24,7 @@ void DataGrid::AddColumn(const std::wstring& header, int32_t width)
 
 void DataGrid::AddColumn(const std::string& header, int32_t width)
 {
-	AddColumn(ToWString(header), width);
+	AddColumn(DataGridToWString(header), width);
 }
 
 void DataGrid::ClearColumns()

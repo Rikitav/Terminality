@@ -5,6 +5,7 @@
 
 #include <terminality/Core/Color.hpp>
 #include <terminality/Core/Geometry.hpp>
+#include <terminality/Core/Layout.hpp>
 #include <terminality/Framework/ControlBase.hpp>
 #include <terminality/Framework/Event.hpp>
 #include <terminality/Core/InputEvent.hpp>
@@ -32,6 +33,13 @@ namespace terminality
 
 		Property<Button, bool> IsDefault { this, "IsDefault", false, InvalidationKind::Visual };
 		Property<Button, bool> IsCancel  { this, "IsCancel",  false, InvalidationKind::Visual };
+		Property<Button, bool> BoxFrame  { this, "BoxFrame",  false, InvalidationKind::Measure };
+
+		Property<Button, wchar_t> OpenBracket  { this, "OpenBracket",  L'[', InvalidationKind::Visual };
+		Property<Button, wchar_t> CloseBracket { this, "CloseBracket", L']', InvalidationKind::Visual };
+
+		Property<Button, TextAlign> TextAlignment { this, "TextAlignment", TextAlign::Left, InvalidationKind::Visual };
+		Property<Button, VerticalAlign> VerticalContentAlignment { this, "VerticalContentAlignment", VerticalAlign::Center, InvalidationKind::Visual };
 
 		Event<> Clicked;
 
@@ -51,5 +59,8 @@ namespace terminality
 		Size MeasureOverride(const Size& availableSize) override;
 		void ArrangeOverride(const Rect& contentRect) override;
 		void RenderOverride(RenderContext& context) override;
+
+	private:
+		void RenderBoxFrame(RenderContext& context, const Rect& rect, Color fore, Color back);
 	};
 }

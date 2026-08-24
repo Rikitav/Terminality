@@ -11,11 +11,41 @@
 #include <termios.h>
 #include <unistd.h>
 #include <poll.h>
-#include <termios.h>
+#include <cwchar>
+#include <string>
 
 using namespace terminality;
 
 static struct termios original_termios;
+
+namespace
+{
+	static InputKey CharToInputKey(wchar_t ch)
+	{
+		if (ch >= L'a' && ch <= L'z')
+			return static_cast<InputKey>(static_cast<int>(InputKey::A) + (ch - L'a'));
+		
+		if (ch >= L'A' && ch <= L'Z')
+			return static_cast<InputKey>(static_cast<int>(InputKey::A) + (ch - L'A'));
+		
+		if (ch >= L'0' && ch <= L'9')
+			return static_cast<InputKey>(static_cast<int>(InputKey::NUM0) + (ch - L'0'));
+		
+		if (ch == L' ')
+			return InputKey::SPACE;
+
+		return InputKey::CHAR;
+	}
+
+	static InputEvent MakeCharEvent(wchar_t ch)
+	{
+		InputKey key = CharToInputKey(ch);
+		if (key == InputKey::CHAR)
+			return InputEvent(ch, true);
+		
+		return InputEvent(InputModifier::None, key, ch, true);
+	}
+}
 
 void HostApplication::EnterTerminal()
 {
@@ -71,52 +101,157 @@ Size HostBackend::QueryViewportSize()
 
 InputEvent HostBackend::PollInput(std::chrono::milliseconds timeout)
 {
+	static std::string pending;
+
 	struct pollfd pfd = { STDIN_FILENO, POLLIN, 0 };
-	int ret = poll(&pfd, 1, timeout.count());
 
-	if (ret <= 0 || !(pfd.revents & POLLIN))
-		return InputEvent(InputModifier::None, InputKey::None, false);
+	// If we already have buffered bytes, only do a non-blocking check for more.
+	int pollTimeout = pending.empty() ? static_cast<int>(timeout.count()) : 0;
+	int ret = poll(&pfd, 1, pollTimeout);
 
-	char buffer[32];
-	ssize_t bytesRead = read(STDIN_FILENO, buffer, sizeof(buffer) - 1);
-
-	if (bytesRead <= 0)
-		return InputEvent(InputModifier::None, InputKey::None, false);
-
-	buffer[bytesRead] = '\0';
-
-	if (buffer[0] == '\x1b')
+	if (ret > 0 && (pfd.revents & POLLIN))
 	{
-		if (bytesRead == 1)
-			return InputEvent(InputModifier::None, InputKey::ESCAPE, true);
+		char buffer[256];
+		ssize_t bytesRead = read(STDIN_FILENO, buffer, sizeof(buffer));
 
-		if (bytesRead >= 3 && buffer[1] == '[')
+		if (bytesRead > 0)
+			pending.append(buffer, static_cast<std::size_t>(bytesRead));
+	}
+
+	if (pending.empty())
+		return InputEvent(InputModifier::None, InputKey::None, false);
+
+	auto consume = [&](std::size_t n, InputEvent evt)
+	{
+		pending.erase(0, n);
+		return evt;
+	};
+
+	// Escape sequences.
+	if (pending[0] == '\x1b')
+	{
+		if (pending.size() == 1)
+			return consume(1, InputEvent(InputModifier::None, InputKey::ESCAPE, true));
+
+		if (pending[1] == '[')
 		{
-			switch (buffer[2])
+			if (pending.size() >= 3)
 			{
-				case 'A': return InputEvent(InputModifier::None, InputKey::UP, true);
-				case 'B': return InputEvent(InputModifier::None, InputKey::DOWN, true);
-				case 'C': return InputEvent(InputModifier::None, InputKey::RIGHT, true);
-				case 'D': return InputEvent(InputModifier::None, InputKey::LEFT, true);
+				switch (pending[2])
+				{
+					case 'A': return consume(3, InputEvent(InputModifier::None, InputKey::UP, true));
+					case 'B': return consume(3, InputEvent(InputModifier::None, InputKey::DOWN, true));
+					case 'C': return consume(3, InputEvent(InputModifier::None, InputKey::RIGHT, true));
+					case 'D': return consume(3, InputEvent(InputModifier::None, InputKey::LEFT, true));
+					case 'H': return consume(3, InputEvent(InputModifier::None, InputKey::HOME, true));
+					case 'F': return consume(3, InputEvent(InputModifier::None, InputKey::END, true));
+				}
+
+				// CSI numeric sequences terminated by '~' (Insert, Delete, PgUp, PgDn, Home, End).
+				std::size_t tilde = pending.find('~', 2);
+				if (tilde != std::string::npos)
+				{
+					std::string seq = pending.substr(2, tilde - 2);
+					InputKey key = InputKey::None;
+
+					if (seq.size() == 1)
+
+					switch (seq[0])
+					{
+						case '2': return consume(tilde + 1, InputEvent(InputModifier::None, InputKey::INSERT, true));
+						case '3': return consume(tilde + 1, InputEvent(InputModifier::None, InputKey::DELETE, true));
+						case '5': return consume(tilde + 1, InputEvent(InputModifier::None, InputKey::PRIOR, true));
+						case '6': return consume(tilde + 1, InputEvent(InputModifier::None, InputKey::NEXT, true));
+						case '7':
+						case '1': return consume(tilde + 1, InputEvent(InputModifier::None, InputKey::HOME, true));
+						case '8':
+						case '4': return consume(tilde + 1, InputEvent(InputModifier::None, InputKey::END, true));
+					}
+				}
 			}
 		}
+		else if (pending[1] == 'O')
+		{
+			if (pending.size() >= 3)
+			{
+				switch (pending[2])
+				{
+					case 'P': return consume(3, InputEvent(InputModifier::None, InputKey::F1, true));
+					case 'Q': return consume(3, InputEvent(InputModifier::None, InputKey::F2, true));
+					case 'R': return consume(3, InputEvent(InputModifier::None, InputKey::F3, true));
+					case 'S': return consume(3, InputEvent(InputModifier::None, InputKey::F4, true));
+					case 'H': return consume(3, InputEvent(InputModifier::None, InputKey::HOME, true));
+					case 'F': return consume(3, InputEvent(InputModifier::None, InputKey::END, true));
+				}
+			}
+		}
+		else
+		{
+			// Alt+key sequence: ESC followed by a control or printable byte.
+			unsigned char c = static_cast<unsigned char>(pending[1]);
+			switch (c)
+			{
+				case '\t': return consume(2, InputEvent(InputModifier::Alt, InputKey::TAB, true));
+				case '\n':
+				case '\r': return consume(2, InputEvent(InputModifier::Alt, InputKey::RETURN, true));
+				case 127:
+				case '\b': return consume(2, InputEvent(InputModifier::Alt, InputKey::BACK, true));
+				case ' ':  return consume(2, InputEvent(InputModifier::Alt, InputKey::SPACE, true));
+			}
+
+			if (c >= 1 && c <= 26)
+			{
+				InputKey key = static_cast<InputKey>(static_cast<int>(InputKey::A) + (c - 1));
+				return consume(2, InputEvent(InputModifier::Alt | InputModifier::Ctrl, key, true));
+			}
+			if (c >= 32 && c < 127)
+			{
+				wchar_t ch = static_cast<wchar_t>(c);
+				InputKey key = CharToInputKey(ch);
+				if (key == InputKey::CHAR)
+					return consume(2, InputEvent(InputModifier::Alt, ch, true));
+
+				return consume(2, InputEvent(InputModifier::Alt, key, ch, true));
+			}
+		}
+
+		// Unknown or incomplete escape sequence: emit ESC and let the following bytes be interpreted on the next call.
+		return consume(1, InputEvent(InputModifier::None, InputKey::ESCAPE, true));
+	}
+
+	unsigned char c = static_cast<unsigned char>(pending[0]);
+	switch (c)
+	{
+		case '\t': return consume(2, InputEvent(InputModifier::None, InputKey::TAB, true));
+		case '\n':
+		case '\r': return consume(2, InputEvent(InputModifier::None, InputKey::RETURN, true));
+		case 127:
+		case '\b': return consume(2, InputEvent(InputModifier::None, InputKey::BACK, true));
+		case ' ':  return consume(2, InputEvent(InputModifier::None, InputKey::SPACE, true));
+	}
+
+	// Ctrl+letter: bytes 1-26 map to A-Z.
+	if (c >= 1 && c <= 26)
+	{
+		InputKey key = static_cast<InputKey>(static_cast<int>(InputKey::A) + (c - 1));
+		return consume(1, InputEvent(InputModifier::Ctrl, key, true));
+	}
+
+	// UTF-8 character.
+	std::mbstate_t state{};
+	wchar_t wc = 0;
+	std::size_t len = std::mbrtowc(&wc, pending.c_str(), pending.size(), &state);
+	if (len > 0 && len != static_cast<std::size_t>(-1) && len != static_cast<std::size_t>(-2) && wc >= 32)
+		return consume(len, MakeCharEvent(wc));
+
+	if (len == static_cast<std::size_t>(-2))
+	{
+		// Incomplete UTF-8 sequence: wait for more bytes.
 		return InputEvent(InputModifier::None, InputKey::None, false);
 	}
 
-	if (bytesRead == 1)
-	{
-		char c = buffer[0];
-		if (c == '\t') return InputEvent(InputModifier::None, InputKey::TAB, true);
-		if (c == '\n' || c == '\r') return InputEvent(InputModifier::None, InputKey::RETURN, true);
-		if (c == 127 || c == '\b') return InputEvent(InputModifier::None, InputKey::BACK, true);
-		if (c == ' ') return InputEvent(InputModifier::None, InputKey::SPACE, true);
-	}
-
-	wchar_t wc = 0;
-	if (std::mbtowc(&wc, buffer, bytesRead) > 0 && wc >= 32)
-		return InputEvent(wc, true);
-
-	return InputEvent(InputModifier::None, InputKey::None, false);
+	// Unknown byte; drop it.
+	return consume(1, InputEvent(InputModifier::None, InputKey::None, false));
 }
 
 #endif // __linux__ || __APPLE__

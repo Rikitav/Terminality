@@ -54,19 +54,19 @@ namespace
 	};
 }
 
-static std::wstring ToWString(const std::string& text)
+static std::wstring MenuToWString(const std::string& text)
 {
 	return std::wstring(text.begin(), text.end());
 }
 
-static wchar_t ToLower(wchar_t ch)
+static wchar_t MenuToLower(wchar_t ch)
 {
 	if (ch >= L'A' && ch <= L'Z')
 		return ch - L'A' + L'a';
 	return std::towlower(ch);
 }
 
-static bool KeyMatchesAccessKey(InputKey key, wchar_t accessKey)
+static bool MenuKeyMatchesAccessKey(InputKey key, wchar_t accessKey)
 {
 	if (accessKey == L'\0')
 		return false;
@@ -75,7 +75,7 @@ static bool KeyMatchesAccessKey(InputKey key, wchar_t accessKey)
 		return false;
 
 	wchar_t keyChar = static_cast<wchar_t>(static_cast<int>(key));
-	return ToLower(keyChar) == ToLower(accessKey);
+	return MenuToLower(keyChar) == MenuToLower(accessKey);
 }
 
 std::wstring Menu::GetDisplayText(const std::wstring& text, wchar_t& accessKey, int32_t& accessKeyIndex) const
@@ -120,7 +120,7 @@ void Menu::AddItem(const std::wstring& text, std::function<void()> action)
 
 void Menu::AddItem(const std::string& text, std::function<void()> action)
 {
-	AddItem(ToWString(text), std::move(action));
+	AddItem(MenuToWString(text), std::move(action));
 }
 
 void Menu::AddCheckableItem(const std::wstring& text, bool checked, std::function<void(bool)> action)
@@ -243,7 +243,7 @@ bool Menu::HandleAccessKey(InputKey key)
 		int32_t index = -1;
 		GetDisplayText(items_[i].Text, accessKey, index);
 
-		if (KeyMatchesAccessKey(key, accessKey))
+		if (MenuKeyMatchesAccessKey(key, accessKey))
 		{
 			selectedIndex_ = i;
 			InvalidateVisual();
@@ -283,7 +283,7 @@ void Menu::SelectNextMatch(wchar_t ch)
 	if (items_.empty() || ch < 32)
 		return;
 
-	wchar_t target = ToLower(ch);
+	wchar_t target = MenuToLower(ch);
 	std::size_t start = selectedIndex_;
 	std::size_t i = (selectedIndex_ + 1) % items_.size();
 
@@ -294,14 +294,14 @@ void Menu::SelectNextMatch(wchar_t ch)
 			wchar_t accessKey = L'\0';
 			int32_t index = -1;
 			GetDisplayText(items_[i].Text, accessKey, index);
-			if (accessKey != L'\0' && ToLower(accessKey) == target)
+			if (accessKey != L'\0' && MenuToLower(accessKey) == target)
 			{
 				selectedIndex_ = i;
 				InvalidateVisual();
 				return;
 			}
 
-			if (!items_[i].Text.empty() && ToLower(items_[i].Text[0]) == target)
+			if (!items_[i].Text.empty() && MenuToLower(items_[i].Text[0]) == target)
 			{
 				selectedIndex_ = i;
 				InvalidateVisual();

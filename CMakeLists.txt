@@ -8,4 +8,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(Terminality LANGUAGES CXX)
 add_subdirectory(Terminality)
-add_subdirectory(Terminality.TespApp)
+
+# The test application currently relies on the Windows console API.
+if (WIN32)
+  add_subdirectory(Terminality.TespApp)
+endif()

@@ -96,6 +96,18 @@ FocusManager& VisualTree::GetFocusManager()
 	return layers_.back()->Focus;
 }
 
+void VisualTree::StopCurrentLayer()
+{
+	if (!layers_.empty())
+		layers_.back()->Running.store(false);
+}
+
+void VisualTree::StopNestedLayers()
+{
+	for (std::size_t i = 1; i < layers_.size(); ++i)
+		layers_[i]->Running.store(false);
+}
+
 void VisualTree::Invalidate(const Rect& dirtyRect)
 {
 	if (!dirtyRect_)

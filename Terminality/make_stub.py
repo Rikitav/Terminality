@@ -70,8 +70,26 @@ def topological_sort(graph):
     return sorted_list
 
 
+def is_merged_single_header(path):
+    """Detect stale copies of a previously generated single-header so we don't merge them into themselves."""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            for _ in range(12):
+                line = f.readline()
+                if not line:
+                    break
+                if "Terminality Single Header Library" in line and "Auto-generated" in line:
+                    return True
+    except Exception:
+        pass
+    return False
+
+
 def merge_files(sorted_headers, headers_map, sources_map, output_path):
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    # Normalize the output path so we can skip it if it accidentally ends up in the scan set.
+    output_path_abs = os.path.abspath(output_path)
 
     system_includes = set()
     interface_content = []
@@ -123,6 +141,9 @@ def merge_files(sorted_headers, headers_map, sources_map, output_path):
     # --- 1. СЕКЦИЯ ИНТЕРФЕЙСА (HEADERS) ---
     for rel_path in sorted_headers:
         full_path = headers_map[rel_path]
+        if os.path.abspath(full_path) == output_path_abs or is_merged_single_header(full_path):
+            continue
+
         interface_content.append(f"// --- Begin Header: {rel_path} ---")
 
         with open(full_path, "r", encoding="utf-8") as f:
@@ -151,6 +172,9 @@ def merge_files(sorted_headers, headers_map, sources_map, output_path):
 
     # --- 2. СЕКЦИЯ РЕАЛИЗАЦИИ (SOURCES) ---
     for rel_path, full_path in sources_map.items():
+        if os.path.abspath(full_path) == output_path_abs or is_merged_single_header(full_path):
+            continue
+
         implementation_content.append(f"// --- Begin Source: {rel_path} ---")
 
         with open(full_path, "r", encoding="utf-8") as f:
@@ -215,11 +239,12 @@ def merge_files(sorted_headers, headers_map, sources_map, output_path):
         final_content.append("")  # Пустая строка для отступа
 
     final_content.extend(interface_content)
-    final_content.append("#endif // TERMINALITY_SINGLE_HEADER_H\n")
 
     final_content.append("#ifdef TERMINALITY_IMPLEMENTATION\n")
     final_content.extend(implementation_content)
     final_content.append("#endif // TERMINALITY_IMPLEMENTATION\n")
+
+    final_content.append("#endif // TERMINALITY_SINGLE_HEADER_H\n")
 
     if os.path.exists(output_path):
         os.chmod(output_path, stat.S_IWRITE)

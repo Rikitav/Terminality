@@ -18,6 +18,7 @@ namespace terminality
 	{
 		RenderBuffer& buffer_;
 		Rect rect_;
+		Rect clipRect_;
 
 	public:
 		RenderContext(RenderBuffer& buffer, Rect targetRect);
@@ -25,9 +26,9 @@ namespace terminality
 
 		Rect ContextRect() const;
 
-		void SetCell(uint32_t x, uint32_t y, const CellInfo& cell);
-		void SetCell(uint32_t x, uint32_t y, const wchar_t puts, Color fg = Color::WHITE, Color bg = Color::BLACK);
-		CellInfo GetCell(uint32_t x, uint32_t y) const;
+		void SetCell(int32_t x, int32_t y, const CellInfo& cell);
+		void SetCell(int32_t x, int32_t y, const wchar_t puts, Color fg = Color::WHITE, Color bg = Color::BLACK);
+		CellInfo GetCell(int32_t x, int32_t y) const;
 
 		void RenderRaw(const Point& point, const std::string& rawData);
 		RenderStream BeginText(Point startPos = Point(0, 0));

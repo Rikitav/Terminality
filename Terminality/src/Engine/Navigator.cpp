@@ -48,27 +48,11 @@ bool Navigator::GoBack()
 	if (!CanGoBack())
 		return false;
 
-	VisualTree& tree = VisualTree::Current();
-	tree.PopLayer();
-
-	if (tree.PeekLayer() != nullptr)
-	{
-		tree.PeekLayer()->InvalidateMeasure();
-		tree.PeekLayer()->InvalidateVisual();
-	}
-
+	VisualTree::Current().StopCurrentLayer();
 	return true;
 }
 
 void Navigator::GoHome()
 {
-	VisualTree& tree = VisualTree::Current();
-	while (tree.LayerCount() > 1)
-		tree.PopLayer();
-
-	if (tree.Root())
-	{
-		tree.Root()->InvalidateMeasure();
-		tree.Root()->InvalidateVisual();
-	}
+	VisualTree::Current().StopNestedLayers();
 }

@@ -15,7 +15,7 @@ using namespace terminality;
 
 namespace
 {
-	static bool KeyMatchesAccessKey(InputKey key, wchar_t accessKey)
+	static bool HostKeyMatchesAccessKey(InputKey key, wchar_t accessKey)
 	{
 		if (accessKey == L'\0')
 			return false;
@@ -59,7 +59,7 @@ namespace
 		if (auto* button = dynamic_cast<Button*>(node))
 		{
 			if (button->IsVisible && button->IsEnabled &&
-			    KeyMatchesAccessKey(input.Key, button->GetAccessKey()))
+			    HostKeyMatchesAccessKey(input.Key, button->GetAccessKey()))
 			{
 				VisualTree::Current().GetFocusManager().SetFocused(button);
 				button->Click();

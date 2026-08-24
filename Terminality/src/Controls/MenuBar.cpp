@@ -12,12 +12,12 @@ using namespace terminality;
 
 namespace
 {
-	static std::wstring ToWString(const std::string& text)
+	static std::wstring MenuBarToWString(const std::string& text)
 	{
 		return std::wstring(text.begin(), text.end());
 	}
 
-	static wchar_t ToLower(wchar_t ch)
+	static wchar_t MenuBarToLower(wchar_t ch)
 	{
 		if (ch >= L'A' && ch <= L'Z')
 			return ch - L'A' + L'a';
@@ -25,7 +25,7 @@ namespace
 		return std::towlower(ch);
 	}
 
-	static bool KeyMatchesAccessKey(InputKey key, wchar_t accessKey)
+	static bool MenuBarKeyMatchesAccessKey(InputKey key, wchar_t accessKey)
 	{
 		if (accessKey == L'\0')
 			return false;
@@ -34,7 +34,7 @@ namespace
 			return false;
 
 		wchar_t keyChar = static_cast<wchar_t>(static_cast<int>(key));
-		return ToLower(keyChar) == ToLower(accessKey);
+		return MenuBarToLower(keyChar) == MenuBarToLower(accessKey);
 	}
 
 	static std::wstring GetDisplayText(const std::wstring& text, wchar_t& accessKey)
@@ -78,7 +78,7 @@ void MenuBar::AddMenu(const std::wstring& header, std::shared_ptr<Menu> menu)
 
 void MenuBar::AddMenu(const std::string& header, std::shared_ptr<Menu> menu)
 {
-	AddMenu(ToWString(header), std::move(menu));
+	AddMenu(MenuBarToWString(header), std::move(menu));
 }
 
 void MenuBar::AddMenu(const std::wstring& header, std::unique_ptr<Menu> menu)
@@ -88,7 +88,7 @@ void MenuBar::AddMenu(const std::wstring& header, std::unique_ptr<Menu> menu)
 
 void MenuBar::AddMenu(const std::string& header, std::unique_ptr<Menu> menu)
 {
-	AddMenu(ToWString(header), std::shared_ptr<Menu>(std::move(menu)));
+	AddMenu(MenuBarToWString(header), std::shared_ptr<Menu>(std::move(menu)));
 }
 
 void MenuBar::OpenSelectedMenu()
@@ -119,7 +119,7 @@ bool MenuBar::HandleAccessKey(InputKey key)
 		wchar_t accessKey = L'\0';
 		GetDisplayText(items_[i].Header, accessKey);
 
-		if (KeyMatchesAccessKey(key, accessKey))
+		if (MenuBarKeyMatchesAccessKey(key, accessKey))
 		{
 			selectedIndex_ = i;
 			InvalidateVisual();
@@ -184,12 +184,12 @@ bool MenuBar::OnKeyDown(InputEvent input)
 
 	if (input.Pressed && input.Key == InputKey::CHAR && input.Char >= 32)
 	{
-		wchar_t target = ToLower(input.Char);
+		wchar_t target = MenuBarToLower(input.Char);
 		for (std::size_t i = 0; i < items_.size(); ++i)
 		{
 			wchar_t accessKey = L'\0';
 			GetDisplayText(items_[i].Header, accessKey);
-			if (accessKey != L'\0' && ToLower(accessKey) == target)
+			if (accessKey != L'\0' && MenuBarToLower(accessKey) == target)
 			{
 				selectedIndex_ = i;
 				OpenSelectedMenu();
