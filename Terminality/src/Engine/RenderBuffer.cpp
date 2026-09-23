@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <string>
 #include <algorithm>
+#include <cstring>
 #include <iostream>
 #include <optional>
 #include <stdexcept>
@@ -9,64 +10,64 @@
 
 #include <terminality/Engine/RenderBuffer.hpp>
 
+#if defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP >= 2)
+	#define TERMINALITY_SIMD_SSE2 1
+	#include <emmintrin.h>
+#else
+	#define TERMINALITY_SIMD_SSE2 0
+#endif
+
 using namespace terminality;
 
-const wchar_t* RenderBuffer::GetAnsiBg(Color color) const
+#if TERMINALITY_SIMD_SSE2
+// Raw 16-byte compare of two cells. Sound because CellInfo::Padding is
+// value-initialized to zero on every construction and never written afterward,
+// so the padding lanes are always equal on both sides.
+static inline bool CellsEqualSimd(const CellInfo& a, const CellInfo& b)
 {
-	switch (color)
-	{
-		// default
-		case Color::BLACK:          return L"\x1b[40m";
-		case Color::DARK_RED:       return L"\x1b[41m";
-		case Color::DARK_GREEN:     return L"\x1b[42m";
-		case Color::DARK_YELLOW:    return L"\x1b[43m";
-		case Color::DARK_BLUE:      return L"\x1b[44m";
-		case Color::DARK_MAGENTA:   return L"\x1b[45m";
-		case Color::DARK_CYAN:      return L"\x1b[46m";
-		case Color::LIGHT_GRAY:     return L"\x1b[47m";
-
-		// light
-		case Color::DARK_GRAY:      return L"\x1b[100m";
-		case Color::RED:            return L"\x1b[101m";
-		case Color::GREEN:          return L"\x1b[102m";
-		case Color::YELLOW:         return L"\x1b[103m";
-		case Color::BLUE:           return L"\x1b[104m";
-		case Color::MAGENTA:        return L"\x1b[105m";
-		case Color::CYAN:           return L"\x1b[106m";
-		case Color::WHITE:          return L"\x1b[107m";
-
-		case Color::TRANSPARENT:    return L"";
-		default:                    return L"\x1b[40m";
-	}
+	const __m128i va = _mm_loadu_si128(reinterpret_cast<const __m128i*>(&a));
+	const __m128i vb = _mm_loadu_si128(reinterpret_cast<const __m128i*>(&b));
+	return _mm_movemask_epi8(_mm_cmpeq_epi32(va, vb)) == 0xFFFF;
 }
 
-const wchar_t* RenderBuffer::GetAnsiFg(Color color) const
+// True when four consecutive cells are all unchanged vs. the snapshot.
+static inline bool CellsUnchanged4(const CellInfo* cell, const CellInfo* snap)
 {
-	switch (color)
-	{
-		// default
-		case Color::BLACK:          return L"\x1b[30m";
-		case Color::DARK_RED:       return L"\x1b[31m";
-		case Color::DARK_GREEN:     return L"\x1b[32m";
-		case Color::DARK_YELLOW:    return L"\x1b[33m";
-		case Color::DARK_BLUE:      return L"\x1b[34m";
-		case Color::DARK_MAGENTA:   return L"\x1b[35m";
-		case Color::DARK_CYAN:      return L"\x1b[36m";
-		case Color::LIGHT_GRAY:     return L"\x1b[37m";
+	const __m128i d0 = _mm_cmpeq_epi32(_mm_loadu_si128(reinterpret_cast<const __m128i*>(cell + 0)), _mm_loadu_si128(reinterpret_cast<const __m128i*>(snap + 0)));
+	const __m128i d1 = _mm_cmpeq_epi32(_mm_loadu_si128(reinterpret_cast<const __m128i*>(cell + 1)), _mm_loadu_si128(reinterpret_cast<const __m128i*>(snap + 1)));
+	const __m128i d2 = _mm_cmpeq_epi32(_mm_loadu_si128(reinterpret_cast<const __m128i*>(cell + 2)), _mm_loadu_si128(reinterpret_cast<const __m128i*>(snap + 2)));
+	const __m128i d3 = _mm_cmpeq_epi32(_mm_loadu_si128(reinterpret_cast<const __m128i*>(cell + 3)), _mm_loadu_si128(reinterpret_cast<const __m128i*>(snap + 3)));
+	const __m128i all = _mm_and_si128(_mm_and_si128(d0, d1), _mm_and_si128(d2, d3));
+	return _mm_movemask_epi8(all) == 0xFFFF;
+}
+#endif
 
-		// light
-		case Color::DARK_GRAY:      return L"\x1b[90m";
-		case Color::RED:            return L"\x1b[91m";
-		case Color::GREEN:          return L"\x1b[92m";
-		case Color::YELLOW:         return L"\x1b[93m";
-		case Color::BLUE:           return L"\x1b[94m";
-		case Color::MAGENTA:        return L"\x1b[95m";
-		case Color::CYAN:           return L"\x1b[96m";
-		case Color::WHITE:          return L"\x1b[97m";
+void RenderBuffer::AppendAnsiBg(std::wstring& out, const Color& color)
+{
+	if (color.Transparent)
+		return;
 
-		case Color::TRANSPARENT:    return L"";
-		default:                    return L"\x1b[37m";
-	}
+	out += L"\x1b[48;2;";
+	out += std::to_wstring(color.R);
+	out += L';';
+	out += std::to_wstring(color.G);
+	out += L';';
+	out += std::to_wstring(color.B);
+	out += L'm';
+}
+
+void RenderBuffer::AppendAnsiFg(std::wstring& out, const Color& color)
+{
+	if (color.Transparent)
+		return;
+
+	out += L"\x1b[38;2;";
+	out += std::to_wstring(color.R);
+	out += L';';
+	out += std::to_wstring(color.G);
+	out += L';';
+	out += std::to_wstring(color.B);
+	out += L'm';
 }
 
 RenderBuffer::RenderBuffer(uint32_t initialWidth, uint32_t initialHeight)
@@ -144,7 +145,16 @@ const CellInfo& RenderBuffer::GetCell(uint32_t x, uint32_t y) const
 void RenderBuffer::Snapshot()
 {
 	std::lock_guard<std::recursive_mutex> guard(renderMutex);
-	snapshotBuffer = buffer;
+
+	// Copy only the used rows (GetIndex strides by MAX_WIDTH) instead of the
+	// whole MAX_WIDTH x MAX_HEIGHT backing store.
+	if (width > 0 && height > 0)
+	{
+		const std::size_t usedCells =
+			(static_cast<std::size_t>(height) - 1) * MAX_WIDTH + width;
+		std::memcpy(snapshotBuffer.data(), buffer.data(), usedCells * sizeof(CellInfo));
+	}
+
 	snapshotWidth = width;
 	snapshotHeight = height;
 	dirtyRect.reset();
@@ -177,16 +187,16 @@ void RenderBuffer::BulkRender(std::wostream& out)
 
 			if (!currentFore.has_value() || *currentFore != cell.Fore)
 			{
-				output += GetAnsiFg(cell.Fore);
+				AppendAnsiFg(output, cell.Fore);
 				currentFore = cell.Fore;
 			}
-			
+
 			if (!currentBack.has_value() || *currentBack != cell.Back)
 			{
-				output += GetAnsiBg(cell.Back);
+				AppendAnsiBg(output, cell.Back);
 				currentBack = cell.Back;
 			}
-			
+
 			output += cell.Symbol;
 		}
 
@@ -231,6 +241,16 @@ void RenderBuffer::DiffRender(std::wostream& out)
 		for (uint32_t x = startX; x < endX; ++x)
 		{
 			const size_t idx = GetIndex(x, y);
+
+#if TERMINALITY_SIMD_SSE2
+			// Fast-skip runs of unchanged cells four at a time.
+			if (x + 4 <= endX && CellsUnchanged4(&buffer[idx], &snapshotBuffer[idx]))
+			{
+				x += 3; // loop increment lands on x + 4
+				continue;
+			}
+#endif
+
 			const CellInfo& cell = buffer[idx];
 			if (cell == snapshotBuffer[idx])
 				continue;
@@ -246,16 +266,16 @@ void RenderBuffer::DiffRender(std::wostream& out)
 
 			if (!currentFore.has_value() || *currentFore != cell.Fore)
 			{
-				output += GetAnsiFg(cell.Fore);
+				AppendAnsiFg(output, cell.Fore);
 				currentFore = cell.Fore;
 			}
-			
+
 			if (!currentBack.has_value() || *currentBack != cell.Back)
 			{
-				output += GetAnsiBg(cell.Back);
+				AppendAnsiBg(output, cell.Back);
 				currentBack = cell.Back;
 			}
-			
+
 			output += cell.Symbol;
 			
 			expectedX = x + 1;
@@ -289,3 +309,5 @@ void RenderBuffer::MarkDirty(const Rect& rect)
 
 	dirtyRect = Rect::Union(*dirtyRect, rect);
 }
+
+#undef TERMINALITY_SIMD_SSE2

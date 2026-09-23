@@ -758,6 +758,52 @@ std::unique_ptr<ControlBase> TestExpander()
     });
 }
 
+std::unique_ptr<ControlBase> TestBarrelListBox()
+{
+    std::unique_ptr<StackPanel> panel = init<StackPanel>([](StackPanel* p)
+    {
+        p->ContentOrientation = Orientation::Vertical;
+        p->ItemSpacing = 1;
+
+        p->AddChild(init<Label>([](Label* l)
+        {
+            l->Text = L"Focus the barrel and press UP/DOWN to spin the selection.";
+        }));
+        
+        static Label* selectedLabel = nullptr;
+        p->AddChild(init<Label>([&](Label* c)
+        {
+            selectedLabel = c;
+            c->Tag = "selected_label";
+        }));
+
+        static BarrelListBox* barrel = nullptr;
+        p->AddChild(init<BarrelListBox>([&](BarrelListBox* b)
+        {
+            barrel = b;
+            b->ExpSize = Size(18, 9);
+            b->HorizontalAlignment = HorizontalAlign::Center;
+            b->Items.push_back(L"Monday");
+            b->Items.push_back(L"Tuesday");
+            b->Items.push_back(L"Wednesday");
+            b->Items.push_back(L"Thursday");
+            b->Items.push_back(L"Friday");
+            b->Items.push_back(L"Saturday");
+            b->Items.push_back(L"Sunday");
+            b->SelectedIndex = 2;
+            
+            b->SelectionChanged += [&](std::size_t index)
+            {
+                const std::wstring& selected = barrel->Items.at(index);
+                selectedLabel->Text = selected;
+                //MessageBox::Show(L"BarrelListBox", L"Selection changed to index: " + std::to_wstring(index), MessageBoxButton::Ok);
+            };
+        }));
+    });
+
+    return panel;
+}
+
 std::unique_ptr<ControlBase> TestHeap()
 {
     return init<Border>([](Border* b)
@@ -793,6 +839,39 @@ std::unique_ptr<ControlBase> TestVisuals()
             b->Text = L"Focused Colors!";
             b->FocusedForegroundColor = Color::YELLOW;
             b->FocusedBackgroundColor = Color::DARK_RED;
+        }));
+
+        p->AddChild(init<Label>([](Label* l)
+        {
+            l->Text = L"Custom RGB (255, 128, 0) orange text!";
+            l->ForegroundColor = Color(255, 128, 0);
+        }));
+
+        p->AddChild(init<Canvas>([](Canvas* c)
+        {
+            c->MinSize = Size(60, 3);
+            c->OnRender = [](RenderContext& ctx, float)
+            {
+                const Rect r = ctx.ContextRect();
+                const Color stops[] =
+                {
+                    Color::RED, Color::YELLOW, Color::GREEN, Color::CYAN,
+                    Color::BLUE, Color::MAGENTA, Color::RED
+                };
+                const int stopCount = sizeof(stops) / sizeof(stops[0]);
+                const int denom = (r.Width > 1) ? (r.Width - 1) : 1;
+
+                for (int x = 0; x < r.Width; ++x)
+                {
+                    const float scaled = (static_cast<float>(x) / denom) * (stopCount - 1);
+                    const int seg = (static_cast<int>(scaled) < stopCount - 1)
+                        ? static_cast<int>(scaled) : stopCount - 2;
+                    const Color cell = Color::Lerp(stops[seg], stops[seg + 1], scaled - seg);
+
+                    for (int y = 0; y < r.Height; ++y)
+                        ctx.SetCell(x, y, L' ', Color::WHITE, cell);
+                }
+            };
         }));
     });
 }
@@ -975,6 +1054,7 @@ public:
         tests_.push_back({L"Canvas Test", L"Animated sine graph", TestCanvas});
         tests_.push_back({L"Slider Test", L"Adjustable value range", TestSlider});
         tests_.push_back({L"Expander Test", L"Collapsing containers", TestExpander});
+        tests_.push_back({L"BarrelListBox Test", L"Barrel-style selection list", TestBarrelListBox});
         tests_.push_back({L"Heap Test", L"Absolute positioning", TestHeap});
         
         tests_.push_back({L"Visuals Test", L"Custom colors", TestVisuals});

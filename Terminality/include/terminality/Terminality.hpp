@@ -38,6 +38,7 @@
 // terminality.Controls.Interactable
 #include <terminality/Controls/CheckBox.hpp>
 #include <terminality/Controls/Button.hpp>
+#include <terminality/Controls/BarrelListBox.hpp>
 #include <terminality/Controls/TextBox.hpp>
 #include <terminality/Controls/Slider.hpp>
 #include <terminality/Controls/Menu.hpp>

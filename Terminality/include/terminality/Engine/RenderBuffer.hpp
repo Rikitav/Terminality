@@ -10,11 +10,17 @@
 
 namespace terminality
 {
-	struct CellInfo
+	// Laid out as a 16-byte POD (Symbol + Fore + Back + zeroed padding) so the
+	// renderer can compare whole cells with a single SIMD register.
+	struct alignas(16) CellInfo
 	{
 		wchar_t Symbol = L' ';
 		Color Fore = Color::WHITE;
 		Color Back = Color::BLACK;
+
+		// Never read by user code; always zero so raw 16-byte SIMD compares
+		// (see RenderBuffer::DiffRender) match member-wise equality.
+		uint32_t Padding = 0;
 
 		CellInfo() = default;
 
@@ -69,7 +75,7 @@ namespace terminality
 		void DiffRender(std::wostream& out);
 		void BulkRender(std::wostream& out);
 
-		const wchar_t* GetAnsiBg(Color color) const;
-		const wchar_t* GetAnsiFg(Color color) const;
+		static void AppendAnsiBg(std::wstring& out, const Color& color);
+		static void AppendAnsiFg(std::wstring& out, const Color& color);
 	};
 }
