@@ -1,0 +1,136 @@
+---
+title: "Platform support and compiler requirements"
+description: "Terminality requires C++20, CMake 3.20, and a recent MSVC or GCC build. Windows and Linux are both supported with platform-specific terminal setup."
+---
+
+Terminality is plain C++20 — headers, sources, and a generated single-header amalgamation, with no module system involved. The framework targets Windows and Linux, with each platform handled by a dedicated translation unit compiled under the appropriate preprocessor guard.
+
+## Build system requirements
+
+The root `CMakeLists.txt` sets the minimum requirements for the entire project:
+
+```cmake
+cmake_minimum_required(VERSION 3.20)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+project(Terminality LANGUAGES CXX)
+add_subdirectory(Terminality)
+```
+
+| Setting | Purpose |
+|---------|---------|
+| `cmake_minimum_required(VERSION 3.20)` | Baseline for the C++20 build; nothing newer is required. |
+| `CMAKE_CXX_STANDARD 20` | The framework is written in C++20 (concepts, `std::ranges`, designated initialization). |
+| `CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON` | Automatically generates `__declspec(dllexport)` entries when building Windows shared libraries. Harmless for the static `terminality` target. |
+| `CMAKE_EXPORT_COMPILE_COMMANDS ON` | Writes `compile_commands.json` for tooling such as clangd. Has no effect on the build output. |
+
+The library target lives in `Terminality/CMakeLists.txt`: it globs all headers and sources, excludes both platform backends from the glob, and re-adds the matching one (`HostApplication.Windows.cpp` under `WIN32`, `HostApplication.Linux.cpp` under `UNIX`).
+
+<Warning>
+The source lists use `file(GLOB_RECURSE)`. After adding or removing `.hpp`/`.cpp` files, re-run `cmake ..` so the build system picks them up.
+</Warning>
+
+## Supported compilers
+
+Terminality is tested against the **latest stable releases** of:
+
+- **MSVC** (Visual Studio 2022 or later) — primary development compiler on Windows
+- **GCC** (13 or later) — used on Windows (via MinGW/Strawberry) and Linux
+
+Because the framework is standard C++20 without modules, other conforming toolchains (newer Clang versions, for example) are expected to work but are not officially tested.
+
+## Windows
+
+On Windows, `HostApplication::EnterTerminal` uses the Win32 console API to set up the terminal before any rendering begins:
+
+- Sets the console code page to UTF-8 (`CP_UTF8 = 65001`) for both input and output.
+- Enables `ENABLE_VIRTUAL_TERMINAL_PROCESSING` on the output handle so ANSI/VT sequences are interpreted correctly.
+- Enables `ENABLE_WINDOW_INPUT` on the input handle so resize events are delivered.
+- Hides the cursor with `SetConsoleCursorInfo`.
+
+`ExitTerminal` restores the alternate screen buffer and re-enables cursor visibility.
+
+### The MessageBox macro conflict
+
+`<Windows.h>` defines a `MessageBox` macro that maps to either `MessageBoxA` or `MessageBoxW` depending on the character-set setting. This macro shadows `terminality::MessageBox` and causes a compilation error.
+
+Terminality's own headers `#undef MessageBox` internally (see `Dialogs/MessageBox.hpp`), so the simplest pattern is to include the framework first. If your translation unit must include `<Windows.h>` before Terminality, add the `#undef` yourself:
+
+```cpp
+#include <Windows.h>
+#undef MessageBox       // remove the Win32 macro
+
+#include <terminality/Terminality.hpp>
+using namespace terminality;
+```
+
+### Windows-only API: AlertAsync
+
+One Windows-specific helper is declared under `#ifdef _WIN32`:
+
+```cpp
+// Only available when _WIN32 is defined
+void terminality::AlertAsync(const std::wstring& text, const std::wstring& title);
+```
+
+`AlertAsync` calls `MessageBoxW` on a detached background thread, so it returns immediately without blocking the UI loop. Guard every call to it:
+
+```cpp
+#ifdef _WIN32
+    menu->AddItem(L"Alert", []()
+    {
+        AlertAsync(L"Background message", L"Title");
+    });
+#endif
+```
+
+## Linux
+
+On Linux, `EnterTerminal` uses POSIX terminal APIs:
+
+- Saves the current `termios` state with `tcgetattr`.
+- Puts the terminal into raw mode: disables canonical processing, echo, signal generation (`ISIG`), and output post-processing.
+- Writes ANSI escape sequences to switch to the alternate screen buffer and hide the cursor.
+
+`ExitTerminal` restores the saved `termios` state and returns to the normal screen buffer.
+
+Input is read using `poll` with the configured timeout, and escape sequences are decoded manually to produce `InputEvent` values for arrow keys and special characters.
+
+<Note>
+A UTF-8 locale must be active for wide-character rendering to work correctly on Linux. `EnterTerminal` calls `setlocale(LC_ALL, "")` and attempts to imbue `std::wcout`, but if no UTF-8 locale is installed on the system a warning is printed and rendering may be incorrect.
+</Note>
+
+## Quick start
+
+```bash
+git clone https://github.com/Rikitav/Terminality.git
+cd Terminality
+mkdir build && cd build
+cmake ..
+cmake --build .
+```
+
+<Tabs>
+  <Tab title="Windows (MSVC)">
+    Open the repository in Visual Studio 2022 and use the **CMake** project support, or run from the Developer Command Prompt:
+
+    ```bash
+    cmake -G "Visual Studio 17 2022" ..
+    cmake --build . --config Release
+    ```
+  </Tab>
+  <Tab title="Linux (GCC)">
+    Any GCC 13+ (or compatible C++20 compiler) works:
+
+    ```bash
+    cmake -DCMAKE_CXX_COMPILER=g++ ..
+    cmake --build .
+    ```
+  </Tab>
+</Tabs>
+

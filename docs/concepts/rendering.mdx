@@ -1,0 +1,185 @@
+---
+title: "Terminality's lazy rendering and dirty-rect pipeline"
+description: "How RenderBuffer tracks dirty cells, how RenderContext and RenderStream let controls draw themselves, and when InvalidationKind triggers each layout phase."
+---
+
+Terminality does not redraw the terminal on every frame. Instead it maintains a double-buffered cell grid, compares the new frame to the previous snapshot, and writes only the cells that changed. This dirty-rect approach keeps output minimal even when many controls update simultaneously, which matters for flicker-free rendering in a terminal environment.
+
+## RenderBuffer
+
+`RenderBuffer` is the in-memory representation of the terminal screen. It holds two grids of `CellInfo` structs — the live buffer being written to, and a snapshot of what was last flushed — along with a `Rect dirtyRect` that grows to enclose every cell modified since the last flush.
+
+```cpp
+struct CellInfo
+{
+    wchar_t Symbol = L' ';
+    Color   Fore   = Color::WHITE;   // RGB color; Transparent flag = "leave unchanged"
+    Color   Back   = Color::BLACK;
+};
+```
+
+Key members:
+
+| Method | Purpose |
+|---|---|
+| `SetCell(x, y, cell)` | Write one cell and expand `dirtyRect` to include it |
+| `GetCell(x, y)` | Read a cell from the live buffer |
+| `Snapshot()` | Copy the live buffer into the snapshot buffer |
+| `DiffRender(out)` | Emit ANSI escape sequences only for cells that differ from the snapshot |
+| `BulkRender(out)` | Emit the full screen, ignoring the snapshot |
+| `Resize(w, h)` | Resize both buffers; capped at `MAX_WIDTH` (512) × `MAX_HEIGHT` (256) |
+| `Clear(cell)` | Fill the live buffer with a given cell |
+
+After `DiffRender` flushes, the snapshot is refreshed internally (only the used rows are copied, not the whole backing store), so the next diff is always against what is actually on screen.
+
+## Dirty-rect tracking
+
+`VisualTree` keeps its own `Rect dirtyRect_` alongside the `RenderBuffer`'s cell-level dirty rect. When a node calls `InvalidateVisual()`, the dirty flag propagates up the tree via `OnChildInvalidated()`. On the next frame, `VisualTree::Render()` collects the union of all dirty node rectangles and passes them to `RenderBuffer` as the region to flush.
+
+This means a single property change — say, a `ProgressBar` value update — results in only that control's cells being compared and written, regardless of how large the rest of the UI is.
+
+## RenderContext
+
+`RenderContext` is passed to your `RenderOverride()` method. It wraps the `RenderBuffer` with a clipping rectangle scoped to the control's arranged bounds, so you cannot accidentally draw outside your allocated area.
+
+```cpp
+class RenderContext
+{
+public:
+    Rect ContextRect();
+
+    void SetCell(uint32_t x, uint32_t y, wchar_t ch,
+                 Color fg = Color::WHITE, Color bg = Color::BLACK);
+    const CellInfo& GetCell(uint32_t x, uint32_t y) const;
+
+    void RenderText(const Point& point, const std::wstring& text,
+                    Color fg = Color::WHITE, Color bg = Color::BLACK,
+                    bool wrap = false);
+
+    void RenderRectangle(const Point& point, const Size& size,
+                         Color fg, Color bg, RectangleStyle style);
+
+    void RenderLine(const Point& fromPoint, const Point& toPoint);
+
+    RenderStream BeginText(Point startPos = Point(0, 0));
+
+    RenderContext CreateInner(Rect targetRect);
+};
+```
+
+`CreateInner(rect)` returns a child context clipped to `rect` within the current context — useful when a panel delegates rendering to a sub-region.
+
+### RenderText overloads
+
+`RenderText` accepts `std::string`, `std::wstring`, `const char*`, and `const wchar_t*`. Set `wrap = true` to hard-wrap at the context boundary.
+
+### RenderRectangle and RenderLine
+
+`RenderRectangle` fills a rectangular region. Overloads accept a `RectangleStyle` function pointer — `wchar_t (*)(const Point&, const Size&)` — so you can provide custom border characters:
+
+```cpp
+context.RenderRectangle(Point::Zero, rect.AsSize(),
+                        ForegroundColor, BackgroundColor,
+                        EmptyRectangleStyle);
+```
+
+`RenderLine` draws a horizontal or vertical line using a `VectorStyle` function for custom glyphs.
+
+## RenderStream
+
+`RenderStream` provides a stream-style API for building text output inside `RenderOverride`. Obtain one from `context.BeginText()`, then use `operator<<` to set position, colours, and text:
+
+```cpp
+void MessageBubble::RenderOverride(RenderContext& context)
+{
+    auto stream = context.BeginText();
+
+    stream << SetBack(Color::BLACK);
+    stream << SetFore(Color::LIGHT_GRAY) << message_.Timestamp;
+    stream << SetFore(Color::CYAN)       << L" " << message_.Text;
+}
+```
+
+Available stream operators:
+
+| Input type | Effect |
+|---|---|
+| `Point` | Move the write cursor to that position |
+| `RenderStreamColor` | Change foreground and/or background colour |
+| `std::wstring` / `std::string` / `const wchar_t*` / `const char*` | Write text at the current cursor position |
+| `int32_t`, `uint32_t`, `float`, `double` | Write the formatted numeric value |
+| `endl` | Advance to the next line |
+
+Colour helpers:
+
+```cpp
+SetColor(fg, bg)  // set both colours
+SetFore(fg)       // set foreground only
+SetBack(bg)       // set background only
+```
+
+## InvalidationKind and when rendering is triggered
+
+Controls never call rendering APIs directly outside of `RenderOverride`. Instead, property changes raise an `InvalidationKind` that schedules the appropriate pass:
+
+<CardGroup cols={2}>
+  <Card title="InvalidationKind::Visual" icon="paintbrush">
+    Only `RenderOverride` is called again. Position and size are unchanged. Use this for colour or text-content changes.
+  </Card>
+  <Card title="InvalidationKind::Arrange" icon="arrows-up-down-left-right">
+    `ArrangeOverride` runs, then `RenderOverride`. Use this when child positions change but measured sizes do not.
+  </Card>
+  <Card title="InvalidationKind::Measure" icon="ruler">
+    Full pipeline: `MeasureOverride` → `ArrangeOverride` → `RenderOverride`. Use this when the control's natural size changes.
+  </Card>
+  <Card title="InvalidationKind::None" icon="ban">
+    No layout pass. Only `OnPropertyChanged` and `PropertyChanged` fire. Use this for metadata like `Tag` or `ContextMenu`.
+  </Card>
+</CardGroup>
+
+## The three override extension points
+
+Every control that inherits from `ControlBase` implements these three protected pure virtuals:
+
+### MeasureOverride
+
+Called by `ControlBase::Measure()` after margins and size constraints have been applied. Return the natural content size. For a leaf control this is typically computed from content length; for a panel it is the union of all children's measured sizes.
+
+```cpp
+Size MeasureOverride(const Size& availableSize) override
+{
+    // availableSize already has margins subtracted
+    static const int timestampLen = 10;
+    return Size(timestampLen + static_cast<int>(message_.Text.size()) + 1, 1);
+}
+```
+
+### ArrangeOverride
+
+Called by `ControlBase::Arrange()` after alignment and margin have been resolved into `arrangedRect_`. Use it to position child controls by calling `child->Arrange(childRect)`.
+
+```cpp
+void ArrangeOverride(const Rect& finalRect) override
+{
+    // finalRect is the resolved position inside the parent slot
+    // Call Arrange on each child with its allocated rect
+    for (auto& child : children_)
+        child->Arrange(ComputeChildRect(child, finalRect));
+}
+```
+
+### RenderOverride
+
+Called by `ControlBase::Render()` after the background rectangle has been painted. Receives a `RenderContext` clipped to `arrangedRect_`. Draw text, shapes, and lines here.
+
+```cpp
+void RenderOverride(RenderContext& context) override
+{
+    auto stream = context.BeginText();
+    stream << SetFore(Color::CYAN) << L"Hello, terminal!";
+}
+```
+
+<Note>
+`ControlBase::Render()` always fills the background using `ForegroundColor` and `BackgroundColor` before calling `RenderOverride`. You do not need to clear the background yourself unless you need a non-uniform fill.
+</Note>

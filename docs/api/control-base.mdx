@@ -1,0 +1,590 @@
+---
+title: "ControlBase — base class for all controls"
+description: "ControlBase extends VisualTreeNode with the reactive property system, event infrastructure, layout pipeline, and input handling all controls share."
+---
+
+`ControlBase` is the concrete base class that all Terminality widgets inherit from. It wires together the reactive `Property<T>` system, the three-phase layout pipeline (`Measure` → `Arrange` → `Render`), keyboard events and hotkeys, focus management, and child iteration. You never instantiate `ControlBase` directly — you subclass it and implement the three pure-virtual override points, or use one of the built-in controls such as `Button`, `TextBox`, or `Grid`.
+
+## Creating controls with init\<T\>
+
+The `init<T>` factory helper creates a widget, runs an optional initialization lambda over it, and returns a `unique_ptr<T>`. It is the idiomatic way to build widget trees in Terminality:
+
+```cpp
+auto button = init<Button>([](Button* b)
+{
+    b->Text = L"Click me";
+    b->HorizontalAlignment = HorizontalAlign::Stretch;
+    b->Clicked += []() { HostApplication::Current().RequestStop(); };
+});
+```
+
+### init\<T\> overloads
+
+<AccordionGroup>
+  <Accordion title="init<T>(lambda) — create and initialize">
+
+```cpp
+template <typename T>
+std::unique_ptr<T> init(std::function<void(T*)> init);
+```
+
+Constructs `T` with `make_unique<T>()`, calls `init(widget.get())` if the function is non-null, and returns the `unique_ptr`. Ownership passes to the caller.
+
+<ParamField path="init" type="std::function<void(T*)>" required>
+  Initialization lambda. Receives a raw pointer to the newly constructed widget. Set properties, connect events, and add children here.
+</ParamField>
+
+<ResponseField name="return" type="std::unique_ptr<T>">
+  Owning pointer to the fully initialized widget.
+</ResponseField>
+
+  </Accordion>
+
+  <Accordion title="init<T>() — create without initialization">
+
+```cpp
+template <typename T>
+std::unique_ptr<T> init();
+```
+
+Shorthand when no initialization is needed. Equivalent to `std::make_unique<T>()`.
+
+<ResponseField name="return" type="std::unique_ptr<T>">
+  Owning pointer to the default-constructed widget.
+</ResponseField>
+
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Properties
+
+Every property is an instance of `Property<ControlBase, T>`. Assigning to a property automatically fires `PropertyChanged` and schedules the appropriate invalidation pass (measure, arrange, or visual).
+
+```cpp
+// Read
+Size s = button->MinSize.Get();      // explicit getter
+Size s2 = button->MinSize;           // implicit conversion
+
+// Write
+button->MinSize = Size(20, 1);       // operator=
+button->MinSize.Set(Size(20, 1));    // fluent setter, returns ControlBase&
+```
+
+### Identity and tagging
+
+<AccordionGroup>
+  <Accordion title="Tag — string identifier">
+
+```cpp
+Property<ControlBase, std::string> Tag;
+```
+
+An arbitrary string label for this control. Used by `QueryByTag<T>()` to locate a specific node in the tree. Does not trigger any invalidation when changed (`InvalidationKind::None`).
+
+**Default:** `""`
+
+  </Accordion>
+</AccordionGroup>
+
+### Sizing
+
+<AccordionGroup>
+  <Accordion title="MinSize, MaxSize, ExpSize — size constraints">
+
+```cpp
+Property<ControlBase, Size> MinSize;   // default: Size::Auto
+Property<ControlBase, Size> MaxSize;   // default: Size::Auto
+Property<ControlBase, Size> ExpSize;   // default: Size::Auto
+```
+
+`MinSize` clamps the measured content size from below; `MaxSize` clamps from above. Setting `ExpSize` is a shorthand that writes the same value to both `MinSize` and `MaxSize`, pinning the control to an exact size.
+
+Use `Size::Auto` (negative component values) to indicate no constraint. All three properties trigger a measure pass on change.
+
+  </Accordion>
+</AccordionGroup>
+
+### Layout
+
+<AccordionGroup>
+  <Accordion title="Margin — external spacing">
+
+```cpp
+Property<ControlBase, Thickness> Margin;
+```
+
+Space in character cells between this control's edge and its parent's slot boundary. `Thickness` has `Left`, `Top`, `Right`, `Bottom` fields.
+
+**Default:** `Thickness::Zero`
+
+  </Accordion>
+
+  <Accordion title="HorizontalAlignment — horizontal placement">
+
+```cpp
+Property<ControlBase, HorizontalAlign> HorizontalAlignment;
+```
+
+Controls how the control is placed within the horizontal slot allocated by its parent.
+
+| Value | Behavior |
+|---|---|
+| `HorizontalAlign::Left` | Anchors to the left edge |
+| `HorizontalAlign::Center` | Centers within the slot |
+| `HorizontalAlign::Right` | Anchors to the right edge |
+| `HorizontalAlign::Stretch` | Expands to fill the slot (clamped by `MinSize`/`MaxSize`) |
+
+**Default:** `HorizontalAlign::Stretch`
+
+  </Accordion>
+
+  <Accordion title="VerticalAlignment — vertical placement">
+
+```cpp
+Property<ControlBase, VerticalAlign> VerticalAlignment;
+```
+
+Controls how the control is placed within the vertical slot allocated by its parent.
+
+| Value | Behavior |
+|---|---|
+| `VerticalAlign::Top` | Anchors to the top edge |
+| `VerticalAlign::Center` | Centers within the slot |
+| `VerticalAlign::Bottom` | Anchors to the bottom edge |
+| `VerticalAlign::Stretch` | Expands to fill the slot (clamped by `MinSize`/`MaxSize`) |
+
+**Default:** `VerticalAlign::Stretch`
+
+  </Accordion>
+</AccordionGroup>
+
+### Colors
+
+<AccordionGroup>
+  <Accordion title="ForegroundColor, BackgroundColor — normal state">
+
+```cpp
+Property<ControlBase, Color> ForegroundColor;   // default: Color::WHITE
+Property<ControlBase, Color> BackgroundColor;   // default: Color::BLACK
+```
+
+The text and fill colors used when the control does not have focus. Triggers a visual-only invalidation on change.
+
+  </Accordion>
+
+  <Accordion title="FocusedForegroundColor, FocusedBackgroundColor — focused state">
+
+```cpp
+Property<ControlBase, Color> FocusedForegroundColor;   // default: Color::BLACK
+Property<ControlBase, Color> FocusedBackgroundColor;   // default: Color::WHITE
+```
+
+Colors applied when the control holds keyboard focus. Triggers a visual-only invalidation on change. The inverted default (black on white) provides a visible focus indicator without extra rendering logic.
+
+  </Accordion>
+</AccordionGroup>
+
+### Visibility and context menu
+
+<AccordionGroup>
+  <Accordion title="IsVisible — show or hide">
+
+```cpp
+Property<ControlBase, bool> IsVisible;
+```
+
+When `false`, the control is hidden. This triggers a visual invalidation but does not remove the control from the layout tree.
+
+**Default:** `true`
+
+  </Accordion>
+
+  <Accordion title="CtxMenu — right-click context menu">
+
+```cpp
+Property<ControlBase, std::unique_ptr<ContextMenu>> CtxMenu;
+```
+
+An optional `ContextMenu` shown when `OpenContextMenu()` is called. Build and assign the menu with `init<ContextMenu>`:
+
+```cpp
+bubble->CtxMenu = init<ContextMenu>([](ContextMenu* menu)
+{
+    menu->AddItem(L"Delete", []() { /* ... */ });
+});
+```
+
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Events
+
+Events use the `Event<Args...>` template. Subscribe with `operator+=` for fire-and-forget handlers, or `Connect()` for a scoped `EventConnection` that auto-disconnects on destruction.
+
+```cpp
+// Fire-and-forget
+control->KeyDown += [](InputEvent e) { /* ... */ };
+
+// Scoped connection (auto-disconnects when conn goes out of scope)
+auto conn = control->KeyDown.Connect([](InputEvent e) { /* ... */ });
+```
+
+| Event | Signature | Description |
+|---|---|---|
+| `PropertyChanged` | `Event<const char*>` | Fires after any property or internal field changes. The argument is the property name string. |
+| `KeyDown` | `Event<InputEvent>` | Fires when a key-down event is dispatched to this control. |
+| `KeyUp` | `Event<InputEvent>` | Fires when a key-up event is dispatched to this control. |
+
+---
+
+## Methods
+
+### Tree attachment
+
+<AccordionGroup>
+  <Accordion title="SetParent(parent) — attach to a parent node">
+
+```cpp
+void SetParent(VisualTreeNode* parent) override;
+```
+
+Called by container controls when this control is added as a child. Sets `parent_` and fires `PropertyChanged("Parent")`. Passing `nullptr` detaches the control and calls `OnDettachedFromTree()`.
+
+<ParamField path="parent" type="VisualTreeNode*">
+  The new parent node, or `nullptr` to detach.
+</ParamField>
+
+  </Accordion>
+
+  <Accordion title="SetLayer(layer) — bind to a UILayer">
+
+```cpp
+void SetLayer(UILayer* layer) override;
+```
+
+Propagates the owning `UILayer` reference down to this control and all of its visual children. Called automatically when the root node of a layer is constructed.
+
+<ParamField path="layer" type="UILayer*">
+  The layer this control belongs to, or `nullptr` to clear.
+</ParamField>
+
+  </Accordion>
+</AccordionGroup>
+
+### Focus configuration
+
+<AccordionGroup>
+  <Accordion title="SetFocusable, SetTabStop, SetTabIndex">
+
+```cpp
+void SetFocusable(bool value) override;
+void SetTabStop(bool value)   override;
+void SetTabIndex(int value)   override;
+```
+
+Configure how this control participates in keyboard focus navigation. All three fire `PropertyChanged` when the value actually changes.
+
+<ParamField path="SetFocusable.value" type="bool">
+  When `false`, the control cannot receive focus at all.
+</ParamField>
+
+<ParamField path="SetTabStop.value" type="bool">
+  When `true`, the control is included in the Tab/Shift-Tab cycle.
+</ParamField>
+
+<ParamField path="SetTabIndex.value" type="int">
+  Explicit ordering within the tab cycle. Lower values come first.
+</ParamField>
+
+  </Accordion>
+</AccordionGroup>
+
+### Layout pipeline
+
+<AccordionGroup>
+  <Accordion title="Measure(availableSize) → Size">
+
+```cpp
+Size Measure(const Size& availableSize) override;
+```
+
+First layout phase. Applies `Margin`, `MinSize`, and `MaxSize` constraints to `availableSize`, then delegates to `MeasureOverride` for the content size. Returns the total desired size including margins.
+
+<ParamField path="availableSize" type="const Size&" required>
+  The space offered by the parent. Negative component values indicate an unconstrained axis.
+</ParamField>
+
+<ResponseField name="return" type="Size">
+  The total space this control wants to occupy, including its margin.
+</ResponseField>
+
+  </Accordion>
+
+  <Accordion title="Arrange(finalRect)">
+
+```cpp
+void Arrange(const Rect& finalRect) override;
+```
+
+Second layout phase. Subtracts margins from `finalRect`, applies `HorizontalAlignment` and `VerticalAlignment` to compute the actual drawing rectangle, then calls `ArrangeOverride` with the result.
+
+<ParamField path="finalRect" type="const Rect&" required>
+  The slot assigned by the parent, including any margin space.
+</ParamField>
+
+  </Accordion>
+
+  <Accordion title="Render(context)">
+
+```cpp
+void Render(RenderContext& context) override;
+```
+
+Third layout phase. Fills the control's background using `ForegroundColor` and `BackgroundColor`, clears the visual-dirty flag, then calls `RenderOverride` for content drawing.
+
+<ParamField path="context" type="RenderContext&" required>
+  The render context scoped to this control's arranged rectangle.
+</ParamField>
+
+  </Accordion>
+</AccordionGroup>
+
+### Invalidation
+
+<AccordionGroup>
+  <Accordion title="ApplyInvalidation(kind) — schedule a layout pass">
+
+```cpp
+void ApplyInvalidation(InvalidationKind invalidation);
+```
+
+Schedules one or more layout phases for the next frame. Properties call this automatically when their value changes. You can call it directly when internal state changes without going through a property.
+
+<ParamField path="invalidation" type="InvalidationKind" required>
+  A bitmask of phases to invalidate.
+
+  | Value | Effect |
+  |---|---|
+  | `InvalidationKind::None` | No invalidation |
+  | `InvalidationKind::Visual` | Redraws this control's pixels |
+  | `InvalidationKind::Arrange` | Reruns arrange and render |
+  | `InvalidationKind::Measure` | Reruns measure, arrange, and render |
+</ParamField>
+
+  </Accordion>
+</AccordionGroup>
+
+### Input handling
+
+<AccordionGroup>
+  <Accordion title="OnKeyDown(input), OnKeyUp(input) — receive key events">
+
+```cpp
+bool OnKeyDown(InputEvent input) override;
+bool OnKeyUp(InputEvent input)   override;
+```
+
+Called by the UI loop when keyboard events are dispatched to the focused control. `OnKeyDown` emits the `KeyDown` event, checks registered hotkeys, and handles arrow-key focus movement. `OnKeyUp` emits the `KeyUp` event. Return `true` to indicate the event was consumed and should not bubble to the parent.
+
+<ParamField path="input" type="InputEvent" required>
+  The keyboard event, carrying `Key`, `Modifier`, and `Pressed` fields.
+</ParamField>
+
+<ResponseField name="return" type="bool">
+  `true` if the event was handled; `false` to let it bubble up the tree.
+</ResponseField>
+
+  </Accordion>
+
+  <Accordion title="OnHotkey(modifier, key, callback) — register a keyboard shortcut">
+
+```cpp
+void OnHotkey(InputModifier modifier, InputKey key, HotkeyCallback callback);
+```
+
+Registers a keyboard shortcut on this control. When the control has focus and the matching `modifier + key` combination is pressed, `callback` is invoked with a pointer to this control. Throws `std::runtime_error` if the same combination is registered twice.
+
+```cpp
+inputBox->OnHotkey(InputModifier::None, InputKey::RETURN, [](ControlBase* self)
+{
+    auto* box = static_cast<TextBox*>(self);
+    // process submitted text
+    box->Text = L"";
+});
+```
+
+<ParamField path="modifier" type="InputModifier" required>
+  The required modifier keys (e.g., `InputModifier::None`, `InputModifier::LeftCtrl`).
+</ParamField>
+
+<ParamField path="key" type="InputKey" required>
+  The primary key for the shortcut.
+</ParamField>
+
+<ParamField path="callback" type="HotkeyCallback" required>
+  `std::function<void(ControlBase*)>` invoked when the shortcut fires.
+</ParamField>
+
+  </Accordion>
+</AccordionGroup>
+
+### Context menu
+
+<AccordionGroup>
+  <Accordion title="OpenContextMenu() — show the CtxMenu overlay">
+
+```cpp
+void OpenContextMenu();
+```
+
+Opens the `ContextMenu` stored in `CtxMenu` as a nested UI layer positioned just below this control's arranged rectangle. Does nothing if `CtxMenu` is `nullptr`.
+
+  </Accordion>
+</AccordionGroup>
+
+### Tree queries
+
+<AccordionGroup>
+  <Accordion title="QueryByTag<T>(tag) — find a descendant by tag">
+
+```cpp
+template<typename T = ControlBase>
+T* QueryByTag(std::string_view tag);
+```
+
+Performs a depth-first search of this control's subtree and returns the first `ControlBase` whose `Tag` property equals `tag`, cast to `T*`. Returns `nullptr` if no match is found or if the found node cannot be cast to `T`.
+
+```cpp
+auto* inputBox = root->QueryByTag<TextBox>("messageInput");
+if (inputBox)
+    inputBox->Text = L"";
+```
+
+<ParamField path="tag" type="std::string_view" required>
+  The tag string to search for.
+</ParamField>
+
+<ResponseField name="return" type="T*">
+  Raw pointer to the matched control, or `nullptr`.
+</ResponseField>
+
+  </Accordion>
+
+  <Accordion title="child_begin(), child_end() — iterate visual children">
+
+```cpp
+const ChildIterator child_begin() const;
+const ChildIterator child_end()   const;
+```
+
+Forward iterators over the control's direct visual children. `ChildIterator` dereferences to `VisualTreeNode*`. The base `ControlBase` implementation returns empty iterators (zero children); container subclasses override `VisualChildrenCount()` and `GetVisualChild()` to expose their children.
+
+```cpp
+for (auto it = container->child_begin(); it != container->child_end(); ++it)
+{
+    VisualTreeNode* child = *it;
+    child->InvalidateVisual();
+}
+```
+
+  </Accordion>
+</AccordionGroup>
+
+### Navigation
+
+<AccordionGroup>
+  <Accordion title="Close() — stop the owning layer's loop">
+
+```cpp
+void Close();
+```
+
+Sets `layer_->Running` to `false`, causing the `NestUILoop` that owns this layer to exit on the next tick. This is how modal dialogs and overlay controls close themselves.
+
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Virtual override points
+
+Subclass `ControlBase` and implement all three pure-virtual methods:
+
+```cpp
+class MyLabel : public ControlBase
+{
+protected:
+    Size MeasureOverride(const Size& availableSize) override
+    {
+        // Return the natural content size (excluding margins — those are handled by Measure()).
+        return Size(static_cast<int>(text_.size()), 1);
+    }
+
+    void ArrangeOverride(const Rect& finalRect) override
+    {
+        // Store layout-derived state if needed. finalRect is already margin-adjusted.
+    }
+
+    void RenderOverride(RenderContext& context) override
+    {
+        // Draw content into context. The background has already been filled by Render().
+        auto writer = context.BeginText();
+        writer << text_;
+    }
+
+private:
+    std::wstring text_;
+};
+```
+
+<AccordionGroup>
+  <Accordion title="MeasureOverride(availableSize) → Size">
+
+```cpp
+virtual Size MeasureOverride(const Size& availableSize) = 0;
+```
+
+Return the intrinsic content size given the space offered. Margins have already been subtracted from `availableSize` by the time this is called. Use negative component values (`Size::Auto`) to indicate that an axis is unconstrained.
+
+<ParamField path="availableSize" type="const Size&" required>
+  Available space after margins and `MaxSize` constraints have been applied.
+</ParamField>
+
+<ResponseField name="return" type="Size">
+  Desired content size, not including margins.
+</ResponseField>
+
+  </Accordion>
+
+  <Accordion title="ArrangeOverride(finalRect)">
+
+```cpp
+virtual void ArrangeOverride(const Rect& finalRect) = 0;
+```
+
+Position any children within `finalRect`. For leaf controls this is often a no-op. Container controls forward `finalRect` slices to each child via their `Arrange` methods.
+
+<ParamField path="finalRect" type="const Rect&" required>
+  The final drawing rectangle after alignment and margin subtraction.
+</ParamField>
+
+  </Accordion>
+
+  <Accordion title="RenderOverride(context)">
+
+```cpp
+virtual void RenderOverride(RenderContext& context) = 0;
+```
+
+Draw the control's content into `context`. The base `Render()` has already cleared the background. Use `context.BeginText()` to write characters, or delegate to children by calling their `Render` methods.
+
+<ParamField path="context" type="RenderContext&" required>
+  Render context whose coordinate origin is the top-left of this control's arranged rectangle.
+</ParamField>
+
+  </Accordion>
+</AccordionGroup>

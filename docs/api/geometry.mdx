@@ -1,0 +1,299 @@
+---
+title: "Geometry types: Point, Size, Rect, Thickness"
+description: "Lightweight value types for 2-D coordinates, sizes, insets, and rectangles — the building blocks of every layout and hit-test calculation in Terminality."
+---
+
+Terminality's layout engine is built on five plain structs — `Point`, `Vector`, `Size`, `Thickness`, and `Rect` — that live in the `terminality` namespace and are declared in `Core/Geometry.hpp`. They carry no heap allocations and are passed by value throughout the framework. Understanding them is a prerequisite for implementing `MeasureOverride`, `ArrangeOverride`, and any rendering code that works with coordinates.
+
+---
+
+## Point
+
+A 2-D integer coordinate. Used for cursor positions, child origins, and hit-test queries.
+
+### Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `X` | `int32_t` | Column coordinate (0 = left edge). |
+| `Y` | `int32_t` | Row coordinate (0 = top edge). |
+
+### Constructors
+
+```cpp
+Point(int32_t x = 0, int32_t y = 0);
+```
+
+Both parameters default to `0`, so `Point{}` is equivalent to `Point::Zero`.
+
+### Static constants
+
+| Constant | Value |
+|----------|-------|
+| `Point::Zero` | `Point(0, 0)` |
+
+### Operators
+
+```cpp
+bool operator==(const Point& other) const;
+bool operator!=(const Point& other) const;
+```
+
+---
+
+## Vector
+
+A directed segment between two `Point` values. Used internally to describe diagonal extents and is accepted by `Size(Vector)`.
+
+### Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `From` | `Point` | Start of the vector. |
+| `To` | `Point` | End of the vector. |
+
+### Constructors
+
+```cpp
+// Construct from two Point values
+Vector(Point from = Point(), Point to = Point());
+
+// Construct from four scalar coordinates
+Vector(int32_t fromX, int32_t fromY, int32_t toX, int32_t toY);
+```
+
+### Operators
+
+```cpp
+bool operator==(const Vector& other) const;
+bool operator!=(const Vector& other) const;
+```
+
+---
+
+## Size
+
+Width/height dimensions returned from `MeasureOverride` and stored in layout constraints.
+
+### Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `Width` | `int32_t` | Horizontal extent in columns. |
+| `Height` | `int32_t` | Vertical extent in rows. |
+
+### Constructors
+
+```cpp
+// Explicit dimensions
+Size(int32_t width = 0, int32_t height = 0);
+
+// Derived from a Vector — width = max(0, To.X - From.X), height = max(0, To.Y - From.Y)
+Size(Vector diagonal);
+```
+
+### Static constants
+
+| Constant | Description |
+|----------|-------------|
+| `Size::Zero` | `Size(0, 0)` — empty size. |
+| `Size::Auto` | Sentinel value meaning "measure to content". The framework treats `Width == -1 && Height == -1` as auto. |
+
+### Operators
+
+```cpp
+bool operator==(const Size& other) const;
+bool operator!=(const Size& other) const;
+```
+
+---
+
+## Thickness
+
+Four independent insets (left, top, right, bottom) used for `Margin`, `Padding`, and border widths.
+
+### Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `Left` | `int32_t` | Inset on the left edge. |
+| `Top` | `int32_t` | Inset on the top edge. |
+| `Right` | `int32_t` | Inset on the right edge. |
+| `Bottom` | `int32_t` | Inset on the bottom edge. |
+
+### Constructors
+
+```cpp
+// All four sides set to the same value
+Thickness(int32_t uniform = 0);
+
+// Each side specified independently
+Thickness(int32_t left, int32_t top, int32_t right, int32_t bottom);
+```
+
+### Static constants
+
+| Constant | Description |
+|----------|-------------|
+| `Thickness::Zero` | All sides `0`. |
+| `Thickness::Single` | All sides `1`. Useful for a one-cell border. |
+
+### Methods
+
+```cpp
+int32_t Horizontal() const;   // Left + Right
+int32_t Vertical()   const;   // Top + Bottom
+bool    IsUniform()  const;   // true when all four sides are equal
+```
+
+`Horizontal()` and `Vertical()` are the values you subtract from an available `Size` when computing inner content bounds:
+
+```cpp
+Size innerSize(
+    availableSize.Width  - margin.Horizontal(),
+    availableSize.Height - margin.Vertical()
+);
+```
+
+### Operators
+
+```cpp
+bool operator==(const Thickness& other) const;
+bool operator!=(const Thickness& other) const;
+```
+
+---
+
+## Rect
+
+An axis-aligned rectangle described by an origin `(X, Y)` and dimensions `(Width, Height)`. Used in `ArrangeOverride` as `finalRect` and in render clipping.
+
+### Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `X` | `int32_t` | Left edge column. |
+| `Y` | `int32_t` | Top edge row. |
+| `Width` | `int32_t` | Horizontal span in columns. |
+| `Height` | `int32_t` | Vertical span in rows. |
+
+### Constructor
+
+```cpp
+Rect(int32_t x = 0, int32_t y = 0, int32_t width = 0, int32_t height = 0);
+```
+
+### Instance methods
+
+<AccordionGroup>
+  <Accordion title="Right() — exclusive right edge">
+
+```cpp
+int32_t Right() const;
+```
+
+Returns `X + Width`. One column past the last occupied column.
+
+  </Accordion>
+
+  <Accordion title="Bottom() — exclusive bottom edge">
+
+```cpp
+int32_t Bottom() const;
+```
+
+Returns `Y + Height`. One row past the last occupied row.
+
+  </Accordion>
+
+  <Accordion title="AsSize() — extract dimensions">
+
+```cpp
+Size AsSize() const;
+```
+
+Returns `Size(Width, Height)`, discarding the origin. Useful when you need to pass dimensions to `MeasureOverride`.
+
+  </Accordion>
+
+  <Accordion title="IsEmpty() — zero-area test">
+
+```cpp
+bool IsEmpty() const;
+```
+
+Returns `true` when `Width <= 0 || Height <= 0`.
+
+  </Accordion>
+
+  <Accordion title="Contains(Point) — point hit-test">
+
+```cpp
+bool Contains(Point point) const;
+```
+
+Returns `true` when `point` falls within the rectangle (inclusive on all edges, exclusive at `Right()` and `Bottom()`).
+
+  </Accordion>
+
+  <Accordion title="Contains(Rect) — containment test">
+
+```cpp
+bool Contains(Rect inner) const;
+```
+
+Returns `true` when `inner` is fully enclosed by this rectangle.
+
+  </Accordion>
+
+  <Accordion title="Intersects(Rect) — overlap test">
+
+```cpp
+bool Intersects(Rect other) const;
+```
+
+Returns `true` when the two rectangles share at least one cell.
+
+  </Accordion>
+</AccordionGroup>
+
+### Static methods
+
+<AccordionGroup>
+  <Accordion title="Rect::Union(a, b) — bounding rectangle">
+
+```cpp
+static Rect Union(const Rect& a, const Rect& b);
+```
+
+Returns the smallest `Rect` that contains both `a` and `b`.
+
+  </Accordion>
+
+  <Accordion title="Rect::Enclose(into, rect) — constrain origin">
+
+```cpp
+static Rect Enclose(const Rect& into, const Rect& rect);
+```
+
+Moves `rect` so that it fits inside `into` without resizing it. If `rect` is already contained, it is returned unchanged.
+
+  </Accordion>
+
+  <Accordion title="Rect::Clip(into, rect) — intersection">
+
+```cpp
+static Rect Clip(const Rect& into, const Rect& rect);
+```
+
+Returns the intersection of `into` and `rect`. If the two rectangles do not overlap, returns an empty `Rect`.
+
+  </Accordion>
+</AccordionGroup>
+
+### Operators
+
+```cpp
+bool operator==(const Rect& other) const;
+bool operator!=(const Rect& other) const;
+```

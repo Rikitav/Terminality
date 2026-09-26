@@ -1,0 +1,390 @@
+---
+title: "RenderContext and RenderStream reference"
+description: "APIs for drawing text, cells, rectangles, and lines inside RenderOverride — plus the RenderStream fluent interface and RenderBuffer internals."
+---
+
+Every time Terminality redraws a widget it calls `RenderOverride(RenderContext& context)` with a `RenderContext` scoped to the widget's allocated rectangle. The context clips all drawing to that region and writes into a shared `RenderBuffer`. When the frame is done, the buffer diffs itself against the previous snapshot and flushes only changed cells to the terminal. This page documents the full surface of `RenderContext`, the `RenderStream` fluent helper, and the `RenderBuffer` that backs them.
+
+## Class: `RenderContext`
+
+A `RenderContext` is created by the engine and passed to `RenderOverride`. You do not instantiate it directly in application code. Every drawing method coordinates through the owning `RenderBuffer` using absolute buffer positions derived from the widget's `Rect`.
+
+### Constructor (internal)
+
+```cpp
+RenderContext(RenderBuffer& buffer, Rect targetRect);
+```
+
+Used internally by the engine. `targetRect` defines the clipping region in buffer coordinates.
+
+---
+
+### `CreateInner`
+
+```cpp
+RenderContext CreateInner(Rect targetRect);
+```
+
+Returns a new `RenderContext` clipped to `targetRect` within the current context's bounds. Useful when a composite widget wants to render sub-sections with tighter clipping. The inner rect is clamped so it never escapes the outer bounds.
+
+<ParamField path="targetRect" type="Rect" required>
+  Target rectangle in the parent context's local coordinate space.
+</ParamField>
+
+<ResponseField name="return" type="RenderContext">
+  A new context clipped to the intersection of `targetRect` and the current context.
+</ResponseField>
+
+---
+
+### `ContextRect`
+
+```cpp
+Rect ContextRect();
+```
+
+Returns the current clipping rectangle in buffer-absolute coordinates.
+
+<ResponseField name="return" type="Rect">
+  The absolute `Rect` this context draws into.
+</ResponseField>
+
+---
+
+### `SetCell` (two overloads)
+
+```cpp
+void SetCell(uint32_t x, uint32_t y, const CellInfo& cell);
+void SetCell(uint32_t x, uint32_t y, wchar_t ch, Color fg = Color::WHITE, Color bg = Color::BLACK);
+```
+
+Writes a single character cell at local coordinates `(x, y)`. Coordinates outside the clipping rect are silently ignored. The second overload creates a `CellInfo` inline.
+
+<ParamField path="x" type="uint32_t" required>
+  Column in local (context-relative) coordinates.
+</ParamField>
+
+<ParamField path="y" type="uint32_t" required>
+  Row in local coordinates.
+</ParamField>
+
+<ParamField path="cell / ch" type="CellInfo or wchar_t" required>
+  The cell state or character to write.
+</ParamField>
+
+---
+
+### `GetCell`
+
+```cpp
+const CellInfo& GetCell(uint32_t x, uint32_t y) const;
+```
+
+Reads the current cell state at local coordinates. Returns a default `CellInfo` (space, white on black) for out-of-bounds positions.
+
+<ResponseField name="return" type="const CellInfo&">
+  The cell at `(x, y)`, or an empty cell if the coordinates are out of range.
+</ResponseField>
+
+---
+
+### `BeginText`
+
+```cpp
+RenderStream BeginText(Point startPos = Point(0, 0));
+```
+
+Creates a `RenderStream` anchored at `startPos`. The stream inherits this context and allows chaining color changes and text output with `<<`. See [RenderStream](#class-renderstream) below.
+
+<ParamField path="startPos" type="Point" default="Point(0, 0)">
+  Starting cursor position within the context's local coordinate space.
+</ParamField>
+
+<ResponseField name="return" type="RenderStream">
+  A stream object bound to this context.
+</ResponseField>
+
+---
+
+### `RenderRaw`
+
+```cpp
+void RenderRaw(const Point& point, const std::string& rawData);
+```
+
+Writes raw bytes as characters starting at `point`, without color or encoding conversion. Intended for pre-formatted ANSI escape sequences or character art.
+
+---
+
+### `RenderText` (four overloads)
+
+```cpp
+void RenderText(const Point& point, const std::wstring& text,
+                Color fg = Color::WHITE, Color bg = Color::BLACK, bool wrap = false);
+void RenderText(const Point& point, const std::string& text, ...);
+void RenderText(const Point& point, const wchar_t* text, ...);
+void RenderText(const Point& point, const char* text, ...);
+```
+
+Renders a text string at `point` with the given foreground and background colors. When `wrap` is `true`, text that overflows the width wraps to the next row. All overloads converge on the `std::wstring` implementation.
+
+<ParamField path="point" type="Point" required>
+  Top-left origin of the text in local coordinates.
+</ParamField>
+
+<ParamField path="text" type="string or wchar_t*" required>
+  The text content to render.
+</ParamField>
+
+<ParamField path="fg" type="Color" default="Color::WHITE">
+  Foreground (character) color.
+</ParamField>
+
+<ParamField path="bg" type="Color" default="Color::BLACK">
+  Background color behind the text.
+</ParamField>
+
+<ParamField path="wrap" type="bool" default="false">
+  When `true`, text wraps to subsequent rows instead of clipping at the right edge.
+</ParamField>
+
+---
+
+### `RenderRectangle` (multiple overloads)
+
+```cpp
+void RenderRectangle(const Point& point, const Size& size);
+void RenderRectangle(const Point& point, const Size& size, Color fg, Color bg);
+void RenderRectangle(const Point& point, const Size& size, RectangleStyle style);
+void RenderRectangle(const Point& point, const Size& size, Color fg, Color bg, RectangleStyle style);
+// Width/height scalar overloads mirror the above
+void RenderRectangle(const Point& point, int32_t width, int32_t height);
+void RenderRectangle(const Point& point, int32_t width, int32_t height, Color fg, Color bg);
+void RenderRectangle(const Point& point, int32_t width, int32_t height, RectangleStyle style);
+void RenderRectangle(const Point& point, int32_t width, int32_t height, Color fg, Color bg, RectangleStyle style);
+```
+
+Fills a rectangle with characters produced by `style`. The default style fills with `#`. A `RectangleStyle` is a function pointer `wchar_t(*)(const Point&, const Size&)` that receives each cell's local position and the rectangle's size; return `L'\0'` to skip a cell.
+
+```cpp
+// Custom border-drawing style
+wchar_t BorderStyle(const Point& p, const Size& sz)
+{
+    bool top    = p.Y == 0;
+    bool bottom = p.Y == sz.Height - 1;
+    bool left   = p.X == 0;
+    bool right  = p.X == sz.Width - 1;
+
+    if (top    && left)  return L'┌';
+    if (top    && right) return L'┐';
+    if (bottom && left)  return L'└';
+    if (bottom && right) return L'┘';
+    if (top    || bottom) return L'─';
+    if (left   || right)  return L'│';
+    return L'\0'; // leave interior cells untouched
+}
+
+context.RenderRectangle(Point(0, 0), Size(20, 5), Color::CYAN, Color::BLACK, BorderStyle);
+```
+
+---
+
+### `RenderLine` (multiple overloads)
+
+```cpp
+void RenderLine(const Point& fromPoint, const Point& toPoint);
+void RenderLine(const Point& fromPoint, const Point& toPoint, VectorStyle style);
+void RenderLine(const Point& point, int32_t length, short direction = 0);
+void RenderLine(const Point& point, int32_t length, VectorStyle style);
+void RenderLine(const Vector& vector);
+void RenderLine(const Vector& vector, VectorStyle style);
+```
+
+Draws a line using Bresenham's algorithm. The default style chooses `─` for horizontal and `│` for vertical movement. A `VectorStyle` is `wchar_t(*)(const Point&, const Vector&)`; receive the current point and the full vector, return `L'\0'` to skip. `direction` 0 means horizontal, non-zero means vertical.
+
+---
+
+## Class: `RenderStream`
+
+`RenderStream` is a fluent, stream-style wrapper around `RenderContext::RenderText`. Obtain one by calling `context.BeginText()`. The stream tracks the current cursor position and active colors, advancing the cursor after each text write.
+
+### Positioning with `<<`
+
+```cpp
+RenderStream& operator<<(const Point& point);
+```
+
+Moves the cursor to `point` without drawing anything.
+
+### Color with `<<`
+
+```cpp
+RenderStream& operator<<(const RenderStreamColor& color);
+```
+
+Sets the foreground and/or background color for subsequent text. Use the `SetFore`, `SetBack`, and `SetColor` helpers to create a `RenderStreamColor`:
+
+```cpp
+RenderStreamColor SetColor(Color fg, Color bg = Color::BLACK);
+RenderStreamColor SetFore(Color fg);
+RenderStreamColor SetBack(Color bg);
+```
+
+### Text output with `<<`
+
+```cpp
+RenderStream& operator<<(const std::wstring& text);
+RenderStream& operator<<(const std::string& text);
+RenderStream& operator<<(const wchar_t* text);
+RenderStream& operator<<(const char* text);
+RenderStream& operator<<(int32_t value);
+RenderStream& operator<<(uint32_t value);
+RenderStream& operator<<(float value);
+RenderStream& operator<<(double value);
+```
+
+Each write appends text at the current cursor position using the active foreground and background colors, then advances the cursor by the text width.
+
+### Manipulators
+
+```cpp
+RenderStream& operator<<(RenderStream& (*manipulator)(RenderStream&));
+```
+
+Accepts stream manipulator functions. The built-in `endl` manipulator calls `NewLine()`:
+
+```cpp
+inline RenderStream& endl(RenderStream& stream);
+```
+
+### `NewLine`
+
+```cpp
+void NewLine();
+```
+
+Moves the cursor to column 0 of the next row.
+
+---
+
+## Complete `RenderOverride` example
+
+A chat-bubble-style widget demonstrates typical `RenderStream` usage: a single `BeginText()` call followed by chained color and text writes, with `focused_` driving the color choice.
+
+```cpp
+void RenderOverride(RenderContext& context) override
+{
+    auto rin = context.BeginText();
+
+    if (focused_)
+    {
+        rin << SetBack(Color::WHITE);
+        rin << SetFore(Color::DARK_GRAY) << message_.Timestamp;
+    }
+    else
+    {
+        rin << SetBack(Color::BLACK);
+        rin << SetFore(Color::LIGHT_GRAY) << message_.Timestamp;
+    }
+
+    rin << SetFore(message_.isAuthor ? Color::CYAN : Color::YELLOW);
+    rin << " " << message_.Text;
+}
+```
+
+---
+
+## Class: `RenderBuffer`
+
+`RenderBuffer` is the backing store for the terminal display. It holds two cell grids — the current frame and the previous snapshot — and computes the dirty region between them so `DiffRender` only writes changed cells to `stdout`.
+
+You do not normally interact with `RenderBuffer` directly; `RenderContext` writes into it on your behalf. It is documented here for completeness and for use in custom engine extensions.
+
+### Constructor
+
+```cpp
+RenderBuffer(uint32_t initialWidth, uint32_t initialHeight);
+```
+
+<ParamField path="initialWidth" type="uint32_t" required>
+  Initial column count. Must not exceed `MAX_WIDTH` (512).
+</ParamField>
+
+<ParamField path="initialHeight" type="uint32_t" required>
+  Initial row count. Must not exceed `MAX_HEIGHT` (256).
+</ParamField>
+
+### Dimensions
+
+```cpp
+uint32_t Width() const;
+uint32_t Height() const;
+void Resize(uint32_t newWidth, uint32_t newHeight);
+```
+
+`Resize` is called automatically by the engine when the terminal window size changes (after the debounce timer fires on `ResizeFinishedEvent`).
+
+### Cell access
+
+```cpp
+void SetCell(uint32_t x, uint32_t y, const CellInfo& cell);
+const CellInfo& GetCell(uint32_t x, uint32_t y) const;
+```
+
+Direct cell read/write. `RenderContext` uses these internally.
+
+### `Clear`
+
+```cpp
+void Clear(const CellInfo& cell = CellInfo());
+```
+
+Fills the entire buffer with `cell` (default: space, white on black).
+
+### Dirty-region tracking
+
+```cpp
+void Snapshot();
+void DiffRender(std::wostream& out);
+void BulkRender(std::wostream& out);
+```
+
+`Snapshot` copies the current buffer into the snapshot grid (only the used rows, not the whole backing store). `DiffRender` compares the current buffer to the snapshot and emits ANSI escape sequences only for cells that differ — calling `Snapshot()` internally after flushing, so the next diff is always against what is actually on screen. If the buffer was resized since the last flush, `DiffRender` delegates to `BulkRender`, which emits the full screen. The engine calls `DiffRender` each frame; applications do not need to call `Snapshot` themselves.
+
+### Constants
+
+| Constant     | Value | Description           |
+| ------------ | ----- | --------------------- |
+| `MAX_WIDTH`  | 512   | Maximum column count  |
+| `MAX_HEIGHT` | 256   | Maximum row count     |
+
+---
+
+## `CellInfo` struct
+
+A single terminal cell: character, foreground color, and background color. The layout is padded to 16 bytes so the renderer can compare cells with SIMD; the padding is never read by user code.
+
+```cpp
+struct alignas(16) CellInfo
+{
+    wchar_t Symbol = L' ';
+    Color   Fore   = Color::WHITE;
+    Color   Back   = Color::BLACK;
+
+    CellInfo() = default;
+    CellInfo(wchar_t symbol, Color fore = Color::WHITE, Color back = Color::BLACK);
+
+    bool operator==(const CellInfo&) const;
+    bool operator!=(const CellInfo&) const;
+};
+```
+
+A cell whose `Fore`/`Back` has the `Transparent` flag set leaves that attribute of the existing cell unchanged when written through `RenderBuffer::SetCell` — this is how controls paint text without clobbering the background behind them.
+
+---
+
+## Related
+
+- [`Color`](/api/color) — `Color::WHITE`, `Color::CYAN`, and all named color values
+- [`Geometry`](/api/geometry) — `Point`, `Size`, `Rect`, `Vector` types used throughout
+- [`DispatchTimer`](/api/dispatch-timer) — drive per-frame animations by mutating properties from `TickEvent`

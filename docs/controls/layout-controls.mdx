@@ -1,0 +1,363 @@
+---
+title: "Layout controls: Grid, StackPanel, ScrollViewer"
+description: "Arrange child controls with Grid's row/column engine, StackPanel's linear stacking, ScrollViewer's panning, and ItemsControl's data-driven lists."
+---
+
+Layout controls in Terminality act as containers that measure, arrange, and render their children. You never position controls manually — instead, you express structure through `Grid` rows and columns, `StackPanel` orientation, or `ScrollViewer` clipping, and the layout engine resolves sizes automatically at each frame.
+
+## Grid
+
+`Grid` divides its space into rows and columns. You define the dimensions of each track with a `GridLength`, then place child controls into specific cells. Children can span multiple rows or columns.
+
+### GridLength
+
+Every row height and column width is described by a `GridLength` value, which combines a numeric value with a sizing mode.
+
+<ParamField path="GridLength::Auto()" type="static factory">
+  Size the track to the largest `DesiredSize` of any child in that track. The track takes exactly as much space as its contents need.
+</ParamField>
+
+<ParamField path="GridLength::Cell(n)" type="static factory">
+  Size the track to exactly `n` terminal cells (characters). Use this for fixed-width columns or fixed-height rows.
+</ParamField>
+
+<ParamField path="GridLength::Star(weight = 1.0f)" type="static factory">
+  Distribute remaining space proportionally. A track with `Star(2.0f)` gets twice the remaining space as a `Star(1.0f)` track. This is the default when you default-construct a `GridLength`.
+</ParamField>
+
+### RowDefinition and ColumnDefinition
+
+<ParamField path="RowDefinition.Height" type="GridLength" default="GridLength::Star()">
+  Sizing mode for this row.
+</ParamField>
+
+<ParamField path="RowDefinition.MinHeight" type="int32_t" default="0">
+  Minimum height in cells. The row will never shrink below this value.
+</ParamField>
+
+<ParamField path="RowDefinition.MaxHeight" type="int32_t" default="-1">
+  Maximum height in cells. `-1` means no limit.
+</ParamField>
+
+<ParamField path="ColumnDefinition.Width" type="GridLength" default="GridLength::Star()">
+  Sizing mode for this column.
+</ParamField>
+
+<ParamField path="ColumnDefinition.MinWidth" type="int32_t" default="0">
+  Minimum width in cells.
+</ParamField>
+
+<ParamField path="ColumnDefinition.MaxWidth" type="int32_t" default="-1">
+  Maximum width in cells. `-1` means no limit.
+</ParamField>
+
+### Methods
+
+<ParamField path="AddRow(const RowDefinition& def)" type="method">
+  Append a row definition. Rows are indexed in the order they are added, starting from `0`.
+</ParamField>
+
+<ParamField path="AddColumn(const ColumnDefinition& def)" type="method">
+  Append a column definition. Columns are indexed in the order they are added, starting from `0`.
+</ParamField>
+
+<ParamField path="AddChild(row, col, child)" type="method">
+  Place a control in a single cell at `(row, col)`. The control occupies exactly one row and one column.
+</ParamField>
+
+<ParamField path="AddChild(row, col, rowSpan, colSpan, child)" type="method">
+  Place a control starting at `(row, col)` and extending across `rowSpan` rows and `colSpan` columns. Useful for headers or panels that need to span the full width.
+</ParamField>
+
+### Example — messenger layout
+
+A classic messenger layout uses a three-row grid: a star-sized chat area, a fixed-height input panel, and a fixed-height status bar.
+
+```cpp
+class MessengerPage : public Grid
+{
+public:
+    MessengerPage()
+    {
+        HorizontalAlignment = HorizontalAlign::Stretch;
+        VerticalAlignment   = VerticalAlign::Stretch;
+
+        // Row 0: chat history — takes all remaining space
+        AddRow(RowDefinition{ GridLength::Star(1.0f) });
+
+        // Row 1: input panel — exactly 3 rows tall
+        AddRow(RowDefinition{ GridLength::Cell(3) });
+
+        // Row 2: status bar — exactly 2 rows tall
+        AddRow(RowDefinition{ GridLength::Cell(2) });
+
+        // Chat history in row 0
+        AddChild(0, 0, init<Border>([&](Border* chatBorder)
+        {
+            chatBorder->HeaderText = L"Chat: Tamerlan";
+            chatBorder->Content = init<ItemsControl<MessageModel>>([&](auto* list)
+            {
+                list->SetItemsSource(&chatHistory_);
+                list->Scrollable    = true;
+                list->AutoScrollToEnd = true;
+            });
+        }));
+
+        // Input grid in row 1
+        AddChild(1, 0, std::make_unique<Border>(init<Grid>([&](Grid* inputGrid)
+        {
+            inputGrid->AddColumn(ColumnDefinition{ GridLength::Auto() });   // spinner
+            inputGrid->AddColumn(ColumnDefinition{ GridLength::Auto() });   // label
+            inputGrid->AddColumn(ColumnDefinition{ GridLength::Star() });   // text box
+
+            inputGrid->AddChild(0, 0, init<Spinner>([](Spinner* s) { s->Margin = Thickness(1, 0, 1, 0); }));
+            inputGrid->AddChild(0, 1, init<Label>([](Label* l) { l->Text = L"Rikitav@Tamerlan> "; }));
+            inputGrid->AddChild(0, 2, init<TextBox>([](TextBox* tb)
+            {
+                tb->HorizontalAlignment = HorizontalAlign::Stretch;
+                tb->AcceptsReturn = false;
+            }));
+        })));
+    }
+};
+```
+
+<Tip>
+  When you omit `AddRow`/`AddColumn` calls entirely, `Grid` creates a single implicit `Star` row and column so it still renders its first child.
+</Tip>
+
+### String-parsed definitions
+
+Rows and columns can also be declared in one shot with an Avalonia-style comma-separated string, via `SetRowDefinitions` / `SetColumnDefinitions`:
+
+```cpp
+grid->SetRowDefinitions("Auto,*,2*,3");   // header row, flexible body, wider body, fixed footer
+grid->SetColumnDefinitions("20,Auto,*");
+```
+
+Each token is `Auto`, `*` or `N*` (star with weight), or a plain integer for a fixed cell count.
+
+### UniformGrid mode
+
+Setting `UniformColumns` and/or `UniformRows` switches the grid into uniform mode: all cells get an equal share of the space (sized to the largest child), and children are placed in row-major order without explicit row/column coordinates.
+
+```cpp
+auto palette = init<Grid>([](Grid* g)
+{
+    g->UniformColumns = 3;
+
+    g->AddChild(init<Button>([](Button* b) { b->Text = L"Red"; }));
+    g->AddChild(init<Button>([](Button* b) { b->Text = L"Green"; }));
+    g->AddChild(init<Button>([](Button* b) { b->Text = L"Blue"; }));
+    g->AddChild(init<Button>([](Button* b) { b->Text = L"Cyan"; }));   // wraps to row 2
+});
+```
+
+`AddChild(child)` without coordinates appends to the next free cell. Leave one of the properties at `0` to let that axis grow with the content.
+
+---
+
+## StackPanel
+
+`StackPanel` arranges children in a single line — either vertically (the default) or horizontally. It is the go-to container when you need a simple list of controls without the overhead of a grid.
+
+### Properties
+
+<ParamField path="ContentOrientation" type="Orientation" default="Orientation::Vertical">
+  Direction in which children are stacked. Set to `Orientation::Horizontal` for a row of controls.
+</ParamField>
+
+<ParamField path="HorizontalContentAlignment" type="HorizontalAlign" default="HorizontalAlign::Stretch">
+  How each child is aligned on the horizontal axis within the panel's width.
+</ParamField>
+
+<ParamField path="VerticalContentAlignment" type="VerticalAlign" default="VerticalAlign::Stretch">
+  How each child is aligned on the vertical axis within the panel's height.
+</ParamField>
+
+<ParamField path="Scrollable" type="bool" default="false">
+  Allow the panel to scroll when children overflow. Requires `InvalidationKind::Arrange` to take effect after the first layout pass.
+</ParamField>
+
+<ParamField path="AutoScrollToEnd" type="bool" default="false">
+  Automatically advance the scroll offset after every child addition so the last item is always visible. Combine with `Scrollable = true` for a live-updating log or chat list.
+</ParamField>
+
+<ParamField path="Looping" type="bool" default="false">
+  When focus reaches the last child and the user navigates forward (or vice versa), wrap focus back to the opposite end instead of leaving the panel.
+</ParamField>
+
+### Methods
+
+<ParamField path="AddChild(child)" type="method">
+  Append a control to the end of the stack.
+</ParamField>
+
+<ParamField path="Insert(index, child)" type="method">
+  Insert a control at the given zero-based position, shifting later children down.
+</ParamField>
+
+<ParamField path="RemoveChild(predicate)" type="method">
+  Find and remove the first child matching `predicate`. Returns the removed control as a `unique_ptr` so you can reuse it.
+</ParamField>
+
+<ParamField path="RemoveAt(index)" type="method">
+  Remove the child at `index` and return it.
+</ParamField>
+
+<ParamField path="Clear()" type="method">
+  Remove all children at once.
+</ParamField>
+
+### Example — vertical menu
+
+```cpp
+auto menu = std::make_unique<StackPanel>();
+menu->ContentOrientation = Orientation::Vertical;
+menu->HorizontalContentAlignment = HorizontalAlign::Stretch;
+menu->Looping = true;
+
+menu->AddChild(init<Button>([](Button* b) { b->Text = L"New game"; }));
+menu->AddChild(init<Button>([](Button* b) { b->Text = L"Load game"; }));
+menu->AddChild(init<Button>([](Button* b) { b->Text = L"Settings"; }));
+menu->AddChild(init<Button>([](Button* b) { b->Text = L"Quit"; }));
+```
+
+<Note>
+  `StackPanel` is the base class of `ItemsControl<T>`. All properties and methods above are inherited by `ItemsControl`.
+</Note>
+
+---
+
+## ScrollViewer
+
+`ScrollViewer` wraps a single child control and provides panning when the child's desired size exceeds the viewport. The user can scroll with the arrow keys when the control is focused.
+
+### Properties
+
+<ParamField path="Content" type="unique_ptr<ControlBase>">
+  The single child to display and scroll. Assign with `std::move` or `init<T>`.
+</ParamField>
+
+<ParamField path="ScrollX" type="int" default="0">
+  Horizontal scroll offset in cells. Increasing this value pans the content left.
+</ParamField>
+
+<ParamField path="ScrollY" type="int" default="0">
+  Vertical scroll offset in cells. Increasing this value pans the content up.
+</ParamField>
+
+### Measurement methods
+
+<ParamField path="GetExtentWidth()" type="int">
+  The total width of the scrollable content in cells (the child's desired width).
+</ParamField>
+
+<ParamField path="GetExtentHeight()" type="int">
+  The total height of the scrollable content in cells.
+</ParamField>
+
+<ParamField path="GetViewportWidth()" type="int">
+  The visible width of the `ScrollViewer` in cells.
+</ParamField>
+
+<ParamField path="GetViewportHeight()" type="int">
+  The visible height of the `ScrollViewer` in cells.
+</ParamField>
+
+### Example
+
+```cpp
+auto viewer = std::make_unique<ScrollViewer>();
+viewer->HorizontalAlignment = HorizontalAlign::Stretch;
+viewer->VerticalAlignment   = VerticalAlign::Stretch;
+
+viewer->Content = init<Label>([](Label* l)
+{
+    l->Text = L"A very long line that extends beyond the terminal width...";
+    l->TextWrapping = TextWrap::NoWrap;
+});
+
+// Programmatically jump to position (20, 0)
+viewer->ScrollX = 20;
+```
+
+---
+
+## ItemsControl\<T\>
+
+`ItemsControl<T>` extends `StackPanel` with data-binding: you supply an `ObservableCollection<T>` as the data source and a factory lambda as the item template, and the control keeps its children in sync with the collection automatically.
+
+### Key API
+
+<ParamField path="SetItemsSource(ObservableCollection<T>*)" type="method">
+  Bind the control to a collection. `ItemsControl` subscribes to `ItemAdded`, `ItemRemoved`, `ItemReplaced`, and `CollectionCleared` events and rebuilds or patches its children accordingly. Pass `nullptr` to detach.
+</ParamField>
+
+<ParamField path="SetItemTemplate(lambda)" type="method">
+  Provide a factory function with signature `std::unique_ptr<ControlBase>(const T&)`. Called once per item when the control is bound or when a new item is added. Rebuilds all items immediately when set.
+</ParamField>
+
+<ParamField path="GetItemsSource()" type="method">
+  Returns the currently bound `ObservableCollection<T>*`, or `nullptr` if none is set.
+</ParamField>
+
+### ObservableCollection\<T\>
+
+`ObservableCollection<T>` is a `std::vector`-like container that fires events on every mutation. You own the collection instance; `ItemsControl` only holds a pointer to it.
+
+| Event | Signature | Fired when |
+|---|---|---|
+| `ItemAdded` | `(size_t index, const T&)` | `push_back` or `insert` |
+| `ItemRemoved` | `(size_t index, const T&)` | `pop_back` or `erase` |
+| `ItemReplaced` | `(size_t index, const T& oldItem, const T& newItem)` | `replace` |
+| `CollectionCleared` | `()` | `clear` |
+
+Standard mutation methods (`push_back`, `insert`, `erase`, `replace`, `pop_back`, `clear`) mirror the `std::vector` API and fire the corresponding events automatically.
+
+### Example — chat history
+
+```cpp
+struct MessageModel
+{
+    bool        isAuthor;
+    std::wstring Timestamp;
+    std::wstring Text;
+};
+
+class ChatView : public Border
+{
+    ObservableCollection<MessageModel> history_;
+
+public:
+    ChatView()
+    {
+        HeaderText = L"Chat";
+        Content = init<ItemsControl<MessageModel>>([&](auto* list)
+        {
+            list->Scrollable     = true;
+            list->AutoScrollToEnd = true;
+
+            list->SetItemsSource(&history_);
+
+            list->SetItemTemplate([](const MessageModel& msg) -> std::unique_ptr<ControlBase>
+            {
+                return init<Label>([&](Label* l)
+                {
+                    l->Text = msg.Timestamp + L" " + msg.Text;
+                });
+            });
+        });
+    }
+
+    void PushMessage(MessageModel msg)
+    {
+        // ItemsControl reacts immediately — no manual refresh needed.
+        history_.push_back(std::move(msg));
+    }
+};
+```
+
+<Tip>
+  Call `SetItemsSource` before `SetItemTemplate` if possible. When the template is set, `ItemsControl` rebuilds all existing items immediately, so setting the source first avoids a double rebuild.
+</Tip>

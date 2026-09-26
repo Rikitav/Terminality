@@ -1,0 +1,148 @@
+---
+title: "Build and integrate Terminality into your C++ project"
+description: "Clone the Terminality repository, build the static library with CMake, or drop in the single-header amalgamation — on Windows or Linux."
+---
+
+Terminality is distributed as source in two forms: a classic headers-plus-sources static library built with CMake, and a generated single-header amalgamation for drop-in use. This page covers every step: prerequisites, building Terminality itself, and wiring it into your own project.
+
+## Prerequisites
+
+Before you build, make sure you have:
+
+- **C++20-capable compiler** — MSVC (Visual Studio 2022) on Windows or GCC 13+ on Linux. There is no module machinery to support; any conforming C++20 toolchain works.
+- **CMake 3.20 or newer** — the root `CMakeLists.txt` declares `cmake_minimum_required(VERSION 3.20)`.
+- **Git** — to clone the repository.
+
+## Build Terminality
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/Rikitav/Terminality.git
+    cd Terminality
+    ```
+  </Step>
+
+  <Step title="Configure with CMake">
+    Create a build directory and run CMake from inside it:
+
+    ```bash
+    mkdir build && cd build
+    cmake ..
+    ```
+
+    CMake sets `CMAKE_CXX_STANDARD 20` and automatically selects the platform-specific backend — `HostApplication.Windows.cpp` on Windows, `HostApplication.Linux.cpp` on Linux. Sources are picked up with a `GLOB_RECURSE`, so if you add or remove files, re-run `cmake ..` before building.
+  </Step>
+
+  <Step title="Build the library">
+    ```bash
+    cmake --build .
+    ```
+
+    This produces `terminality` as a static library (`libterminality.a` / `terminality.lib`, under `build/Terminality/`). On Windows it also builds the `Terminality.TespApp` test executable and the bundled samples.
+  </Step>
+</Steps>
+
+## Integrate into your own project
+
+There are three supported ways to integrate: `add_subdirectory`, linking the pre-built library, or the single-header amalgamation.
+
+### Option A: add_subdirectory (recommended)
+
+Add Terminality as a subdirectory in your `CMakeLists.txt`:
+
+```cmake
+cmake_minimum_required(VERSION 3.20)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+project(MyApp LANGUAGES CXX)
+
+add_subdirectory(Terminality)
+
+add_executable(MyApp main.cpp)
+target_link_libraries(MyApp PRIVATE terminality)
+```
+
+The `terminality` target exposes its include directories as `PUBLIC`, so `target_link_libraries` is all you need — your sources can `#include <terminality/Terminality.hpp>` immediately.
+
+### Option B: link the pre-built library
+
+If you built Terminality separately, point CMake to the include path and the library file:
+
+```cmake
+cmake_minimum_required(VERSION 3.20)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+project(MyApp LANGUAGES CXX)
+
+add_executable(MyApp main.cpp)
+
+target_include_directories(MyApp PRIVATE /path/to/Terminality/Terminality/include)
+target_link_libraries(MyApp PRIVATE /path/to/Terminality/build/Terminality/libterminality.a)
+```
+
+### Option C: single-header amalgamation
+
+The repository ships a generated `out/Terminality.hpp` that merges all 46 headers and every source file. Regenerate it any time with the capiunity tool from the repository root (where `capiunity.toml` lives):
+
+```bash
+capiunity
+```
+
+In your project, define `TERMINALITY_IMPLEMENTATION` in exactly one translation unit before the include; every other TU includes it normally:
+
+```cpp
+// main.cpp — the one implementation unit
+#define TERMINALITY_IMPLEMENTATION
+#include "Terminality.hpp"
+
+int main() { /* ... */ }
+```
+
+This is the simplest option for quick prototypes, single-TU programs, and embedding into existing codebases — no CMake, no include paths.
+
+## Platform notes
+
+<Tabs>
+  <Tab title="Windows">
+    Build with MSVC via the Visual Studio 2022 generator, Ninja, or the `cl` command line. The Windows backend (`HostApplication.Windows.cpp`) is selected automatically by CMake when `WIN32` is defined. The test application and samples currently build on Windows only.
+
+    ```bash
+    cmake .. -G "Visual Studio 17 2022"
+    cmake --build . --config Release
+    ```
+  </Tab>
+  <Tab title="Linux">
+    Build with GCC 13+ or a compatible C++20 toolchain. The Linux backend (`HostApplication.Linux.cpp`) is selected automatically when `UNIX` is defined. The `terminality` library itself builds and runs on Linux; the test executable is not built there.
+
+    ```bash
+    cmake .. -DCMAKE_CXX_COMPILER=g++
+    cmake --build .
+    ```
+  </Tab>
+</Tabs>
+
+## Verify the build
+
+On Windows, run the bundled test application to confirm everything is working:
+
+```bash
+./Terminality.TespApp/Terminality.TespApp
+```
+
+You should see the Terminality test suite: a scrollable menu of demos covering every built-in control (buttons, text boxes, grids, scroll viewers, tabs, trees, data grids, and more). Select an entry with `UP`/`DOWN` and press `ENTER`; press `Escape` to exit.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Get started with Terminality" icon="rocket" href="/quickstart">
+    Build your first app with a complete code walkthrough.
+  </Card>
+  <Card title="What is Terminality?" icon="book" href="/introduction">
+    Understand the architecture, distribution model, and extension points.
+  </Card>
+</CardGroup>

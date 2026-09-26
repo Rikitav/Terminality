@@ -1,0 +1,282 @@
+---
+title: "Building custom controls with ControlBase"
+description: "Subclass ControlBase and implement MeasureOverride, ArrangeOverride, and RenderOverride to create a fully integrated Terminality custom control."
+---
+
+Every visible widget in Terminality is a subclass of `ControlBase`. When you need behaviour or appearance that the built-in controls do not provide, you subclass `ControlBase` directly, implement three pure-virtual methods, and the layout engine takes care of sizing, placement, dirty tracking, and focus routing automatically.
+
+## Subclassing ControlBase
+
+```cpp
+#include <terminality/Terminality.hpp>
+using namespace terminality;
+
+class MyControl : public ControlBase
+{
+protected:
+    Size MeasureOverride(const Size& availableSize) override;
+    void ArrangeOverride(const Rect& finalRect) override;
+    void RenderOverride(RenderContext& context) override;
+};
+```
+
+The three methods are called by the framework in order — measure, arrange, render — whenever the corresponding dirty flags are set. You must implement all three; there are no default bodies.
+
+## MeasureOverride
+
+Return the size your control needs. The `availableSize` argument tells you how much space the parent is offering.
+
+```cpp
+Size MyControl::MeasureOverride(const Size& availableSize)
+{
+    // Return a fixed size:
+    return Size(20, 1);
+
+    // Or compute from content:
+    return Size(static_cast<int>(text_.size()), 1);
+}
+```
+
+<Note>
+`Size::Auto` can be used as a sentinel to mean "no constraint". Inspect `availableSize` fields before assuming a specific dimension is meaningful.
+</Note>
+
+## ArrangeOverride
+
+Position child nodes (if any) within `finalRect`. Leaf controls with no children typically leave this empty.
+
+```cpp
+void MyControl::ArrangeOverride(const Rect& finalRect)
+{
+    // Leaf control — nothing to arrange.
+    return;
+}
+```
+
+For container controls, iterate `child_begin()` / `child_end()` and call `Arrange` on each child with an appropriate sub-rectangle.
+
+## RenderOverride
+
+Draw the control using the provided `RenderContext`. The context is already clipped to the control's arranged rectangle, so coordinate `(0, 0)` is your top-left corner.
+
+```cpp
+void MyControl::RenderOverride(RenderContext& context)
+{
+    context.RenderText(Point(0, 0), L"Hello", Color::WHITE, Color::BLACK);
+}
+```
+
+### RenderContext API
+
+```cpp
+// Place individual cells
+void SetCell(uint32_t x, uint32_t y, wchar_t ch, Color fg, Color bg);
+
+// Render text at a fixed position
+void RenderText(const Point& point, const std::wstring& text,
+                Color fg = Color::WHITE, Color bg = Color::BLACK,
+                bool wrap = false);
+
+// Render a box outline
+void RenderRectangle(const Point& point, const Size& size,
+                     Color fg, Color bg);
+
+// Stream-style rendering
+RenderStream BeginText(Point startPos = Point(0, 0));
+```
+
+### RenderStream
+
+`BeginText()` returns a `RenderStream` you can stream text and color changes into using `operator<<`. This is the most convenient approach for mixed-color output.
+
+```cpp
+auto stream = context.BeginText(Point(0, 0));
+stream << SetFore(Color::CYAN) << L"label: ";
+stream << SetFore(Color::WHITE) << value_;
+```
+
+Available stream manipulators:
+
+| Helper | Effect |
+|--------|--------|
+| `SetFore(Color)` | Change the foreground color for subsequent text. |
+| `SetBack(Color)` | Change the background color for subsequent text. |
+| `SetColor(Color fg, Color bg)` | Change both colors at once. |
+| `endl` | Move to the next line within the stream. |
+| `Point(x, y)` | Jump to an absolute position within the context. |
+
+## Focus and the focused_ field
+
+`ControlBase` inherits the `focused_` boolean from `VisualTreeNode`. The framework sets it to `true` when the control receives focus and `false` when it loses focus. Check it in `RenderOverride` to change the visual state:
+
+```cpp
+void MyControl::RenderOverride(RenderContext& context)
+{
+    auto stream = context.BeginText();
+    if (focused_)
+    {
+        stream << SetBack(Color::WHITE) << SetFore(Color::BLACK);
+    }
+    else
+    {
+        stream << SetBack(Color::BLACK) << SetFore(Color::WHITE);
+    }
+    stream << text_;
+}
+```
+
+`ControlBase` already exposes `FocusedForegroundColor` and `FocusedBackgroundColor` properties for cases where simple color swaps are sufficient. Read them in `RenderOverride` to honour whatever the user configured.
+
+### IsFocusable
+
+Override `IsFocusable()` if your control should never receive focus (for example, a purely decorative widget):
+
+```cpp
+bool IsFocusable() const override { return false; }
+```
+
+The default inherited from `VisualTreeNode` returns `focusable_`, which is `true` by default.
+
+## Declaring properties
+
+Use the `Property<TOwner, T>` template to give your control reactive properties that automatically trigger layout or visual invalidation when changed:
+
+```cpp
+class MyControl : public ControlBase
+{
+public:
+    Property<MyControl, std::wstring> Text {
+        this, "Text", L"", InvalidationKind::Visual
+    };
+
+    Property<MyControl, int> MaxLength {
+        this, "MaxLength", 100, InvalidationKind::Measure
+    };
+};
+```
+
+`InvalidationKind` controls what is dirtied when the property value changes:
+
+| Value | Effect |
+|-------|--------|
+| `None` | No automatic invalidation — handle it manually if needed. |
+| `Visual` | Marks the visual pass dirty; `RenderOverride` is called next frame. |
+| `Arrange` | Marks arrange dirty; `ArrangeOverride` is called before next render. |
+| `Measure` | Marks measure dirty; full measure → arrange → render cycle runs. |
+
+## Declaring events
+
+Use `Event<Args...>` to expose signals that consumers can subscribe to with `+=`:
+
+```cpp
+class MyControl : public ControlBase
+{
+public:
+    Event<> Activated;          // no arguments
+    Event<std::wstring> TextCommitted;  // one argument
+};
+
+// Emit from inside the control:
+Activated.Emit();
+TextCommitted.Emit(text_);
+
+// Subscribe from outside:
+myControl->Activated += []() { /* ... */ };
+myControl->TextCommitted += [](std::wstring t) { /* ... */ };
+```
+
+For lifetime-managed subscriptions, use `Connect` instead of `+=` and hold the returned `EventConnection`:
+
+```cpp
+auto conn = myControl->TextCommitted.Connect([](std::wstring t) { });
+// conn automatically disconnects when it goes out of scope
+```
+
+## Complete example: a chat message bubble
+
+A `MessageBubble` control renders a single chat message line. The example below demonstrates all three override methods, focus-dependent styling, and `RenderStream` usage:
+
+```cpp
+struct MessageModel
+{
+    bool         isAuthor;
+    std::wstring Timestamp;
+    std::wstring Text;
+};
+
+class MessageBubble : public ControlBase
+{
+public:
+    MessageModel message_;
+
+    MessageBubble()
+    {
+        HorizontalAlignment = HorizontalAlign::Left;
+    }
+
+    Size MeasureOverride(const Size& availableSize) override
+    {
+        static const int timestampLength = 10;
+        return Size(
+            timestampLength + static_cast<int>(message_.Text.size()) + 1,
+            1
+        );
+    }
+
+    void ArrangeOverride(const Rect& finalRect) override
+    {
+        // Leaf control — no children to arrange.
+        return;
+    }
+
+    void RenderOverride(RenderContext& context) override
+    {
+        auto rin = context.BeginText();
+
+        if (focused_)
+        {
+            // Highlight the whole row when focused
+            rin << SetBack(Color::WHITE);
+            rin << SetFore(Color::DARK_GRAY) << message_.Timestamp;
+        }
+        else
+        {
+            rin << SetBack(Color::BLACK);
+            rin << SetFore(Color::LIGHT_GRAY) << message_.Timestamp;
+        }
+
+        // Author messages are cyan; others are yellow
+        rin << SetFore(message_.isAuthor ? Color::CYAN : Color::YELLOW);
+        rin << " " << message_.Text;
+    }
+};
+```
+
+`MessageBubble` is used as an item template inside an `ItemsControl`:
+
+```cpp
+chatHistory->SetItemTemplate([](const MessageModel& item) -> std::unique_ptr<ControlBase>
+{
+    return init<MessageBubble>([&](MessageBubble* bubble)
+    {
+        bubble->message_ = item;
+
+        bubble->CtxMenu = init<ContextMenu>([](ContextMenu* menu)
+        {
+            menu->AddItem(L"Test2", []()
+            {
+                MessageBox::Show(L"ContextMenu.Test2", L"ContextMenu.Test2");
+            });
+        });
+
+        bubble->OnHotkey(InputModifier::None, InputKey::D, [](ControlBase* self)
+        {
+            self->OpenContextMenu();
+        });
+    });
+});
+```
+
+<Tip>
+Use the `init<T>(lambda)` helper to configure controls inline. The lambda receives a raw pointer to the freshly constructed object, and `init` returns a `unique_ptr<T>`. This keeps tree construction readable without manual `make_unique` + setter chains.
+</Tip>

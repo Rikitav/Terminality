@@ -1,0 +1,272 @@
+---
+title: "DispatchTimer — frame clock, timers, and cross-thread dispatch"
+description: "Singleton frame clock that fires TickEvent once per frame, interval/one-shot timers with RAII handles, and InvokeAsync for posting work to the UI thread."
+---
+
+`DispatchTimer` is the engine's frame clock and UI-thread dispatcher. Each iteration of the render loop calls `Tick()`, which measures the elapsed time since the previous call, stores it as `DeltaTime`, fires `TickEvent`, and fires every due timer. Subscribing to `TickEvent` is the standard way to animate properties or run per-frame logic; `SetInterval`/`SetTimeout` cover scheduled one-shot and repeating callbacks without manual bookkeeping; `InvokeAsync` posts work from background threads to the UI thread. A second event, `ResizeFinishedEvent`, fires after the terminal window stops being resized, giving you a clean moment to re-measure layouts.
+
+## Class: `DispatchTimer`
+
+`DispatchTimer` is a non-copyable singleton; obtain the instance with `DispatchTimer::Current()`.
+
+### `Current`
+
+```cpp
+static DispatchTimer& Current();
+```
+
+Returns the process-wide `DispatchTimer` instance.
+
+---
+
+### `TickEvent`
+
+```cpp
+Event<float> TickEvent;
+```
+
+Fired once per frame with the delta time in seconds since the last tick. Subscribe using `+=`:
+
+```cpp
+DispatchTimer::Current().TickEvent += [](float dt)
+{
+    // dt is seconds elapsed since the previous frame
+};
+```
+
+Handlers run synchronously inside `Tick()`, on the engine's render thread.
+
+---
+
+### `ResizeFinishedEvent`
+
+```cpp
+Event<> ResizeFinishedEvent;
+```
+
+Fired after the terminal window finishes resizing. Terminality debounces resize signals with a 100 ms delay (`RESIZE_DELAY = 0.1f`); `ResizeFinishedEvent` fires on the first tick after that delay expires. Use it to invalidate custom layout measurements that depend on absolute terminal dimensions.
+
+```cpp
+DispatchTimer::Current().ResizeFinishedEvent += []()
+{
+    // Terminal dimensions have stabilized — safe to re-query Width/Height
+};
+```
+
+---
+
+## Timers: `SetInterval` and `SetTimeout`
+
+For scheduled work you don't need to count frames yourself — arm a timer and hold the returned handle:
+
+```cpp
+// Fire every 500 ms
+DispatchTimer::TimerHandle blink = DispatchTimer::Current().SetInterval(
+    std::chrono::milliseconds(500),
+    [] { /* runs on the UI thread */ });
+
+// Fire exactly once after 2 s
+DispatchTimer::TimerHandle timeout = DispatchTimer::Current().SetTimeout(
+    std::chrono::milliseconds(2000),
+    [] { /* runs once */ });
+```
+
+```cpp
+class DispatchTimer::TimerHandle;   // move-only RAII handle
+```
+
+| Member | Behaviour |
+|---|---|
+| `~TimerHandle()` | Cancels the timer. Dropping the handle is the normal way to stop it. |
+| `Cancel()` | Idempotent cancellation. |
+| `IsActive()` | `true` while the timer is still armed. After a one-shot fires it reports `false`. |
+| move construction / assignment | Transfers ownership; the moved-from handle is inert. Move-assigning cancels the timer previously held. |
+
+Timer semantics:
+
+- **Fired on the UI thread** from `Tick()` — callbacks may touch controls directly, no `InvokeAsync` hop.
+- **Arming is thread-safe**: a background thread can call `SetInterval`/`SetTimeout` directly.
+- **Sliding schedule**: after each firing, an interval timer's next fire is `interval` from *then*, so slow callbacks never accumulate catch-up fires. An interval of `0` fires every frame.
+- **Reentrancy-safe**: a callback may cancel its own timer, cancel others, or arm new timers.
+- Timers do not fire while the dispatcher is stopped; they survive `Stop()`/`Start()` and are cancelled only by handle destruction or `Cancel()`.
+
+```cpp
+// Self-cancelling interval: fire once, 100 ms from now
+auto handle = std::make_shared<DispatchTimer::TimerHandle>();
+*handle = DispatchTimer::Current().SetInterval(std::chrono::milliseconds(100),
+    [handle] { handle->Cancel(); /* do work */ });
+```
+
+---
+
+## Cross-thread dispatch: `InvokeAsync` and `ProcessTasks`
+
+Background threads cannot touch controls directly — post the work to the UI thread:
+
+```cpp
+void DispatchTimer::InvokeAsync(std::function<void()> task);
+void DispatchTimer::ProcessTasks();
+```
+
+`InvokeAsync` queues `task` (thread-safe) and wakes the UI loop immediately if it is sleeping in its frame-time wait, so the task runs now rather than at the next frame boundary. The engine calls `ProcessTasks()` at the top of every loop iteration; tasks run on the UI thread in FIFO order. Exceptions thrown by a task are swallowed so one bad task cannot kill the loop.
+
+UI-thread identity is established with `SetUIThread()` (called automatically by `RunUILoop`) and checked with `CheckAccess()` / `VerifyAccess()`:
+
+```cpp
+void DispatchTimer::SetUIThread();
+bool DispatchTimer::CheckAccess() const;   // true on the UI thread
+void DispatchTimer::VerifyAccess() const;  // throws std::logic_error off the UI thread
+```
+
+Other members: `BeginResize()` starts the resize debounce window (the engine calls it when the viewport size changes).
+
+---
+
+### `DeltaTime`
+
+```cpp
+float DeltaTime() const;
+```
+
+The delta time from the most recent `Tick()` call, in seconds. The same value that is passed to `TickEvent` handlers. Valid after the first `Tick()` and zero before `Start()` is called.
+
+<ResponseField name="return" type="float">
+  Seconds elapsed between the last two frames.
+</ResponseField>
+
+---
+
+### `TotalTime`
+
+```cpp
+float TotalTime() const;
+```
+
+Accumulated sum of all `DeltaTime` values since `Start()` was called — effectively the wall-clock time in seconds since the application loop began.
+
+<ResponseField name="return" type="float">
+  Total elapsed time in seconds since the timer was started.
+</ResponseField>
+
+---
+
+### `IsRunning`
+
+```cpp
+bool IsRunning() const;
+```
+
+Returns `true` after `Start()` has been called and before `Stop()` is called. `Tick()` is a no-op when the timer is not running.
+
+<ResponseField name="return" type="bool">
+  `true` if the timer is currently running.
+</ResponseField>
+
+---
+
+### `IsResizing`
+
+```cpp
+bool IsResizing() const;
+```
+
+Returns `true` during the debounce window after a terminal resize event arrives and before `ResizeFinishedEvent` fires.
+
+<ResponseField name="return" type="bool">
+  `true` while a resize is being debounced.
+</ResponseField>
+
+---
+
+### `Start` and `Stop`
+
+```cpp
+void Start();
+void Stop();
+```
+
+`Start` records the current high-resolution time as the baseline for the first delta. `Stop` sets the running flag to `false` so subsequent `Tick()` calls are no-ops. The engine calls these automatically around `RunUILoop`; application code rarely needs to call them directly.
+
+---
+
+### `Tick`
+
+```cpp
+void Tick();
+```
+
+Called by the engine each frame. Computes `deltaTime_` as the duration since `lastTime_`, accumulates it into `totalTime_`, fires `TickEvent`, and advances the resize debounce timer if a resize is in progress. Calling `Tick()` when `IsRunning()` is `false` is a no-op.
+
+---
+
+### `GetRemainingFrameTime`
+
+```cpp
+std::chrono::milliseconds GetRemainingFrameTime(int targetFPS = 60);
+```
+
+Returns how many milliseconds remain in the current frame budget at the given target frame rate. The engine uses this to sleep between frames and cap CPU usage. Returns zero if the frame has already overrun its budget.
+
+<ParamField path="targetFPS" type="int" default="60">
+  Target frames per second used to calculate the per-frame budget.
+</ParamField>
+
+<ResponseField name="return" type="std::chrono::milliseconds">
+  Remaining time in the current frame, clamped to zero if the frame overran.
+</ResponseField>
+
+---
+
+## Understanding delta time
+
+`dt` (delta time) is the number of seconds between the current frame and the previous one. At 60 fps it is approximately `0.0167`. Using `dt` rather than a fixed increment makes animations frame-rate independent:
+
+```
+value += rate * dt
+```
+
+A `rate` of `10.0f` advances `value` by 10 units per second regardless of whether the frame rate is 30, 60, or 120 fps.
+
+---
+
+## Animating a progress bar
+
+This pattern from the Terminality test application drives a looping progress bar animation entirely from `TickEvent`:
+
+```cpp
+DispatchTimer::Current().TickEvent += [progress](float dt)
+{
+    float current = progress->Value.Get();
+    current += dt * 10.0f; // advance 10 units per second
+
+    if (current > progress->Maximum.Get())
+        current = progress->Minimum.Get(); // wrap back to start
+
+    progress->Value = current;
+};
+```
+
+Setting `progress->Value` marks the widget dirty, causing Terminality to redraw only that control on the next frame. No manual invalidation call is needed.
+
+---
+
+## DispatchTimer vs. OnPropertyChanged
+
+| Use case | Recommended mechanism |
+| --- | --- |
+| Continuous animation (position, fill, opacity) | `DispatchTimer::Current().TickEvent` |
+| Repeating scheduled work (blinking cursor, polling) | `DispatchTimer::Current().SetInterval` |
+| React to a specific property changing | `OnPropertyChanged` callback on a `Property<T>` |
+| One-shot deferred action | `DispatchTimer::Current().SetTimeout` |
+| Hand a result from a background thread to the UI | `DispatchTimer::Current().InvokeAsync` |
+| Terminal resize recovery | `DispatchTimer::Current().ResizeFinishedEvent` |
+
+Prefer `TickEvent` whenever the logic needs to run every frame or accumulate over time. Prefer `OnPropertyChanged` for reactions that should fire exactly when a value changes and have no concept of elapsed time.
+
+---
+
+## Related
+
+- [`RenderContext`](/api/render-context) — draw the animated state inside `RenderOverride`
+- [`FocusManager`](/api/focus-manager) — focus changes fire synchronously, not through `TickEvent`
+- [`HostApplication`](/api/host-application) — `RunUILoop` starts the frame loop that calls `Tick()`

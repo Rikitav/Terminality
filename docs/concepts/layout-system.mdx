@@ -1,0 +1,222 @@
+---
+title: "How Terminality's measure-arrange-render engine works"
+description: "The measure-arrange-render pipeline, alignment and margin, Grid and StackPanel layout containers, and the Point, Size, Rect, and Thickness geometry types."
+---
+
+Terminality's layout engine follows the same three-phase pipeline used by WPF and similar retained-mode UI frameworks: **Measure**, **Arrange**, and **Render**. Each phase runs in a top-down traversal of the visual tree. Only nodes whose dirty flags are set participate in a given pass, so the engine does the minimum work required to update the display after any property change.
+
+## The three-phase pipeline
+
+<Steps>
+  <Step title="Measure">
+    The tree root calls `Measure(availableSize)` on each child, passing the space it has to offer. Each node's `ControlBase::Measure()` clamps the available size against `MinSize`, `MaxSize`, and `Margin`, then delegates to `MeasureOverride()`, which you implement. The result is stored as `actualSize_` and returned to the parent so it can size itself.
+  </Step>
+  <Step title="Arrange">
+    After measuring, the root calls `Arrange(finalRect)` on each child with the rectangle the parent has allocated. `ControlBase::Arrange()` applies `Margin` and resolves `HorizontalAlignment`/`VerticalAlignment` to produce an `arrangedRect_`, then calls your `ArrangeOverride()` so you can position sub-children.
+  </Step>
+  <Step title="Render">
+    `ControlBase::Render()` first fills the control's background using `ForegroundColor`/`BackgroundColor`, resets `visualDirty_`, then calls your `RenderOverride()` with a `RenderContext` scoped to the arranged rectangle.
+  </Step>
+</Steps>
+
+You always override the three `*Override` methods — never the public `Measure`, `Arrange`, or `Render` methods directly.
+
+## Alignment
+
+Every `ControlBase` carries `HorizontalAlignment` and `VerticalAlignment` properties. They control how the control positions itself inside the slot its parent allocates.
+
+### HorizontalAlign
+
+| Value | Behaviour |
+|---|---|
+| `Left` | Pins to the left edge; uses natural content width |
+| `Center` | Centres horizontally; uses natural content width |
+| `Right` | Pins to the right edge; uses natural content width |
+| `Stretch` | Expands to fill available slot width, clamped by `MinSize`/`MaxSize` |
+
+### VerticalAlign
+
+| Value | Behaviour |
+|---|---|
+| `Top` | Pins to the top edge; uses natural content height |
+| `Center` | Centres vertically; uses natural content height |
+| `Bottom` | Pins to the bottom edge; uses natural content height |
+| `Stretch` | Expands to fill available slot height, clamped by `MinSize`/`MaxSize` |
+
+The default for both alignments is `Stretch`, so controls fill their parent slot unless you override them.
+
+```cpp
+init<Label>([](Label* lbl)
+{
+    lbl->Text = L"Centred label";
+    lbl->HorizontalAlignment = HorizontalAlign::Center;
+    lbl->VerticalAlignment   = VerticalAlign::Center;
+});
+```
+
+## Margin (Thickness)
+
+`Margin` is a `Thickness` value that reserves space around the control's content on all four sides. It is subtracted from the available space before `MeasureOverride` is called, and also from the arranged rectangle.
+
+```cpp
+struct Thickness
+{
+    int32_t Left, Top, Right, Bottom;
+
+    Thickness(int32_t uniform);                                    // same on all sides
+    Thickness(int32_t left, int32_t top, int32_t right, int32_t bottom);
+};
+```
+
+`Thickness::Zero` and `Thickness::Single` are predefined constants.
+
+```cpp
+chatBorder->Margin = Thickness(0, 1, 0, 0); // 1 cell top margin only
+promptSpinner->Margin = Thickness(1, 0, 1, 0); // 1 cell left and right
+```
+
+## Size constraints: MinSize, MaxSize, ExpSize
+
+Three `Property<ControlBase, Size>` members constrain the space reported by `MeasureOverride`.
+
+| Property | Effect | Default |
+|---|---|---|
+| `MinSize` | Floor for the measured dimension | `Size::Auto` (no minimum) |
+| `MaxSize` | Ceiling for the measured dimension | `Size::Auto` (no maximum) |
+| `ExpSize` | Shorthand that sets both `MinSize` and `MaxSize` to the same value, making the control a fixed size | `Size::Auto` |
+
+A dimension of `-1` in `Size` or `Thickness` means "automatic" or "unconstrained". Any non-negative value is applied as a hard limit.
+
+```cpp
+inputBox->MaxSize = Size(-1, 1); // unlimited width, exactly 1 cell tall
+```
+
+## Grid layout
+
+`Grid` divides its space into rows and columns, each described by a `RowDefinition` or `ColumnDefinition` with a `GridLength`.
+
+### GridLength sizing modes
+
+| Factory | Meaning |
+|---|---|
+| `GridLength::Auto()` | Size to the largest child in that track |
+| `GridLength::Cell(n)` | Fixed size of *n* terminal cells |
+| `GridLength::Star(w)` | Proportional share of remaining space after Auto and Cell tracks |
+
+```cpp
+AddRow(RowDefinition{ GridLength::Star(1.0f) }); // takes remaining height
+AddRow(RowDefinition{ GridLength::Cell(3) });     // exactly 3 rows tall
+AddRow(RowDefinition{ GridLength::Cell(2) });     // exactly 2 rows tall
+
+AddColumn(ColumnDefinition{ GridLength::Auto() });       // sized to content
+AddColumn(ColumnDefinition{ GridLength::Star(1.0f) });   // fills remaining width
+```
+
+### Placing children
+
+`AddChild` accepts an optional `rowSpan` and `colSpan` (both default to 1):
+
+```cpp
+grid->AddChild(row, column, init<Button>(...));
+grid->AddChild(row, column, rowSpan, colSpan, init<Border>(...));
+```
+
+`RowDefinition` and `ColumnDefinition` also carry `MinHeight`/`MaxHeight` and `MinWidth`/`MaxWidth` fields (defaulting to `0` and `-1` respectively).
+
+## StackPanel layout
+
+`StackPanel` stacks children one after another along an `Orientation` axis.
+
+```cpp
+Property<StackPanel, Orientation> ContentOrientation; // Vertical (default) or Horizontal
+Property<StackPanel, bool> Scrollable;                // enable scrolling when content overflows
+Property<StackPanel, bool> AutoScrollToEnd;           // keep the last item visible
+Property<StackPanel, bool> Looping;                   // wrap focus from last to first child
+```
+
+```cpp
+init<StackPanel>([](StackPanel* panel)
+{
+    panel->ContentOrientation = Orientation::Vertical;
+    panel->Scrollable         = true;
+    panel->AutoScrollToEnd    = true;
+
+    panel->AddChild(init<Label>([](Label* l) { l->Text = L"Item 1"; }));
+    panel->AddChild(init<Label>([](Label* l) { l->Text = L"Item 2"; }));
+});
+```
+
+`HorizontalContentAlignment` and `VerticalContentAlignment` control how each child aligns within its slot along the cross axis.
+
+## Geometry types
+
+All layout computation uses four value types from `Core/Geometry.hpp`.
+
+<AccordionGroup>
+  <Accordion title="Point">
+    A 2D integer position.
+
+    ```cpp
+    struct Point
+    {
+        int32_t X;
+        int32_t Y;
+
+        Point(int32_t x = 0, int32_t y = 0);
+
+        static const Point Zero;
+    };
+    ```
+  </Accordion>
+  <Accordion title="Size">
+    Width and height in terminal cells. A dimension of `-1` means unconstrained.
+
+    ```cpp
+    struct Size
+    {
+        int32_t Width;
+        int32_t Height;
+
+        Size(int32_t width = 0, int32_t height = 0);
+
+        static const Size Zero;
+        static const Size Auto; // both dimensions = -1
+    };
+    ```
+  </Accordion>
+  <Accordion title="Rect">
+    Position and size combined. Provides `Right()`, `Bottom()`, `AsSize()`, `Contains()`, `Intersects()`, and static helpers `Union`, `Enclose`, and `Clip`.
+
+    ```cpp
+    struct Rect
+    {
+        int32_t X, Y, Width, Height;
+
+        Rect(int32_t x = 0, int32_t y = 0, int32_t width = 0, int32_t height = 0);
+    };
+    ```
+  </Accordion>
+  <Accordion title="Thickness">
+    Four-sided spacing value used for margins and padding.
+
+    ```cpp
+    struct Thickness
+    {
+        int32_t Left, Top, Right, Bottom;
+
+        Thickness(int32_t uniform);
+        Thickness(int32_t left, int32_t top, int32_t right, int32_t bottom);
+
+        int32_t Horizontal() const; // Left + Right
+        int32_t Vertical()   const; // Top + Bottom
+
+        static const Thickness Zero;
+        static const Thickness Single; // 1 on all sides
+    };
+    ```
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+Use `Size::Auto` as the default for `MinSize` and `MaxSize`. A dimension value of `-1` in a `Size` means "no constraint applies" — the control can grow or shrink freely along that axis.
+</Tip>

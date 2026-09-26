@@ -1,0 +1,175 @@
+---
+title: "Widget hierarchy and the VisualTree node structure"
+description: "How Terminality organizes controls into a node tree, how ControlBase adds layout and focus, and how init<T>() builds deeply nested widget hierarchies."
+---
+
+Every Terminality UI is a tree of nodes. The framework owns the tree through `VisualTree`, a process-global singleton. Each node in the tree is a `VisualTreeNode`, and every concrete control you write or use inherits from `ControlBase`, which extends `VisualTreeNode` with layout, input handling, focus management, and the reactive property system.
+
+## Core types
+
+<CardGroup cols={2}>
+  <Card title="VisualTree" icon="sitemap">
+    The process-global root of the UI. Holds a stack of `UILayer` objects, runs the layout pipeline, and dispatches dirty-rect rendering to a `RenderBuffer`.
+  </Card>
+  <Card title="VisualTreeNode" icon="circle-nodes">
+    Abstract base class for every node. Declares the `Measure` / `Arrange` / `Render` contract, dirty flags, parent pointer, and focus/input callbacks.
+  </Card>
+  <Card title="UILayer" icon="layer-group">
+    A `VisualTree` layer owns one root `VisualTreeNode` and a `FocusManager`. Layers stack — pushing a modal dialog pushes a new layer; popping removes it.
+  </Card>
+  <Card title="ControlBase" icon="square">
+    The concrete base class for all user-facing controls. Adds the `Property<>` system, `Event<>` members (`PropertyChanged`, `KeyDown`, `KeyUp`), alignment, margin, colours, focus, and hotkey registration.
+  </Card>
+</CardGroup>
+
+## VisualTree and UILayer
+
+`VisualTree::Current()` returns the singleton. The framework starts a UI loop by pushing one root control as a `UILayer`:
+
+```cpp
+HostApplication& app = HostApplication::Current();
+app.EnterTerminal();
+app.RunUILoop(std::make_unique<MyRootWidget>());
+app.ExitTerminal();
+```
+
+You can push additional layers at runtime — for example, to display a modal dialog on top of the existing UI — and pop them when the dialog closes. `PeekLayer()` returns the topmost active layer's root node.
+
+## VisualTreeNode
+
+`VisualTreeNode` is the abstract interface that `VisualTree` operates on. It carries three dirty flags:
+
+| Flag | Cleared by |
+|---|---|
+| `measureDirty_` | `Measure()` |
+| `arrangeDirty_` | `Arrange()` |
+| `visualDirty_` | `Render()` |
+
+Calling `InvalidateMeasure()`, `InvalidateArrange()`, or `InvalidateVisual()` on a node bubbles the notification up to the tree via `OnChildInvalidated()`, so the framework knows which subtree needs re-layout.
+
+Each node exposes `VisualChildrenCount()` and `GetVisualChild(index)` so the tree can traverse its children without knowing the concrete type.
+
+## ControlBase
+
+`ControlBase` derives from `VisualTreeNode` and is the class you subclass to write your own controls. It provides:
+
+- **Layout properties** — `MinSize`, `MaxSize`, `ExpSize`, `Margin`, `HorizontalAlignment`, `VerticalAlignment`
+- **Colour properties** — `ForegroundColor`, `BackgroundColor`, `FocusedForegroundColor`, `FocusedBackgroundColor`
+- **Visibility** — `IsVisible`
+- **Reactive callbacks** — `PropertyChanged`, `KeyDown`, `KeyUp`
+- **Focus/tab order** — `SetFocusable()`, `SetTabStop()`, `SetTabIndex()`
+- **Hotkey registration** — `OnHotkey(modifier, key, callback)`
+- **Tree query** — `QueryByTag<T>()`
+- **Child iteration** — `child_begin()` / `child_end()`
+
+### MeasureOverride / ArrangeOverride / RenderOverride
+
+The three protected pure virtuals are the extension points you override in every control:
+
+```cpp
+class MyWidget : public ControlBase
+{
+protected:
+    Size MeasureOverride(const Size& availableSize) override
+    {
+        // Return the natural content size
+        return Size(20, 3);
+    }
+
+    void ArrangeOverride(const Rect& finalRect) override
+    {
+        // Position children inside finalRect
+    }
+
+    void RenderOverride(RenderContext& context) override
+    {
+        auto stream = context.BeginText();
+        stream << "Hello from MyWidget";
+    }
+};
+```
+
+## The `init<T>()` factory helper
+
+Building a widget tree by hand with `std::make_unique` and sequential setter calls produces verbose, hard-to-read code. The `init<T>()` helper template solves this:
+
+```cpp
+template <typename T>
+std::unique_ptr<T> init(std::function<void(T*)> init);
+```
+
+It allocates a `T`, passes the raw pointer to the lambda so you can configure it, then returns the `unique_ptr`. The overload without a lambda just allocates:
+
+```cpp
+template <typename T>
+std::unique_ptr<T> init();
+```
+
+Nested lambdas naturally mirror the widget hierarchy in the source code:
+
+```cpp
+AddChild(0, 0, init<Border>([&](Border* chatBorder)
+{
+    chatBorder->Margin = Thickness(0, 1, 0, 0);
+    chatBorder->HeaderText = L"Chat: Tamerlan";
+    chatBorder->Content = init<ItemsControl<MessageModel>>([&](ItemsControl<MessageModel>* list)
+    {
+        list->Scrollable = true;
+        list->AutoScrollToEnd = true;
+    });
+}));
+```
+
+Each level of nesting corresponds to one level of the visual tree, which makes the structure obvious at a glance.
+
+## AddChild
+
+Panel controls such as `Grid` and `StackPanel` expose `AddChild()`. `Grid::AddChild` takes a row, column, and optionally row/column spans:
+
+```cpp
+grid->AddChild(0, 0, init<Label>([](Label* lbl)
+{
+    lbl->Text = L"Row 0, Col 0";
+}));
+
+// With spans
+grid->AddChild(0, 0, /*rowSpan=*/2, /*colSpan=*/1, init<Border>());
+```
+
+`StackPanel::AddChild` takes only the child pointer because panels stack children sequentially along their orientation axis.
+
+## QueryByTag
+
+Every control has a `Tag` property (a `std::string`). `QueryByTag<T>(tag)` performs a depth-first search from any node and returns the first match cast to `T*`, or `nullptr`:
+
+```cpp
+// Set a tag during construction
+init<TextBox>([](TextBox* tb)
+{
+    tb->Tag = "inputField";
+    tb->Text = L"";
+});
+
+// Retrieve it later from the root
+TextBox* field = root->QueryByTag<TextBox>("inputField");
+if (field)
+    field->Text = L"populated";
+```
+
+## Child iteration
+
+`ControlBase` exposes a standard forward iterator over its visual children:
+
+```cpp
+for (auto it = control->child_begin(); it != control->child_end(); ++it)
+{
+    VisualTreeNode* child = *it;
+    // ...
+}
+```
+
+The iterator calls `GetVisualChild(index)` internally, so it works uniformly across `Grid`, `StackPanel`, `Border`, and any custom panel you create.
+
+<Note>
+`VisualTreeNode` does not support copy or move semantics — controls are exclusively owned by their parent through `std::unique_ptr`. Never store a raw pointer to a control that outlives its tree.
+</Note>

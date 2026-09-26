@@ -1,0 +1,153 @@
+---
+title: "Get started with Terminality: build your first app"
+description: "Build your first Terminality TUI app from scratch. Follow the complete workflow: include the framework, compose a widget tree, and run the UI loop."
+---
+
+This page walks you through building a minimal but complete Terminality application. You will include the framework, create a `StackPanel` with a centered label and an exit button, hand the widget tree to `HostApplication`, and run the UI loop. By the end you will have a working terminal UI and understand the pattern used in every Terminality application.
+
+<Note>
+  Complete the [installation](/installation) steps before starting. You need Terminality built and linked into your project.
+</Note>
+
+## Build your first app
+
+<Steps>
+  <Step title="Include the framework and open the namespace">
+    Include the umbrella header and pull in the namespace — a standard C++20 include, no module machinery required.
+
+    ```cpp
+    #include <terminality/Terminality.hpp>
+    using namespace terminality;
+    ```
+
+    The single include makes the entire public API available: all controls, the layout engine, the event system, and `HostApplication`. Individual headers (`<terminality/Controls/Button.hpp>`, and so on) work too if you prefer finer-grained includes.
+  </Step>
+
+  <Step title="Enter the terminal">
+    Inside `main`, retrieve the `HostApplication` singleton and call `EnterTerminal()`. This switches the terminal into raw input mode and takes over the output buffer.
+
+    ```cpp
+    int main()
+    {
+        auto& app = HostApplication::Current();
+        app.EnterTerminal();
+    ```
+
+    <Warning>
+      Always pair `EnterTerminal()` with `ExitTerminal()` at the end of `main`. Failing to call `ExitTerminal()` will leave the terminal in raw mode after the process exits.
+    </Warning>
+  </Step>
+
+  <Step title="Compose the widget tree">
+    Use the `init<T>()` factory helper to build controls. Pass a lambda that receives a typed pointer to the new control and configures its properties. Nest calls to build a hierarchy.
+
+    ```cpp
+        auto root = init<StackPanel>([](auto* panel)
+        {
+            panel->HorizontalAlignment = HorizontalAlign::Stretch;
+            panel->VerticalAlignment = VerticalAlign::Stretch;
+
+            panel->AddChild(init<Label>([](auto* label)
+            {
+                label->Text = L"Hello, Terminality!";
+                label->HorizontalAlignment = HorizontalAlign::Center;
+                label->VerticalAlignment = VerticalAlign::Center;
+            }));
+
+            panel->AddChild(init<Button>([](Button* btn)
+            {
+                btn->Text = L"Exit";
+                btn->HorizontalAlignment = HorizontalAlign::Stretch;
+                btn->VerticalAlignment = VerticalAlign::Top;
+
+                btn->Clicked += []()
+                {
+                    HostApplication::Current().RequestStop();
+                };
+            }));
+        });
+    ```
+
+    The `StackPanel` stretches to fill the screen. The `Label` centres itself within the available space. The `Button` subscribes to the `Clicked` event and calls `RequestStop()` to signal the UI loop to exit.
+  </Step>
+
+  <Step title="Run the UI loop and exit">
+    Transfer ownership of the root widget to `RunUILoop()`. The call blocks until `RequestStop()` is called, then returns. Call `ExitTerminal()` to restore the terminal.
+
+    ```cpp
+        app.RunUILoop(std::move(root));
+        app.ExitTerminal();
+        return 0;
+    }
+    ```
+  </Step>
+</Steps>
+
+## Complete example
+
+Here is the full program in one block, ready to compile:
+
+```cpp
+#include <terminality/Terminality.hpp>
+using namespace terminality;
+
+int main()
+{
+    auto& app = HostApplication::Current();
+    app.EnterTerminal();
+
+    auto root = init<StackPanel>([](auto* panel)
+    {
+        panel->HorizontalAlignment = HorizontalAlign::Stretch;
+        panel->VerticalAlignment = VerticalAlign::Stretch;
+
+        panel->AddChild(init<Label>([](auto* label)
+        {
+            label->Text = L"Hello, Terminality!";
+            label->HorizontalAlignment = HorizontalAlign::Center;
+            label->VerticalAlignment = VerticalAlign::Center;
+        }));
+
+        panel->AddChild(init<Button>([](Button* btn)
+        {
+            btn->Text = L"Exit";
+            btn->HorizontalAlignment = HorizontalAlign::Stretch;
+            btn->VerticalAlignment = VerticalAlign::Top;
+
+            btn->Clicked += []()
+            {
+                HostApplication::Current().RequestStop();
+            };
+        }));
+    });
+
+    app.RunUILoop(std::move(root));
+    app.ExitTerminal();
+    return 0;
+}
+```
+
+## What just happened
+
+**`HostApplication::Current()`** returns the singleton that owns the terminal lifecycle. It is the single entry and exit point for every Terminality program.
+
+**`EnterTerminal()`** puts the terminal into raw mode and sets up the output buffer. From this point, Terminality controls all output; do not write to `stdout` or `stderr` directly while the UI loop is running.
+
+**`init<T>(lambda)`** allocates a control of type `T`, calls the lambda with a typed pointer so you can configure properties inline, and returns a `std::unique_ptr<T>`. This pattern replaces constructors and separate setter calls with a single self-contained expression.
+
+**`AddChild()`** on a container control registers a child widget. The layout engine measures and arranges children automatically on every frame based on their alignment and the available space.
+
+**`btn->Clicked += []() { ... }`** subscribes a lambda to the `Clicked` event. Terminality's event system is type-safe: each event carries its own signature, and subscribers are stored as `std::function` instances.
+
+**`RunUILoop(std::move(root))`** takes ownership of the root widget, then runs the measure-arrange-render and input-poll loop until `RequestStop()` is called.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Build and integrate" icon="download" href="/installation">
+    Set up the CMake build and link Terminality into your own project.
+  </Card>
+  <Card title="What is Terminality?" icon="book" href="/introduction">
+    Understand the architecture, distribution model, and extension points in depth.
+  </Card>
+</CardGroup>

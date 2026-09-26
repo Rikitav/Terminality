@@ -1,0 +1,87 @@
+---
+title: "What is Terminality? A C++20 terminal UI framework"
+description: "Learn what Terminality is, why it exists, and how its WPF-style widget hierarchy and header-only-friendly distribution make terminal UI development tractable."
+---
+
+Terminality is a C++20 terminal UI framework that replaces manual cursor positioning with a proper widget hierarchy. Instead of calculating coordinates by hand, you compose a tree of controls — containers like `Grid`, `StackPanel`, and `Border`, plus interactive widgets like `Button`, `TextBox`, and `CheckBox` — and Terminality handles sizing, alignment, focus navigation, and efficient redrawing automatically. This page explains what Terminality is, why it was built, and how its architecture fits together.
+
+## Why Terminality exists
+
+Writing terminal UIs without a framework means managing cursor positions by hand, tracking which screen regions need redrawing, and wiring up input handling for every widget yourself. The result is brittle code that couples business logic tightly to rendering details.
+
+Terminality was built to solve this by applying the same layout model that made WPF and XAML productive for desktop UIs. You describe your interface declaratively — what controls exist, how they should be aligned, and what they do when interacted with — and the framework translates that description into terminal output.
+
+## WPF-style layout in the terminal
+
+Terminality's layout system mirrors XAML concepts directly:
+
+- **`HorizontalAlignment` and `VerticalAlignment`** — `Stretch`, `Center`, `Left`, `Right`, `Top`, `Bottom` work on every control.
+- **`Margin` and `Thickness`** — spacing between controls uses the same four-sided margin model.
+- **`Grid` with row and column definitions** — `GridLength::Star()`, `GridLength::Auto()`, and `GridLength::Cell(n)` distribute space the same way `*`, `Auto`, and fixed pixel values do in XAML.
+- **`StackPanel`** — stacks children vertically or horizontally and stretches to fill available space.
+
+Controls are configured through init-lambdas and composed with `AddChild`, producing a self-contained widget tree that Terminality owns and renders.
+
+## Distribution: headers, sources, and a single-header build
+
+Terminality is written in classic C++20 — no modules. The public API lives in `Terminality/include/terminality/`, mirrored by implementations in `Terminality/src/`, and is exposed through the umbrella header:
+
+```cpp
+#include <terminality/Terminality.hpp>
+```
+
+There are two supported ways to consume it:
+
+- **Static library** — add the repository via `add_subdirectory` (or build and link `libterminality.a` yourself) and include the headers. This is the recommended setup; see [Installation](/installation).
+- **Single-header amalgamation** — the repo ships a generated `out/Terminality.hpp` that merges all headers and sources. Define `TERMINALITY_IMPLEMENTATION` in exactly one translation unit before including it, and you can drop the file into any project without CMake.
+
+The API is organised by category:
+
+| Category | Headers |
+|---|---|
+| Core | `Color`, `Focus`, `Geometry`, `InputEvent`, `Layout`, `TextHelper` |
+| Layout controls | `Grid`, `StackPanel`, `ItemsControl`, `ScrollViewer` |
+| Visual controls | `Label`, `Border`, `Spinner`, `ProgressBar` |
+| Interactive controls | `CheckBox`, `Button`, `TextBox` |
+| Dialogs | `ContextMenu`, `MessageBox`, `OpenFileDialog` |
+| Engine | `DispatchTimer`, `FocusManager`, `Navigator`, `RenderBuffer`, `RenderContext` |
+| Framework | `VisualTree`, `ControlBase`, `Event`, `Property`, `ObservableCollection` |
+
+Any C++20 compiler works: MSVC (Visual Studio 2022) on Windows and GCC 13+ on Linux are the tested toolchains.
+
+## Architecture overview
+
+A Terminality application is structured around three components:
+
+**`HostApplication`** — a singleton that owns the terminal lifecycle. It calls `EnterTerminal()` to configure raw input mode and take over the output buffer, runs the render-input loop via `RunUILoop()`, and restores the terminal on `ExitTerminal()`. On Windows and Linux, a platform-specific backend (`HostBackend`) handles the low-level I/O.
+
+**Widget tree** — every visible element is a `VisualTreeNode`. Containers hold children, measure and arrange them recursively, and propagate invalidation up to the root when state changes.
+
+**Render pipeline** — `RenderBuffer` tracks per-cell state. On each frame, only dirty cells are written to the terminal output, which keeps redraws fast even on large layouts.
+
+## Extension points
+
+You can write custom controls by subclassing `ControlBase` and overriding three virtual methods:
+
+- `MeasureOverride(availableSize)` — return the size your control needs.
+- `ArrangeOverride(finalRect)` — position children within the allocated rectangle.
+- `RenderOverride(context)` — write characters and colors to the `RenderContext`.
+
+The test application in the repository implements a full suite of control demos — including custom-rendered widgets like an animated sine graph on a `Canvas` — as concrete examples of this pattern.
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Get started quickly" icon="rocket" href="/quickstart">
+    Build a working Terminality app with a complete code walkthrough.
+  </Card>
+  <Card title="Build and integrate" icon="download" href="/installation">
+    Clone, build with CMake, and link Terminality into your own project.
+  </Card>
+  <Card title="Widget hierarchy" icon="sitemap" href="/concepts/widget-hierarchy">
+    Grid, StackPanel, Border, and ScrollViewer containers with full child management and automatic layout.
+  </Card>
+  <Card title="Events and properties" icon="signal" href="/concepts/events-and-properties">
+    Type-safe `Event<Args...>` and reactive `Property<T>` with automatic invalidation and hotkey binding.
+  </Card>
+</CardGroup>

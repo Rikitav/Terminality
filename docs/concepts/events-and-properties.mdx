@@ -1,0 +1,224 @@
+---
+title: "Event system, connections, and reactive properties"
+description: "How Terminality's Event<Args...> system and EventConnection work, and how Property<TOwner,T> drives layout invalidation through InvalidationKind."
+---
+
+Terminality couples its widget tree to application logic through two complementary mechanisms: `Event<Args...>` for broadcasting notifications to multiple subscribers, and `Property<TOwner, T>` for values that automatically invalidate the layout pipeline when they change. Together they eliminate the need for manual `Invalidate()` calls in most situations.
+
+## Events
+
+### Event\<Args...\>
+
+`Event` is a variadic template that holds a map of typed callbacks. Each handler is a `std::function<void(Args...)>`.
+
+```cpp
+// Declaration inside Button
+Event<> Clicked;
+
+// Declaration inside ControlBase
+Event<const char*> PropertyChanged;
+Event<InputEvent>  KeyDown;
+Event<InputEvent>  KeyUp;
+```
+
+#### Subscribing with `operator+=`
+
+The simplest way to attach a handler is `operator+=`. The handler stays connected for the lifetime of the event owner. There is no way to disconnect it later.
+
+```cpp
+statusBar->Clicked += []()
+{
+    MessageBox::Show(L"Clicked!", L"Button was pressed");
+};
+```
+
+For events with arguments, the lambda receives them directly:
+
+```cpp
+control->KeyDown += [](InputEvent input)
+{
+    // handle input
+};
+```
+
+#### Subscribing with `Connect()`
+
+`Connect()` returns an `EventConnection` that you can store. When the `EventConnection` is destroyed, the handler is automatically removed. This is the preferred pattern inside classes where handler lifetime must match object lifetime.
+
+```cpp
+[[nodiscard]] EventConnection<Args...> Connect(Handler<Args...> handler);
+```
+
+```cpp
+class MyView : public ControlBase
+{
+    EventConnection<float> timerConn_;
+
+    MyView()
+    {
+        // Connection lives as long as MyView does
+        timerConn_ = DispatchTimer::Current().TickEvent.Connect([this](float dt)
+        {
+            // update animation
+        });
+    }
+};
+```
+
+<Warning>
+`Connect()` is marked `[[nodiscard]]`. If you discard the returned `EventConnection`, the handler is immediately disconnected because the temporary is destroyed at the end of the full expression. Always store the connection when you need it to persist.
+</Warning>
+
+#### Disconnecting manually
+
+Call `Disconnect()` on the `EventConnection` object at any time to remove the handler before the connection goes out of scope:
+
+```cpp
+timerConn_.Disconnect();
+```
+
+`EventConnection` is move-only — it cannot be copied. Move assignment disconnects the previous connection before taking ownership of the new one.
+
+#### Emitting events
+
+Call `Emit(args...)` to invoke all registered handlers. `Emit` snapshots the handler map first, so handlers that add or remove connections during dispatch do not cause iterator invalidation:
+
+```cpp
+void ControlBase::OnKeyDown(InputEvent input)
+{
+    KeyDown.Emit(input); // fires all KeyDown handlers
+    // ...
+}
+```
+
+## Properties
+
+### Property\<TOwner, T\>
+
+`Property` wraps a value and ties it to its owner's invalidation pipeline. Every built-in `ControlBase` property uses this template:
+
+```cpp
+Property<ControlBase, Size>             MinSize     { this, "MinSize",     Size::Auto,          InvalidationKind::Measure };
+Property<ControlBase, HorizontalAlign>  HorizontalAlignment { this, "HorizontalAlign", HorizontalAlign::Stretch, InvalidationKind::Measure };
+Property<ControlBase, Color>            ForegroundColor     { this, "ForegroundColor", Color::WHITE,             InvalidationKind::Visual  };
+```
+
+#### Reading
+
+Use implicit conversion, `Get()`, or `operator->` for struct access:
+
+```cpp
+Size s = control->MinSize;           // implicit conversion
+Size s = control->MinSize.Get();     // explicit getter
+int w  = control->MinSize->Width;    // member access via operator->
+```
+
+#### Writing
+
+Assign with `operator=` or call `Set()`. Both are no-ops when the value has not changed:
+
+```cpp
+inputBox->MaxSize = Size(-1, 1);     // operator=
+inputBox->MaxSize.Set(Size(-1, 1));  // Set() — returns *owner for chaining
+```
+
+Every assignment that produces a new value calls `ApplyInvalidation()` and then `OnPropertyChanged()` on the owner.
+
+### InvalidationKind
+
+`InvalidationKind` controls which part of the layout pipeline is re-run after a property changes:
+
+| Value | Effect |
+|---|---|
+| `None` | No layout pass triggered; only `PropertyChanged` fires |
+| `Visual` | Calls `InvalidateVisual()` — the control redraws on the next frame |
+| `Arrange` | Calls `InvalidateArrange()` — positions are recomputed before the next draw |
+| `Measure` | Calls `InvalidateMeasure()` — full measure + arrange + render on the next frame |
+
+`Measure` is the most expensive because it bubbles up the tree and restarts the entire layout pipeline for that subtree. Use `Visual` for colour or text-content changes where size does not change.
+
+```cpp
+// Only causes a repaint, not a remeasure
+Property<ControlBase, Color> ForegroundColor { this, "ForegroundColor", Color::WHITE, InvalidationKind::Visual };
+
+// Forces a full re-layout when text changes, because width changes too
+Property<Button, std::wstring> Text { this, "Text", L"", InvalidationKind::Measure };
+```
+
+### How invalidation flows
+
+<Steps>
+  <Step title="Assignment detected">
+    `Property::operator=` compares the new value to the stored one. If they differ, it continues.
+  </Step>
+  <Step title="ApplyInvalidation">
+    `owner->ApplyInvalidation(invalidation_)` calls `InvalidateVisual()`, `InvalidateArrange()`, or `InvalidateMeasure()` as appropriate. Each of those sets a dirty flag and calls `parent->OnChildInvalidated()`, propagating up the tree.
+  </Step>
+  <Step title="OnPropertyChanged">
+    `owner->OnPropertyChanged(name_)` is called with the property name string. The base `ControlBase` implementation handles `"ExpSize"` by synchronising `MinSize` and `MaxSize`. Override this in your own control to react to property changes.
+  </Step>
+  <Step title="PropertyChanged event">
+    `ControlBase::OnPropertyChanged` also fires the `PropertyChanged` event so external code can observe any property change on a control.
+  </Step>
+</Steps>
+
+### ExpSize shorthand
+
+Setting `ExpSize` to a `Size` simultaneously sets both `MinSize` and `MaxSize` to that same value, making the control a fixed size. This is handled in `OnPropertyChanged`:
+
+```cpp
+void ControlBase::OnPropertyChanged(const char* propertyName)
+{
+    if (std::strcmp(propertyName, "ExpSize") == 0)
+    {
+        Size newSize = ExpSize.Get();
+        MinSize.Set(std::move(newSize));
+        MaxSize.Set(std::move(newSize));
+    }
+}
+```
+
+## Keyboard events and hotkeys
+
+`ControlBase` fires `KeyDown` and `KeyUp` events for every key event received while the control is focused. You can subscribe to them like any other event:
+
+```cpp
+control->KeyDown += [](InputEvent input)
+{
+    // react to any key
+};
+```
+
+For specific key combinations, `OnHotkey` registers a dedicated callback. It throws `std::runtime_error` if the combination is already registered on that control:
+
+```cpp
+void OnHotkey(InputModifier modifier, InputKey key, HotkeyCallback callback);
+```
+
+```cpp
+// Press ESC to stop the application
+OnHotkey(InputModifier::None, InputKey::ESCAPE, [](ControlBase* self)
+{
+    HostApplication::Current().RequestStop();
+});
+
+// Press D to open the context menu on the focused bubble
+bubble->OnHotkey(InputModifier::None, InputKey::D, [](ControlBase* self)
+{
+    self->OpenContextMenu();
+});
+
+// Enter submits the text box
+inputBox->OnHotkey(InputModifier::None, InputKey::RETURN, [&](ControlBase* self)
+{
+    TextBox* tb = static_cast<TextBox*>(self);
+    chatHistory_.push_back(MessageModel{ true, L"[now]", tb->Text });
+    tb->Text = L"";
+});
+```
+
+Hotkeys are checked before the default arrow/tab focus-navigation logic in `ControlBase::OnKeyDown`. If a hotkey matches, the handler runs and the event is consumed (returns `true`).
+
+<Tip>
+Use `operator+=` for fire-and-forget subscriptions where you never need to disconnect (e.g., top-level button handlers). Use `Connect()` inside classes to ensure the handler is removed when the subscribing object is destroyed.
+</Tip>

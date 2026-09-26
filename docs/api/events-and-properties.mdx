@@ -1,0 +1,241 @@
+---
+title: "Event<T> and Property<T> API reference"
+description: "Reference for Event<Args...>, EventConnection, and Property<TOwner,T> — Terminality's reactive primitives for subscriptions and invalidation-aware state."
+---
+
+Terminality's reactivity model is built on two templates from `Framework/Event.hpp` and `Framework/Property.hpp`. `Event<Args...>` is a multi-cast delegate that lets you subscribe to notifications from any code with access to the object. `Property<TOwner, T>` wraps a value so that assignments automatically notify the owning control to re-measure, re-arrange, or re-render, depending on the `InvalidationKind` attached to the property. Together they replace manual dirty-flagging and callback registration with a concise, type-safe interface.
+
+---
+
+## Handler\<Args...\>
+
+A type alias for `std::function<void(Args...)>`. Every subscription API accepts a `Handler`.
+
+```cpp
+template<typename... Args>
+using Handler = std::function<void(Args...)>;
+```
+
+---
+
+## Event\<Args...\>
+
+A multi-cast event. Non-copyable; supports move semantics so it can live inside types that are themselves movable.
+
+### Constructors and assignment
+
+```cpp
+Event();                                    // default constructor
+~Event();
+
+Event(Event&& other) noexcept;              // move constructor — updates all live EventConnections
+Event& operator=(Event&& other) noexcept;  // move assignment — updates all live EventConnections
+
+Event(const Event&)            = delete;
+Event& operator=(const Event&) = delete;
+```
+
+When an `Event` is moved, its internal self-token is updated so that existing `EventConnection` objects remain valid and still point to the new location.
+
+### Subscribing
+
+<AccordionGroup>
+  <Accordion title="operator+= — fire-and-forget subscription">
+
+```cpp
+void operator+=(Handler<Args...> handler);
+```
+
+Registers `handler` with no way to later unsubscribe. Use this when the lifetime of the subscription matches the lifetime of the `Event` itself (e.g., wiring up a button in the same scope that owns the button):
+
+```cpp
+button->Clicked += []()
+{
+    MessageBox::Show(L"Clicked", L"Hello!", MessageBoxButton::Ok);
+};
+```
+
+  </Accordion>
+
+  <Accordion title="Connect() — RAII subscription">
+
+```cpp
+[[nodiscard]] EventConnection<Args...> Connect(Handler<Args...> handler);
+```
+
+Registers `handler` and returns an `EventConnection` that automatically disconnects when it is destroyed. Store the connection as a member variable when you need the subscription to outlive a local scope but stop before the `Event` is destroyed:
+
+```cpp
+class MyControl : public ControlBase
+{
+    EventConnection<float> timerConn_;
+
+    MyControl()
+    {
+        timerConn_ = DispatchTimer::Current().TickEvent.Connect([this](float dt)
+        {
+            // runs every frame; stops when MyControl is destroyed
+        });
+    }
+};
+```
+
+<Warning>
+`Connect` is marked `[[nodiscard]]`. If you discard the returned `EventConnection`, the subscription is disconnected immediately and the handler never fires.
+</Warning>
+
+  </Accordion>
+</AccordionGroup>
+
+### Firing
+
+```cpp
+void Emit(Args... args);
+```
+
+Calls every registered handler in unspecified order. `Emit` snapshots the handler table before iterating so that handlers that add or remove subscriptions during `Emit` do not cause undefined behaviour.
+
+---
+
+## EventConnection\<Args...\>
+
+An RAII handle returned by `Event::Connect`. When the `EventConnection` is destroyed it automatically unsubscribes the corresponding handler. Move-only.
+
+```cpp
+EventConnection();                                              // default (disconnected)
+
+EventConnection(EventConnection&& other) noexcept;
+EventConnection& operator=(EventConnection&& other) noexcept;
+
+EventConnection(const EventConnection&)            = delete;
+EventConnection& operator=(const EventConnection&) = delete;
+
+~EventConnection();   // calls Disconnect()
+```
+
+### Manual disconnect
+
+```cpp
+void Disconnect();
+```
+
+Immediately removes the handler from the owning `Event`. Safe to call more than once and safe to call after the `Event` has been destroyed (the connection holds a `weak_ptr` to the event's self-token and checks it before dereferencing).
+
+### Lifetime example
+
+```cpp
+{
+    EventConnection<> conn = someEvent.Connect([]() { /* ... */ });
+    // handler fires here
+} // conn destroyed → handler unsubscribed automatically
+```
+
+If you move `conn` into a longer-lived container the subscription persists until the container is destroyed:
+
+```cpp
+connections_.push_back(
+    someEvent.Connect([this]() { Repaint(); })
+);
+```
+
+---
+
+## InvalidationKind
+
+Controls which layout phases are triggered when a `Property` value changes.
+
+| Enumerator | Value | Effect |
+|------------|------:|--------|
+| `InvalidationKind::None` | `0` | No layout pass is triggered. The value is updated silently. |
+| `InvalidationKind::Visual` | `1` | Schedules a render pass only. Use for purely cosmetic properties (colors, text content that does not change size). |
+| `InvalidationKind::Arrange` | `2` | Schedules arrange + render. Use when the control's position may change but its measured size stays the same. |
+| `InvalidationKind::Measure` | `4` | Schedules measure + arrange + render. Use for any property that can change the control's desired size. |
+
+---
+
+## Property\<TOwner, T\>
+
+A value wrapper that ties a typed field to its owning control's invalidation mechanism. `Property` is a class template parameterised on the owner type and the value type.
+
+### Constructor
+
+```cpp
+Property(TOwner* owner, const char* name, T defaultValue = T(),
+         InvalidationKind invalidation = InvalidationKind::None);
+```
+
+| Parameter | Description |
+|-----------|-------------|
+| `owner` | Pointer to the control that owns this property. Must not be `nullptr` if invalidation or `OnPropertyChanged` callbacks are needed. |
+| `name` | String identifier passed to `OnPropertyChanged` when the value changes. |
+| `defaultValue` | Initial value. Defaults to value-initialisation of `T`. |
+| `invalidation` | Which layout phases to trigger on assignment. |
+
+### Setting the value
+
+```cpp
+Property& operator=(const T& value);   // copy assign
+Property& operator=(T&& value);        // move assign
+TOwner&   Set(T&& value);              // fluent setter — returns *owner
+```
+
+Assignment does nothing if the new value compares equal to the current value (no unnecessary invalidation). When the value changes, `owner->ApplyInvalidation(invalidation_)` and `owner->OnPropertyChanged(name_)` are called.
+
+`Set` returns a reference to `*owner`, enabling fluent chaining:
+
+```cpp
+textBox->Text.Set(L"Hello")
+             // chain more property sets on textBox if desired
+```
+
+### Reading the value
+
+```cpp
+operator const T&() const;     // implicit conversion
+const T& Get()      const;     // explicit getter
+const T* operator->() const;   // member access on the value
+```
+
+The implicit conversion lets you pass a `Property<TOwner, T>` directly anywhere a `const T&` is expected:
+
+```cpp
+float current = progress->Value.Get();
+// or equivalently:
+float current = static_cast<float>(progress->Value);
+```
+
+### Comparison
+
+```cpp
+bool operator==(const T& other) const;
+bool operator!=(const T& other) const;
+```
+
+Compares the stored value against `other`, not the `Property` object itself.
+
+### Declaring properties in a control
+
+Properties are declared as data members and initialised in the constructor's member-initialiser list. Pass `this` as the owner and pick the narrowest `InvalidationKind` that is correct for that property:
+
+```cpp
+class MyWidget : public ControlBase
+{
+public:
+    Property<MyWidget, std::wstring> Caption{
+        this, "Caption", L"", InvalidationKind::Measure };
+
+    Property<MyWidget, Color> AccentColor{
+        this, "AccentColor", Color::CYAN, InvalidationKind::Visual };
+};
+```
+
+Consumers set and read properties as if they were plain fields:
+
+```cpp
+widget->Caption    = L"Hello, world!";
+widget->AccentColor = Color::GREEN;
+
+std::wstring text = widget->Caption;   // implicit const wstring& conversion
+```
+
+The framework calls `OnPropertyChanged("Caption")` and schedules a full measure pass automatically when `Caption` changes; it calls `OnPropertyChanged("AccentColor")` and schedules only a visual refresh when `AccentColor` changes.

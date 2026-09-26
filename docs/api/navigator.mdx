@@ -1,0 +1,143 @@
+---
+title: "Navigator — page stack and back navigation"
+description: "Singleton service that pushes full-screen pages onto a layer stack, runs a nested UI loop for each page, and pops back to the previous view on demand."
+---
+
+`Navigator` manages a stack of UI layers so you can overlay full-screen pages on top of the root view — modal flows, detail screens, settings pages — without replacing the root widget. Calling `Navigate` pushes a new layer, runs a nested event loop inside it, then cleans up automatically when the nested loop exits. The root view regains focus the moment you pop back, with its layout invalidated so it redraws cleanly.
+
+## Class: `Navigator`
+
+The `Navigator` singleton is lazily created on first access. It has no public constructor; obtain the instance with `Navigator::Current()`.
+
+### `Current`
+
+```cpp
+static Navigator& Current();
+```
+
+Returns the process-wide `Navigator` instance.
+
+---
+
+### `Navigate`
+
+```cpp
+void Navigate(std::unique_ptr<VisualTreeNode> page);
+```
+
+Pushes `page` onto the visual layer stack and starts a nested UI loop that runs until the page calls `HostApplication::Current().RequestStop()` or another layer-exit mechanism. When the nested loop returns, the layer is popped automatically and the previous layer's root node receives `InvalidateMeasure` and `InvalidateVisual` so it repaints correctly.
+
+If `page` is `nullptr`, the call is a no-op.
+
+<ParamField path="page" type="std::unique_ptr<VisualTreeNode>" required>
+  The root node of the page to display. Ownership is transferred to the layer stack.
+</ParamField>
+
+<Warning>
+  `Navigate` blocks the calling thread for the lifetime of the nested loop. Call it from a hotkey handler or button callback, not from inside `RenderOverride` or `MeasureOverride`.
+</Warning>
+
+---
+
+### `CanGoBack`
+
+```cpp
+bool CanGoBack() const;
+```
+
+Returns `true` when there is more than one layer on the stack — that is, when there is something to go back to.
+
+<ResponseField name="return" type="bool">
+  `true` if the layer count is greater than one.
+</ResponseField>
+
+---
+
+### `GoBack`
+
+```cpp
+bool GoBack();
+```
+
+Pops the top layer from the stack without a nested loop exit and triggers a relayout on the newly exposed layer. Returns `false` if already at the root (nothing to pop).
+
+<ResponseField name="return" type="bool">
+  `true` if a layer was popped; `false` if the stack had only one layer.
+</ResponseField>
+
+---
+
+### `GoHome`
+
+```cpp
+void GoHome();
+```
+
+Pops all layers above the root in a loop, leaving only the original root layer. After all pops, the root node receives `InvalidateMeasure` and `InvalidateVisual`.
+
+---
+
+## Navigate vs. NestUILoop
+
+`Navigator::Navigate` is the recommended high-level API. Internally it calls `VisualTree::PushLayer`, then `HostApplication::NestUILoop`, then `VisualTree::PopLayer`. Use `Navigate` whenever you want a self-contained modal page. Use `HostApplication::NestUILoop` directly only when you need precise control over when the nested loop starts and stops — for example, to animate a transition before handing over input.
+
+---
+
+## Navigating between pages
+
+```cpp
+// Define a settings page as a VisualTreeNode subclass
+class SettingsPage : public Grid
+{
+public:
+    SettingsPage()
+    {
+        HorizontalAlignment = HorizontalAlign::Stretch;
+        VerticalAlignment = VerticalAlign::Stretch;
+
+        // Press Escape to close the page and return to the previous view
+        OnHotkey(InputModifier::None, InputKey::ESCAPE, [](ControlBase* self)
+        {
+            HostApplication::Current().RequestStop();
+        });
+
+        // ... add controls
+    }
+};
+
+// From a hotkey handler in the root view, push the settings page
+OnHotkey(InputModifier::None, InputKey::F1, [](ControlBase* self)
+{
+    Navigator::Current().Navigate(std::make_unique<SettingsPage>());
+    // execution resumes here after the user presses Escape on SettingsPage
+});
+```
+
+### Back button pattern
+
+```cpp
+// A generic "go back" hotkey registered on any page
+OnHotkey(InputModifier::None, InputKey::BACK, [](ControlBase* self)
+{
+    if (Navigator::Current().CanGoBack())
+        Navigator::Current().GoBack();
+});
+```
+
+### Returning to the root
+
+```cpp
+// Jump all the way back to the root from a deeply nested page
+OnHotkey(InputModifier::Ctrl, InputKey::HOME, [](ControlBase* self)
+{
+    Navigator::Current().GoHome();
+});
+```
+
+---
+
+## Related
+
+- [`HostApplication`](/api/host-application) — `RunUILoop`, `NestUILoop`, `RequestStop`
+- [`VisualTree`](/api/visual-tree) — `PushLayer`, `PopLayer`, `LayerCount`
+- [`FocusManager`](/api/focus-manager) — focus is preserved per layer

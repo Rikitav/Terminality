@@ -1,0 +1,211 @@
+---
+title: "Layout enums: alignment, orientation, text"
+description: "All scoped enums that drive Terminality's layout engine: alignment, orientation, text wrapping, text alignment, focus direction, and input modifiers."
+---
+
+Terminality's layout and input subsystems are controlled through a set of scoped enumerations. `HorizontalAlign`, `VerticalAlign`, `TextWrap`, `TextAlign`, and `Orientation` come from `Core/Layout.hpp`; `Direction` comes from `Core/Focus.hpp`; `InputKey` and `InputModifier` come from `Core/InputEvent.hpp`. Together they cover every axis of positioning, content flow, keyboard routing, and input handling available in the framework.
+
+---
+
+## HorizontalAlign
+
+Controls how a control positions itself (or its children) along the horizontal axis. Assigned to the `HorizontalAlignment` property on any `ControlBase`-derived class.
+
+| Enumerator | Description |
+|------------|-------------|
+| `HorizontalAlign::Left` | Snap to the left edge of the available space. Width is determined by the control's measured size. |
+| `HorizontalAlign::Center` | Center horizontally. Width is determined by the control's measured size. |
+| `HorizontalAlign::Right` | Snap to the right edge. Width is determined by the control's measured size. |
+| `HorizontalAlign::Stretch` | Fill the entire available width. The control's measured width is ignored. |
+
+```cpp
+label->HorizontalAlignment = HorizontalAlign::Stretch;
+grid->HorizontalAlignment  = HorizontalAlign::Left;
+```
+
+---
+
+## VerticalAlign
+
+Controls how a control positions itself along the vertical axis. Assigned to the `VerticalAlignment` property.
+
+| Enumerator | Description |
+|------------|-------------|
+| `VerticalAlign::Top` | Snap to the top edge. Height is determined by the control's measured size. |
+| `VerticalAlign::Center` | Center vertically. Height is determined by the control's measured size. |
+| `VerticalAlign::Bottom` | Snap to the bottom edge. Height is determined by the control's measured size. |
+| `VerticalAlign::Stretch` | Fill the entire available height. The control's measured height is ignored. |
+
+```cpp
+button->VerticalAlignment = VerticalAlign::Top;
+panel->VerticalAlignment  = VerticalAlign::Stretch;
+```
+
+---
+
+## TextWrap
+
+Specifies how a `Label` breaks its text when it is wider than the available column count. Assigned to `Label::TextWrapping`.
+
+| Enumerator | Description |
+|------------|-------------|
+| `TextWrap::NoWrap` | Text is never broken; characters that exceed the width are clipped. |
+| `TextWrap::Wrap` | Break at any character boundary once the line is full. |
+| `TextWrap::WrapWholeWords` | Break only at whitespace, keeping whole words together. Falls back to character wrapping if a single word is wider than the available space. |
+
+---
+
+## TextAlign
+
+Specifies horizontal text alignment within the label's bounding box. Assigned to `Label::TextAlignment`.
+
+| Enumerator | Description |
+|------------|-------------|
+| `TextAlign::Left` | Text is left-aligned (ragged right). |
+| `TextAlign::Center` | Each line is centered within the available width. |
+| `TextAlign::Right` | Text is right-aligned (ragged left). |
+| `TextAlign::Justify` | Spaces between words are expanded so each full line reaches both edges. The final line of a paragraph is left-aligned. |
+
+---
+
+## Orientation
+
+Determines the primary axis along which a `StackPanel` (or any panel that has an orientation) lays out its children. Assigned to `StackPanel::ContentOrientation`.
+
+| Enumerator | Description |
+|------------|-------------|
+| `Orientation::Vertical` | Children are stacked top-to-bottom. Each child occupies its full measured height. |
+| `Orientation::Horizontal` | Children are placed left-to-right. Each child occupies its full measured width. |
+
+```cpp
+stackPanel->ContentOrientation = Orientation::Horizontal;
+```
+
+---
+
+## Direction
+
+Describes a focus-traversal direction. Used by the focus manager when the user navigates between focusable controls.
+
+| Enumerator | Trigger | Description |
+|------------|---------|-------------|
+| `Direction::Up` | Up arrow | Move focus to the nearest focusable control above. |
+| `Direction::Down` | Down arrow | Move focus to the nearest focusable control below. |
+| `Direction::Left` | Left arrow | Move focus to the nearest focusable control to the left. |
+| `Direction::Right` | Right arrow | Move focus to the nearest focusable control to the right. |
+| `Direction::Next` | **Tab** | Advance focus to the next focusable control in document order. |
+| `Direction::Previous` | **Shift + Tab** | Move focus to the previous focusable control in document order. |
+
+---
+
+## InputKey
+
+`InputKey` is a scoped enum whose values correspond to Windows Virtual Key codes, making the mapping unambiguous on Win32. The framework maps platform-specific scan codes to these values before dispatching `InputEvent` to controls.
+
+### Common keys
+
+| Enumerator | Hex | Description |
+|------------|-----|-------------|
+| `InputKey::None` | `-1` | No key / timeout sentinel. |
+| `InputKey::BACK` | `0x08` | Backspace. |
+| `InputKey::TAB` | `0x09` | Tab. |
+| `InputKey::RETURN` | `0x0D` | Enter / Return. |
+| `InputKey::ESCAPE` | `0x1B` | Escape. |
+| `InputKey::SPACE` | `0x20` | Spacebar. |
+| `InputKey::PRIOR` | `0x21` | Page Up. |
+| `InputKey::NEXT` | `0x22` | Page Down. |
+| `InputKey::END` | `0x23` | End. |
+| `InputKey::HOME` | `0x24` | Home. |
+| `InputKey::LEFT` | `0x25` | Left arrow. |
+| `InputKey::UP` | `0x26` | Up arrow. |
+| `InputKey::RIGHT` | `0x27` | Right arrow. |
+| `InputKey::DOWN` | `0x28` | Down arrow. |
+| `InputKey::INSERT` | `0x2D` | Insert. |
+| `InputKey::DELETE` | `0x2E` | Delete. |
+
+### Alphanumeric keys
+
+Digit keys run from `InputKey::NUM0` (`0x30`) through `InputKey::NUM9` (`0x39`). Letter keys run from `InputKey::A` (`0x41`) through `InputKey::Z` (`0x5A`).
+
+### Numpad keys
+
+Numpad digits run from `InputKey::NUMPAD0` (`0x60`) through `InputKey::NUMPAD9` (`0x69`). Arithmetic operators are `MULTIPLY` (`0x6A`), `ADD` (`0x6B`), `SUBTRACT` (`0x6D`), `DECIMAL` (`0x6E`), and `DIVIDE` (`0x6F`).
+
+### Function keys
+
+`InputKey::F1` (`0x70`) through `InputKey::F24` (`0x87`).
+
+### Mouse buttons
+
+| Enumerator | Hex | Description |
+|------------|-----|-------------|
+| `InputKey::LBUTTON` | `0x01` | Left mouse button. |
+| `InputKey::RBUTTON` | `0x02` | Right mouse button. |
+| `InputKey::MBUTTON` | `0x04` | Middle mouse button. |
+| `InputKey::XBUTTON1` | `0x05` | X1 side button. |
+| `InputKey::XBUTTON2` | `0x06` | X2 side button. |
+
+### Special sentinel
+
+`InputKey::CHAR` (`0xFF`) is set internally when a printable Unicode character arrives rather than a virtual key. In that case `InputEvent::Char` holds the `wchar_t` value.
+
+<Note>
+On Windows, `<Windows.h>` defines `DELETE` as a macro, which breaks the token `InputKey::DELETE` in any translation unit that includes the Windows header after Terminality. Use the `KEY_DELETE` alias (`Core/InputEvent.hpp`) in that situation: `case KEY_DELETE:`.
+</Note>
+
+### Modifier keys
+
+The plain modifier virtual keys are exposed as `InputKey::SHIFT` (`0x10`), `InputKey::CONTROL` (`0x11`), and `InputKey::MENU` (`0x12`, the Alt key), alongside the left/right variants `LSHIFT`/`RSHIFT`, `LCONTROL`/`RCONTROL`, and `LMENU`/`RMENU` — useful when registering bare-modifier hotkeys.
+
+---
+
+## InputModifier
+
+A bitmask enum that describes which modifier keys were held when an `InputEvent` was generated. You combine values with `operator|` and test them with `hasFlag<InputModifier>()`.
+
+| Enumerator | Bit | Description |
+|------------|----:|-------------|
+| `InputModifier::None` | `0` | No modifiers. |
+| `InputModifier::LeftAlt` | `1 << 0` | Left Alt held. |
+| `InputModifier::RightAlt` | `1 << 1` | Right Alt held. |
+| `InputModifier::Alt` | `LeftAlt\|RightAlt` | Either Alt key held. |
+| `InputModifier::LeftCtrl` | `1 << 2` | Left Ctrl held. |
+| `InputModifier::RightCtrl` | `1 << 3` | Right Ctrl held. |
+| `InputModifier::Ctrl` | `LeftCtrl\|RightCtrl` | Either Ctrl key held. |
+| `InputModifier::Shift` | `1 << 4` | Shift held. |
+| `InputModifier::NumLockOn` | `1 << 5` | Num Lock is active. |
+| `InputModifier::ScrollLockOn` | `1 << 6` | Scroll Lock is active. |
+| `InputModifier::CapsLockOn` | `1 << 7` | Caps Lock is active. |
+| `InputModifier::Special` | `1 << 20` | Platform-specific extended key flag. |
+
+`operator|` and `operator&` are provided as `constexpr` free functions, so you can compose modifiers without a cast:
+
+```cpp
+// Register a hotkey for Ctrl+Shift+D
+OnHotkey(InputModifier::Ctrl | InputModifier::Shift, InputKey::D, [](ControlBase* self)
+{
+    // handler body
+});
+
+// Test whether Ctrl was held in an event handler
+if (hasFlag(event.Modifier, InputModifier::Ctrl))
+{
+    // ...
+}
+```
+
+From the test application, registering a plain key with no modifiers looks like this:
+
+```cpp
+OnHotkey(InputModifier::None, InputKey::ESCAPE, [](ControlBase* self)
+{
+    HostApplication::Current().RequestStop();
+});
+
+OnHotkey(InputModifier::None, InputKey::RETURN, [&](ControlBase* self)
+{
+    TextBox* box = static_cast<TextBox*>(self);
+    chatHistory_.push_back(MessageModel{ true, L"[now]", box->Text });
+    box->Text = L"";
+});
+```

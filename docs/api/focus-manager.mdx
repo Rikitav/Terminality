@@ -1,0 +1,185 @@
+---
+title: "FocusManager — keyboard focus and navigation"
+description: "Singleton engine service that owns the focus stack, routes Tab and arrow-key navigation, and fires FocusChanged when the active node changes."
+---
+
+`FocusManager` is the central authority for keyboard focus in a Terminality application. It maintains an ordered focus stack — the chain of nodes from the root container down to the currently focused leaf — and exposes methods to set focus explicitly, move it in a direction, and remove it when a node is destroyed or hidden. The engine calls `MoveNext` automatically in response to Tab and arrow-key input, so most applications only need to listen to `FocusChanged` or call `SetFocused` to seed the initial focus.
+
+## Class: `FocusManager`
+
+Access the singleton with `FocusManager::Current()`. The instance is owned by `VisualTree` and is safe to call from event handlers, hotkey callbacks, and `TickEvent` subscriptions.
+
+<Note>
+  `FocusManager::Current()` delegates to `VisualTree::Current().GetFocusManager()`. It returns the `FocusManager` for the topmost active layer.
+</Note>
+
+### `Current`
+
+```cpp
+static FocusManager& Current();
+```
+
+Returns the `FocusManager` for the topmost active layer. Internally delegates to `VisualTree::Current().GetFocusManager()`.
+
+---
+
+### `GetFocused`
+
+```cpp
+VisualTreeNode* GetFocused() const;
+```
+
+Returns the node at the top of the focus stack, which is the deepest currently focused widget. Returns `nullptr` when nothing is focused.
+
+<ResponseField name="return" type="VisualTreeNode*">
+  The currently focused node, or `nullptr` if the focus stack is empty.
+</ResponseField>
+
+---
+
+### `SetFocused`
+
+```cpp
+bool SetFocused(VisualTreeNode* node);
+```
+
+Attempts to give focus to `node`. The call is a no-op — and returns `false` — if `node` is `nullptr` or not focusable (i.e. `IsFocusable()` returns `false`). If `node` is a child of the current focus, it is pushed onto the stack; otherwise the stack is cleared and rebuilt from the root. On success, `FocusChanged` is emitted and `OnGotFocus` is called on the new node.
+
+<ParamField path="node" type="VisualTreeNode*" required>
+  The node to focus. Must have `IsFocusable()` returning `true`.
+</ParamField>
+
+<ResponseField name="return" type="bool">
+  `true` if focus was successfully transferred to `node`; `false` otherwise.
+</ResponseField>
+
+---
+
+### `MoveNext`
+
+```cpp
+bool MoveNext(Direction direction, InputModifier modifiers = InputModifier::None);
+```
+
+Walks the focus stack from the deepest node upward, asking each node to advance focus in the given direction via `MoveFocusNext`. Nodes that cannot handle the movement are popped and their `OnLostFocus` is called. Returns `true` if any node successfully moved focus.
+
+<ParamField path="direction" type="Direction" required>
+  The direction to move focus. See [Direction enum](#direction-enum) below.
+</ParamField>
+
+<ParamField path="modifiers" type="InputModifier" default="InputModifier::None">
+  Active modifier keys at the time of the key event. Used by container nodes to distinguish Tab from Shift+Tab.
+</ParamField>
+
+<ResponseField name="return" type="bool">
+  `true` if focus moved; `false` if no node in the stack could handle the direction.
+</ResponseField>
+
+---
+
+### `ClearFocus`
+
+```cpp
+void ClearFocus(VisualTreeNode* node);
+```
+
+Removes `node` and all nodes above it from the focus stack, calling `OnLostFocus` on each removed node. If the top of the stack changes, `FocusChanged` is emitted with the new top (or `nullptr` if the stack becomes empty).
+
+<ParamField path="node" type="VisualTreeNode*" required>
+  The node to remove from the focus stack. If not found in the stack, the call is a no-op.
+</ParamField>
+
+---
+
+### `FocusChanged` event
+
+```cpp
+Event<VisualTreeNode*, VisualTreeNode*> FocusChanged;
+```
+
+Fired whenever the active focused node changes. The first argument is the previously focused node (may be `nullptr`), and the second argument is the newly focused node (may be `nullptr` when focus is fully cleared).
+
+```cpp
+FocusManager::Current().FocusChanged += [](VisualTreeNode* oldNode, VisualTreeNode* newNode)
+{
+    // oldNode lost focus; newNode gained focus
+    // Either argument may be nullptr
+};
+```
+
+---
+
+## Direction enum
+
+Defined in `Core/Focus.hpp`. Passed to `MoveNext` and forwarded to each container's `MoveFocusNext` implementation.
+
+| Enumerator  | Keyboard gesture  | Description                          |
+| ----------- | ----------------- | ------------------------------------ |
+| `Up`        | Up arrow          | Move focus to a node above           |
+| `Down`      | Down arrow        | Move focus to a node below           |
+| `Left`      | Left arrow        | Move focus to a node to the left     |
+| `Right`     | Right arrow       | Move focus to a node to the right    |
+| `Next`      | Tab               | Move focus to the next tab stop      |
+| `Previous`  | Shift + Tab       | Move focus to the previous tab stop  |
+
+```cpp
+// Manually advance focus in a specific direction
+FocusManager::Current().MoveNext(Direction::Next);
+FocusManager::Current().MoveNext(Direction::Previous, InputModifier::Shift);
+```
+
+---
+
+## Tab-order navigation
+
+Terminality builds Tab order automatically from the visual tree. When you call `MoveNext(Direction::Next)`, the engine walks the focus stack and calls `MoveFocusNext` on the innermost container that knows how to cycle its children. You configure participation through properties on `ControlBase`:
+
+- **`SetFocusable(bool)`** — whether a control can receive focus at all. Defaults to `true`; set `false` on purely decorative controls that should never receive input.
+- **`SetTabStop(bool)`** — whether Tab navigation will land on this control. Containers are typically not tab stops even if focusable.
+- **`SetTabIndex(int)`** — override the default document-order position in the Tab cycle. Lower values are visited first.
+
+```cpp
+auto btn = init<Button>([](Button* b)
+{
+    b->SetFocusable(true);
+    b->SetTabStop(true);
+    b->SetTabIndex(2); // visited third
+});
+```
+
+---
+
+## Listening to focus changes
+
+Subscribe to `FocusChanged` to update visual state or run side-effects when focus moves between controls:
+
+```cpp
+FocusManager::Current().FocusChanged += [](VisualTreeNode* oldNode, VisualTreeNode* newNode)
+{
+    if (oldNode)
+        oldNode->InvalidateVisual(); // repaint unfocused appearance
+
+    if (newNode)
+        newNode->InvalidateVisual(); // repaint focused appearance
+};
+```
+
+Inside `RenderOverride`, use the inherited `focused_` field to choose colors without additional subscriptions:
+
+```cpp
+void RenderOverride(RenderContext& context) override
+{
+    auto stream = context.BeginText();
+    stream << SetBack(focused_ ? Color::WHITE : Color::BLACK);
+    stream << SetFore(focused_ ? Color::DARK_GRAY : Color::LIGHT_GRAY);
+    stream << label_;
+}
+```
+
+---
+
+## Related
+
+- [`ControlBase`](/api/control-base) — `SetFocusable`, `SetTabStop`, `SetTabIndex`, `IsFocusable`
+- [`VisualTree`](/api/visual-tree) — owns the `FocusManager` instance
+- [`DispatchTimer`](/api/dispatch-timer) — per-frame callbacks that run safely outside the render pass

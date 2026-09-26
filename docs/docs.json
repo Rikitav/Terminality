@@ -1,0 +1,98 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "name": "Terminality",
+  "theme": "aspen",
+  "colors": {
+    "primary": "#00BFFF",
+    "light": "#E0F7FF",
+    "dark": "#003344"
+  },
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/Rikitav/Terminality"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/Rikitav/Terminality"
+    }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/widget-hierarchy",
+              "concepts/layout-system",
+              "concepts/events-and-properties",
+              "concepts/rendering"
+            ]
+          },
+          {
+            "group": "Controls",
+            "pages": [
+              "controls/layout-controls",
+              "controls/visual-controls",
+              "controls/interactive-controls",
+              "controls/selection-controls",
+              "controls/misc-controls",
+              "controls/menus"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "advanced/dialogs",
+              "advanced/navigation",
+              "advanced/custom-controls",
+              "advanced/platform-notes"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Framework",
+            "pages": [
+              "api/host-application",
+              "api/control-base",
+              "api/visual-tree"
+            ]
+          },
+          {
+            "group": "Engine",
+            "pages": [
+              "api/focus-manager",
+              "api/navigator",
+              "api/render-context",
+              "api/dispatch-timer"
+            ]
+          },
+          {
+            "group": "Core Types",
+            "pages": [
+              "api/geometry",
+              "api/color",
+              "api/layout-enums",
+              "api/events-and-properties"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,169 @@
+---
+title: "HostApplication — app lifecycle and UI loop"
+description: "HostApplication owns the terminal session, drives the render/input loop, and is the singleton entry point for every Terminality application."
+---
+
+`HostApplication` is the singleton that owns the terminal session and drives the main UI loop. You retrieve it with `HostApplication::Current()`, call `EnterTerminal()` to configure raw input mode, hand it a root widget via `RunUILoop()`, and restore the terminal state with `ExitTerminal()` when the loop exits. The companion struct `HostBackend` provides the two platform calls the loop relies on: querying the viewport size and polling for input events.
+
+## Canonical app skeleton
+
+Every Terminality application follows the same three-line lifecycle pattern:
+
+```cpp
+int main()
+{
+    HostApplication& app = HostApplication::Current();
+    app.EnterTerminal();
+    app.RunUILoop(std::make_unique<MyRootWidget>());
+    app.ExitTerminal();
+    return 0;
+}
+```
+
+`RunUILoop` blocks until the loop exits — typically because `RequestStop()` was called (a button handler, an `ESCAPE` hotkey, or a cancel/default button) or an overlay layer called `Close()` on itself. `ExitTerminal()` is always called after the loop returns to restore the original terminal state. To check the UI-thread identity from code, use `DispatchTimer::Current().CheckAccess()`.
+
+## HostApplication
+
+The application singleton. Non-copyable and non-movable; obtain the instance with `Current()`.
+
+### Static methods
+
+<AccordionGroup>
+  <Accordion title="Current() — obtain the singleton">
+
+```cpp
+static HostApplication& Current();
+```
+
+Returns the process-wide `HostApplication` instance. The object is constructed on first call using a local static; it is safe to call from any thread before `RunUILoop` starts, but you must only call `RunUILoop` once per process — nesting is rejected with an exception (`NestUILoop` is the mechanism for nested loops).
+
+  </Accordion>
+</AccordionGroup>
+
+### Terminal lifecycle
+
+<AccordionGroup>
+  <Accordion title="EnterTerminal() — initialize raw mode">
+
+```cpp
+void EnterTerminal();
+```
+
+Switches the terminal into raw (unbuffered) input mode, hides the cursor, and performs any platform-specific setup required before the first render pass. Call this once before `RunUILoop`.
+
+  </Accordion>
+
+  <Accordion title="ExitTerminal() — restore terminal state">
+
+```cpp
+void ExitTerminal();
+```
+
+Restores the terminal to the state it was in before `EnterTerminal()` was called — cooked mode, visible cursor, and any platform-specific teardown. Call this after `RunUILoop` returns.
+
+  </Accordion>
+</AccordionGroup>
+
+### UI loop
+
+<AccordionGroup>
+  <Accordion title="RunUILoop(root) — start the main loop">
+
+```cpp
+void RunUILoop(std::unique_ptr<VisualTreeNode> root);
+```
+
+Pushes `root` as the first `UILayer` onto `VisualTree`, starts the `DispatchTimer`, and enters the event/render loop by calling `NestUILoop` internally. The method blocks until the layer's `Running` flag is cleared.
+
+<ParamField path="root" type="std::unique_ptr<VisualTreeNode>" required>
+  The root widget that fills the entire viewport. Ownership is transferred to the `VisualTree`. Passing `nullptr` throws `std::runtime_error`.
+</ParamField>
+
+<Warning>
+Throws `std::runtime_error` if the UI loop is already running (only one top-level `RunUILoop` is allowed per process — use `NestUILoop` for nested layers), or if `root` is `nullptr`.
+</Warning>
+
+  </Accordion>
+
+  <Accordion title="NestUILoop(layer) — run a nested loop for overlays">
+
+```cpp
+void NestUILoop(UILayer& layer);
+```
+
+Runs an inner event/render loop that processes input and layout for `layer` until `layer.Running` becomes `false`. Used internally by dialogs and overlay windows (such as `MessageBox` and `ContextMenu`) to block the caller while the overlay is visible, without starting a new thread.
+
+<ParamField path="layer" type="UILayer&" required>
+  The `UILayer` to drive. The layer must already be pushed onto `VisualTree` before this call. Set `layer.Running` to `false` (or call `RequestStop()`) to exit the nested loop.
+</ParamField>
+
+  </Accordion>
+
+  <Accordion title="RequestStop() — signal the loop to exit">
+
+```cpp
+void RequestStop();
+```
+
+Signals the `DispatchTimer` to stop, which causes the active `NestUILoop` iteration to exit on its next tick. This is the correct way to quit from inside a hotkey callback or event handler:
+
+```cpp
+OnHotkey(InputModifier::None, InputKey::ESCAPE, [](ControlBase* self)
+{
+    HostApplication::Current().RequestStop();
+});
+```
+
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## HostBackend
+
+A stateless utility struct that wraps the two platform-specific operations the UI loop calls every frame. You rarely need to call these directly, but they are part of the public API for testing and custom loop implementations.
+
+<AccordionGroup>
+  <Accordion title="QueryViewportSize() → Size">
+
+```cpp
+static Size QueryViewportSize();
+```
+
+Returns the current terminal dimensions as a `Size` (width in columns, height in rows). The loop calls this every tick to detect resize events and trigger a layout pass.
+
+<ResponseField name="return" type="Size">
+  Terminal dimensions. `Width` is the column count; `Height` is the row count.
+</ResponseField>
+
+  </Accordion>
+
+  <Accordion title="PollInput(timeout) → InputEvent">
+
+```cpp
+static InputEvent PollInput(std::chrono::milliseconds timeout);
+```
+
+Waits up to `timeout` for a key or mouse event from the terminal and returns it as an `InputEvent`. If no event arrives within the timeout, returns an `InputEvent` with `Key == InputKey::None`.
+
+<ParamField path="timeout" type="std::chrono::milliseconds" required>
+  Maximum time to block waiting for input. The loop passes the remaining frame budget (typically a fraction of a 60 Hz frame) so that layout and rendering still run at a predictable rate.
+</ParamField>
+
+<ResponseField name="return" type="InputEvent">
+  The key event that arrived, or an event with `Key == InputKey::None` if the timeout elapsed without input or the wait was woken by a background signal (see below).
+</ResponseField>
+
+  </Accordion>
+
+  <Accordion title="SignalInput() / ResetInputSignal() — background wakeups">
+
+```cpp
+static void SignalInput();
+static void ResetInputSignal();
+```
+
+`SignalInput` wakes a `PollInput` call that is blocked in its frame-time wait. The dispatcher calls it after `InvokeAsync` posts a task or a timer is armed from a background thread, so queued work runs immediately instead of waiting out the frame budget. `ResetInputSignal` clears the wake signal once the posted-work queue is drained (the engine handles this in `ProcessTasks`). Implemented with an event object on Windows and a self-pipe on Linux.
+
+  </Accordion>
+</AccordionGroup>

@@ -1,0 +1,112 @@
+---
+title: "Menus: Menu and MenuBar"
+description: "Build menu bars with drop-down menus, access keys, checkable items, separators, and nested submenus."
+---
+
+Terminality ships a classic menu system: a `MenuBar` row of top-level captions, each opening a drop-down `Menu` with items, checkable items, separators, and nested submenus. Menus integrate with the focus system — they open as a nested layer and block until dismissed, like the built-in dialogs.
+
+---
+
+## Menu
+
+A `Menu` is a list of labelled actions. It can stand behind a `MenuBar` caption or open standalone at an arbitrary position via `Open(Point)`.
+
+### Items
+
+```cpp
+void AddItem(const std::wstring& text, std::function<void()> action = nullptr);
+void AddItem(const std::string& text, std::function<void()> action = nullptr);
+
+void AddCheckableItem(const std::wstring& text, bool checked,
+                      std::function<void(bool)> action = nullptr);
+
+void AddSeparator();
+void AddSubMenu(const std::wstring& text, std::shared_ptr<Menu> submenu);
+void Clear();
+
+bool IsEmpty() const;
+```
+
+Each item carries its own state:
+
+| Field | Meaning |
+|---|---|
+| `Text` | The label. Prefix a character with `&` to make it an access key — `L"&File"` opens with **F**. Use `&&` for a literal ampersand. |
+| `ShortcutText` | Rendered right-aligned as a shortcut hint (e.g. `L"Ctrl+O"`). Display only — not parsed. |
+| `Action` | Callback invoked when the item is selected. |
+| `SubMenu` | Nested menu opened when this item is selected. |
+| `IsSeparator` | Renders as a horizontal rule; not selectable. |
+| `IsEnabled` | Disabled items render dimmed and are skipped by the selection. |
+| `IsCheckable` / `IsChecked` | Checkable items render a checked/unchecked marker; toggling flips `IsChecked`. |
+
+### Appearance
+
+<ParamField path="DisabledForegroundColor / DisabledBackgroundColor" type="Color" default="DARK_GRAY on BLACK">
+  Colors used to render disabled items.
+</ParamField>
+
+### Example
+
+```cpp
+auto fileMenu = init<Menu>([](Menu* m)
+{
+    m->AddItem(L"&New",   []() { /* new file */ });
+    m->AddItem(L"&Open",  []() { /* open */ });
+    m->AddSeparator();
+    m->AddCheckableItem(L"&Word wrap", true, [](bool checked) { /* persist */ });
+    m->AddSeparator();
+    m->AddItem(L"E&xit",  []() { HostApplication::Current().RequestStop(); });
+});
+```
+
+Keyboard: Up/Down move the selection, Enter selects, Right opens a submenu, Left or Escape closes it. While a menu is open, pressing an item's access key activates that item directly.
+
+<Note>
+`Menu` derives from `std::enable_shared_from_this` because a menu can appear both in a `MenuBar` and as a submenu of another menu. Keep menus alive with `std::shared_ptr<Menu>` when sharing them.
+</Note>
+
+---
+
+## MenuBar
+
+`MenuBar` renders the row of top-level captions and opens the attached menus as drop-downs.
+
+### Methods
+
+```cpp
+void AddMenu(const std::wstring& header, std::shared_ptr<Menu> menu);
+void AddMenu(const std::wstring& header, std::unique_ptr<Menu> menu);
+// const std::string& overloads for narrow captions
+```
+
+The `&` access-key convention applies to captions too: `L"&File"` opens with **F**.
+
+### Example
+
+```cpp
+auto bar = init<MenuBar>([](MenuBar* bar)
+{
+    auto helpMenu = init<Menu>([](Menu* m)
+    {
+        auto docs = init<Menu>([](Menu* dm)
+        {
+            dm->AddItem(L"&Online Docs", []() { /* ... */ });
+            dm->AddItem(L"&Local Docs",  []() { /* ... */ });
+        });
+
+        m->AddSubMenu(L"&Documentation", std::move(docs));
+        m->AddSeparator();
+        m->AddItem(L"&About", []() { MessageBox::Show(L"Terminality", L"1.0"); });
+    });
+
+    bar->AddMenu(L"&File", std::move(fileMenu));
+    bar->AddMenu(L"&Edit", std::move(editMenu));
+    bar->AddMenu(L"&Help", std::move(helpMenu));
+});
+```
+
+Keyboard: Left/Right move between top-level captions, Enter or Down opens the selected menu. While the bar is focused, pressing a caption's access key opens that menu directly.
+
+```cpp
+grid->AddChildControl(0, 0, std::move(bar));  // typically a fixed-height top row
+```

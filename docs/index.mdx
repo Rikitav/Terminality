@@ -1,0 +1,61 @@
+---
+title: "Terminality: WPF-style TUI framework for C++20"
+description: "Terminality brings widget hierarchy, automatic layout, and lazy rendering to the terminal. Build rich TUI apps in C++20 with XAML-inspired patterns."
+---
+
+Terminality is a C++20 terminal UI framework that replaces manual cursor positioning with a proper widget hierarchy. You describe your interface as a tree of controls — containers like `Grid` and `StackPanel`, interactive widgets like `Button`, `TextBox`, and `CheckBox` — and Terminality handles sizing, alignment, focus management, and efficient redrawing automatically.
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Build your first Terminality app in minutes with a working code example.
+  </Card>
+  <Card title="Installation" icon="download" href="/installation">
+    Clone the repo, build with CMake, and link Terminality into your project.
+  </Card>
+  <Card title="Core Concepts" icon="book" href="/concepts/widget-hierarchy">
+    Understand the widget hierarchy, layout system, events, and rendering pipeline.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/host-application">
+    Complete reference for every class, method, and type in the public API.
+  </Card>
+</CardGroup>
+
+## How it works
+
+<Steps>
+  <Step title="Include the umbrella header">
+    Add `#include <terminality/Terminality.hpp>` to your source file. Terminality ships as classic headers plus sources, and also as a generated single-header amalgamation (`out/Terminality.hpp`) for drop-in use.
+  </Step>
+  <Step title="Initialize the application">
+    Call `HostApplication::Current().EnterTerminal()` to take over the terminal and set up raw input mode.
+  </Step>
+  <Step title="Build your widget tree">
+    Use the `init<T>()` factory helper and nested lambdas to compose containers and controls into a widget tree.
+  </Step>
+  <Step title="Run the UI loop">
+    Pass your root widget to `app.RunUILoop()`. Terminality drives the render/input loop, tracks dirty regions, and manages focus navigation until you call `RequestStop()`.
+  </Step>
+</Steps>
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Widget hierarchy" icon="sitemap" href="/concepts/widget-hierarchy">
+    Grid, StackPanel, Border, and ScrollViewer containers with full child management.
+  </Card>
+  <Card title="Automatic layout" icon="table-columns" href="/concepts/layout-system">
+    Star, Auto, and Cell sizing with margin and alignment — no manual coordinate math.
+  </Card>
+  <Card title="Lazy rendering" icon="bolt" href="/concepts/rendering">
+    Dirty-rect tracking redraws only the cells that changed, keeping output fast.
+  </Card>
+  <Card title="Focus management" icon="keyboard" href="/api/focus-manager">
+    Automatic tab-order navigation and hotkey registration without mesh maps.
+  </Card>
+  <Card title="Events and properties" icon="signal" href="/concepts/events-and-properties">
+    Type-safe `Event<Args...>` and reactive `Property<T>` with automatic invalidation.
+  </Card>
+  <Card title="Built-in dialogs" icon="window-restore" href="/advanced/dialogs">
+    MessageBox, ContextMenu, and OpenFileDialog overlays out of the box.
+  </Card>
+</CardGroup>

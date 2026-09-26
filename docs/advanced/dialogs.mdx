@@ -1,0 +1,233 @@
+---
+title: "Built-in dialogs: MessageBox, ContextMenu, FileDialog"
+description: "Terminality ships three modal dialog types — MessageBox, ContextMenu, and OpenFileDialog — each callable with a single static method or property."
+---
+
+Terminality provides three ready-to-use dialog types that handle their own rendering and event loops so your application code stays simple. `MessageBox` blocks until the user dismisses it and returns a typed result. `ContextMenu` attaches to any control and opens at an arbitrary screen position. `OpenFileDialog` presents a file-picker and returns an `optional<filesystem::path>` you can test before using.
+
+## MessageBox
+
+`MessageBox::Show` is a static method that renders a blocking modal dialog and returns which button the user pressed.
+
+```cpp
+#include <Windows.h>
+#undef MessageBox   // prevent the Win32 macro from shadowing terminality::MessageBox
+
+#include <terminality/Terminality.hpp>
+using namespace terminality;
+```
+
+<Warning>
+On Windows, `<Windows.h>` defines a `MessageBox` macro that will shadow `terminality::MessageBox`. Terminality's own headers `#undef` it internally, so including the framework first also works; if you include `<Windows.h>` first, always `#undef MessageBox` immediately after, before including Terminality.
+</Warning>
+
+### Signature
+
+```cpp
+static MessageBoxResult MessageBox::Show(
+    const std::wstring& title,
+    const std::wstring& message,
+    MessageBoxButton buttons = MessageBoxButton::Ok
+);
+```
+
+### Button sets
+
+<CardGroup cols={2}>
+  <Card title="MessageBoxButton::Ok">
+    Displays a single **Ok** button. The default when no argument is passed.
+  </Card>
+  <Card title="MessageBoxButton::OkCancel">
+    Displays **Ok** and **Cancel**.
+  </Card>
+  <Card title="MessageBoxButton::YesNo">
+    Displays **Yes** and **No**.
+  </Card>
+  <Card title="MessageBoxButton::YesNoCancel">
+    Displays **Yes**, **No**, and **Cancel**.
+  </Card>
+</CardGroup>
+
+### Return values
+
+| `MessageBoxResult` | Meaning |
+|--------------------|---------|
+| `None` | Dialog was closed without a selection. |
+| `Ok` | User pressed **Ok**. |
+| `Cancel` | User pressed **Cancel**. |
+| `Yes` | User pressed **Yes**. |
+| `No` | User pressed **No**. |
+
+### Example from TespApp
+
+The messenger demo calls `MessageBox::Show` both from a button's `Clicked` event and from a hotkey that opens a help overlay:
+
+```cpp
+// Button in the status bar
+statusBar->Clicked += []()
+{
+    MessageBox::Show(
+        L"Status",
+        L"Button was pressed",
+        MessageBoxButton::YesNoCancel
+    );
+};
+
+// Hotkey: * key opens a help dialog
+OnHotkey(InputModifier::None, InputKey::MULTIPLY, [](ControlBase* self)
+{
+    MessageBox::Show(L"Help", L"Help screen", MessageBoxButton::YesNoCancel);
+});
+```
+
+To act on the result, capture the return value:
+
+```cpp
+MessageBoxResult result = MessageBox::Show(
+    L"Confirm delete",
+    L"Are you sure?",
+    MessageBoxButton::YesNo
+);
+
+if (result == MessageBoxResult::Yes)
+{
+    // proceed
+}
+```
+
+---
+
+## ContextMenu
+
+A `ContextMenu` is a popup list of labelled actions. You create one, populate it with `AddItem`, assign it to a control's `CtxMenu` property, and call `OpenContextMenu()` or `Open(position)` to show it.
+
+### ContextMenuItem
+
+Each entry in the menu is a plain struct:
+
+```cpp
+struct ContextMenuItem
+{
+    std::wstring          Text;    // label shown in the menu
+    std::function<void()> Action;  // called when the item is selected
+};
+```
+
+### ContextMenu class
+
+```cpp
+class ContextMenu
+{
+public:
+    void AddItem(const std::wstring& text, std::function<void()> action);
+    void Clear();
+    void Open(Point position);
+};
+```
+
+| Method | Description |
+|--------|-------------|
+| `AddItem(text, action)` | Appends a new item with the given label and callback. |
+| `Clear()` | Removes all items. |
+| `Open(position)` | Opens the menu at the given screen `Point`. |
+
+### Attaching a menu to a control
+
+`ControlBase` exposes a typed `CtxMenu` property and a convenience method:
+
+```cpp
+Property<ControlBase, std::unique_ptr<ContextMenu>> CtxMenu;
+
+void OpenContextMenu();   // opens CtxMenu at the control's current position
+```
+
+Assign a `unique_ptr<ContextMenu>` to `CtxMenu`, then call `OpenContextMenu()` from a hotkey or event handler.
+
+### Example from TespApp
+
+The `MessageBubble` item template attaches a context menu and binds the **D** key to open it:
+
+```cpp
+bubble->CtxMenu = init<ContextMenu>([](ContextMenu* menu)
+{
+    menu->AddItem(L"Test2", []()
+    {
+        MessageBox::Show(L"ContextMenu.Test2", L"ContextMenu.Test2");
+    });
+
+#ifdef _WIN32
+    menu->AddItem(L"Test1", []()
+    {
+        AlertAsync(L"ContextMenu.Test1", L"");
+    });
+#endif
+});
+
+bubble->OnHotkey(InputModifier::None, InputKey::D, [](ControlBase* self)
+{
+    self->OpenContextMenu();
+});
+```
+
+<Note>
+`AlertAsync` is a Windows-only helper declared in `<terminality/Engine/PlatformSpecific.hpp>` (included via the umbrella header). Guard any call to it with `#ifdef _WIN32`.
+</Note>
+
+---
+
+## OpenFileDialog
+
+`OpenFileDialog::Show` presents a file-picker dialog and returns an `optional<filesystem::path>`. The optional is empty if the user cancels.
+
+### Signature
+
+```cpp
+static std::optional<std::filesystem::path> OpenFileDialog::Show(
+    const std::wstring&          title            = L"Open File",
+    const std::filesystem::path& initialDirectory = std::filesystem::current_path()
+);
+```
+
+### Checking the result
+
+Always test `has_value()` before accessing the path:
+
+```cpp
+auto selected = OpenFileDialog::Show();
+if (!selected.has_value())
+{
+    // user cancelled — nothing was selected
+}
+else
+{
+    // use selected.value()
+    doSomethingWith(selected.value());
+}
+```
+
+### Example from TespApp
+
+The minus key on the numpad opens a file picker and shows the result (or a "returned nothing" message) in a `MessageBox`:
+
+```cpp
+OnHotkey(InputModifier::None, InputKey::SUBTRACT, [](ControlBase* self)
+{
+    auto selectedFile = OpenFileDialog::Show();
+    if (!selectedFile.has_value())
+    {
+        MessageBox::Show(
+            L"OpenFileDialog test",
+            L"returned nothing",
+            MessageBoxButton::Ok
+        );
+    }
+    else
+    {
+        MessageBox::Show(
+            L"OpenFileDialog test",
+            selectedFile.value().wstring(),
+            MessageBoxButton::Ok
+        );
+    }
+});
+```

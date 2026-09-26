@@ -1,0 +1,124 @@
+---
+title: "Multi-page navigation with Navigator"
+description: "Use Navigator to push and pop full-screen pages, and NestUILoop to run a blocking modal layer — understand when to use each approach."
+---
+
+Terminality manages multiple pages through a layered visual tree. The `Navigator` singleton provides a page stack you can push to and pop from at any time. `HostApplication::NestUILoop` offers a lower-level mechanism for running a blocking sub-loop on a separate `UILayer`, which is how the built-in dialogs are implemented internally.
+
+## Navigator singleton
+
+`Navigator::Current()` returns the single, globally shared navigator. It does not need to be constructed or passed around — call it from anywhere after `RunUILoop` has started.
+
+```cpp
+#include <terminality/Terminality.hpp>
+using namespace terminality;
+
+// from inside any control or hotkey handler:
+Navigator& nav = Navigator::Current();
+```
+
+## Pushing a page
+
+`Navigate` takes ownership of a new root node and pushes it onto the navigation stack. The previous page is suspended but not destroyed.
+
+```cpp
+void Navigator::Navigate(std::unique_ptr<VisualTreeNode> page);
+```
+
+```cpp
+OnHotkey(InputModifier::None, InputKey::F2, [](ControlBase* self)
+{
+    Navigator::Current().Navigate(std::make_unique<SettingsPage>());
+});
+```
+
+The new page immediately becomes the active layer and receives input focus.
+
+## Going back
+
+```cpp
+bool Navigator::CanGoBack() const;
+bool Navigator::GoBack();
+void Navigator::GoHome();
+```
+
+| Method | Description |
+|--------|-------------|
+| `CanGoBack()` | Returns `true` if there is at least one page beneath the current one. |
+| `GoBack()` | Pops the current page and resumes the previous one. Returns `true` on success. |
+| `GoHome()` | Pops all pages and returns to the root page that was passed to `RunUILoop`. |
+
+```cpp
+OnHotkey(InputModifier::None, InputKey::ESCAPE, [](ControlBase* self)
+{
+    auto& nav = Navigator::Current();
+    if (nav.CanGoBack())
+        nav.GoBack();
+    else
+        HostApplication::Current().RequestStop();
+});
+```
+
+## Relationship with HostApplication
+
+`HostApplication` provides two related entry points:
+
+```cpp
+void HostApplication::RunUILoop(std::unique_ptr<VisualTreeNode> root);
+void HostApplication::NestUILoop(UILayer& layer);
+```
+
+`RunUILoop` starts the main event loop with a root page and does not return until `RequestStop()` is called. The `Navigator` operates on top of the visual tree managed by this loop.
+
+`NestUILoop` runs a second, nested event loop on a pre-built `UILayer`. It blocks the calling thread until the layer's `Running` flag is set to `false`. The built-in dialogs (`MessageBox`, `ContextMenu`, `OpenFileDialog`) use this mechanism to implement their blocking behaviour.
+
+## Multi-layered UI
+
+The visual tree is a stack of `UILayer` objects. Each layer has its own root node and `FocusManager`. Layers render as a composite: each frame the tree finds the oldest layer that covers and paints the whole viewport, renders from that layer up to the topmost (so newer layers draw over older ones), and skips anything fully occluded below. Input is routed only to the active (topmost) layer.
+
+<CardGroup cols={2}>
+  <Card title="Navigator.Navigate">
+    Use for application-level page transitions — settings screens, detail views, wizard steps. The previous page is kept alive on the stack and restored when you go back.
+  </Card>
+  <Card title="NestUILoop">
+    Use for modal overlays that must block the rest of the UI — confirmation dialogs, context menus, file pickers. The current layer is still visible underneath, but receives no input.
+  </Card>
+</CardGroup>
+
+## Typical navigation setup
+
+<Steps>
+  <Step title="Start the application">
+    Call `EnterTerminal` to prepare the console, then `RunUILoop` with your initial page.
+
+    ```cpp
+    int main()
+    {
+        HostApplication& app = HostApplication::Current();
+        app.EnterTerminal();
+        app.RunUILoop(std::make_unique<HomePage>());
+        app.ExitTerminal();
+        return 0;
+    }
+    ```
+  </Step>
+  <Step title="Navigate to a new page">
+    From inside any control, call `Navigator::Current().Navigate(...)`.
+
+    ```cpp
+    Navigator::Current().Navigate(std::make_unique<DetailPage>());
+    ```
+  </Step>
+  <Step title="Return to the previous page">
+    Call `GoBack()` or bind `GoHome()` to a reset hotkey.
+
+    ```cpp
+    if (Navigator::Current().CanGoBack())
+        Navigator::Current().GoBack();
+    ```
+  </Step>
+</Steps>
+
+<Tip>
+Bind `GoBack` to a consistent key (such as `Escape`) across all pages so users always have a predictable way to go back. Check `CanGoBack()` first and fall through to `RequestStop()` when on the root page.
+</Tip>

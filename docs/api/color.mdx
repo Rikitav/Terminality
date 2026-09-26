@@ -1,0 +1,149 @@
+---
+title: "Color — 24-bit RGB colors"
+description: "The Color struct holds 8-bit RGB channels plus a transparent flag, named constants keep the classic 16-color palette, and output is emitted as 24-bit ANSI true color."
+---
+
+Terminality represents terminal colors as the `Color` struct defined in `Core/Color.hpp`. It carries three 8-bit RGB channels and a transparent flag, and is emitted to the terminal as 24-bit ANSI true color (`38;2;r;g;b` / `48;2;r;g;b`). The 16 classic terminal palette entries remain available as named constants, so existing palette-based code keeps working while full RGB is available everywhere a `Color` is accepted.
+
+---
+
+## The struct
+
+```cpp
+struct Color
+{
+    uint8_t R = 0;
+    uint8_t G = 0;
+    uint8_t B = 0;
+    bool    Transparent = false;
+
+    constexpr Color() = default;
+    constexpr Color(uint8_t r, uint8_t g, uint8_t b);
+
+    bool operator==(const Color& other) const = default;
+    bool operator!=(const Color& other) const = default;
+
+    static const Color TRANSPARENT; // transparent sentinel (flag set, RGB ignored)
+    static const Color BLACK;
+    static const Color WHITE;
+    // ... all 16 classic palette names (see table below)
+
+    static Color Lerp(const Color& from, const Color& to, float t);
+    static Color Darken(const Color& color, float amount);
+    Color AsTransparent() const;
+};
+```
+
+| Member | Description |
+|---|---|
+| `R`, `G`, `B` | 8-bit color channels (0–255). |
+| `Transparent` | When `true`, the color is treated as "no color" — the cell's existing color is left unchanged by buffer writes. |
+| `Color::TRANSPARENT` | The shared transparent sentinel. Tests like `if (!background.Transparent)` are the macro-safe idiom. |
+| `Lerp(from, to, t)` | Linear interpolation between two opaque colors; `t` in `[0, 1]`. Transparent inputs are returned as-is. |
+| `Darken(color, amount)` | Multiplies the RGB channels by `1 - amount`; handy for depth effects such as dimming items farther from a selection. |
+| `AsTransparent()` | Returns a copy with the transparent flag set (RGB preserved). |
+
+## Named constants
+
+The classic palette remains as predefined constants, mapped to their usual RGB values:
+
+| Dark | Bright |
+|---|---|
+| `Color::BLACK` | `Color::DARK_GRAY` |
+| `Color::DARK_BLUE` | `Color::BLUE` |
+| `Color::DARK_GREEN` | `Color::GREEN` |
+| `Color::DARK_CYAN` | `Color::CYAN` |
+| `Color::DARK_RED` | `Color::RED` |
+| `Color::DARK_MAGENTA` | `Color::MAGENTA` |
+| `Color::DARK_YELLOW` | `Color::YELLOW` |
+| `Color::LIGHT_GRAY` | `Color::WHITE` |
+
+You are not limited to these — construct any color directly: `Color{ 200, 30, 30 }`.
+
+---
+
+## Using colors on controls
+
+Most controls expose four `Property<>` fields that accept `Color`:
+
+| Property | Description |
+|----------|-------------|
+| `ForegroundColor` | Text color when the control is not focused. |
+| `BackgroundColor` | Fill color when the control is not focused. |
+| `FocusedForegroundColor` | Text color while the control holds keyboard focus. |
+| `FocusedBackgroundColor` | Fill color while the control holds keyboard focus. |
+
+Assign them with the property assignment operator, which automatically triggers the appropriate invalidation:
+
+```cpp
+auto* label = init<Label>([](Label* l)
+{
+    l->ForegroundColor        = Color{ 230, 230, 230 };
+    l->BackgroundColor        = Color{ 20, 40, 90 };
+    l->FocusedForegroundColor = Color::BLACK;
+    l->FocusedBackgroundColor = Color::CYAN;
+    l->Text = L"Hello, Terminality!";
+});
+```
+
+---
+
+## Using colors in RenderOverride
+
+Inside `RenderOverride` you obtain a `RenderStream` from `context.BeginText()` and pipe color commands into it with `SetFore` and `SetBack`:
+
+```cpp
+void RenderOverride(RenderContext& context) override
+{
+    auto rin = context.BeginText();
+
+    rin << SetBack(Color::BLACK);
+    rin << SetFore(Color{ 170, 170, 170 }) << message_.Timestamp;
+
+    rin << SetFore(message_.isAuthor ? Color::CYAN : Color::YELLOW);
+    rin << " " << message_.Text;
+}
+```
+
+`SetFore` changes the foreground (glyph) color; `SetBack` changes the background (cell fill) color. Both commands take effect for all characters written to the stream after the command.
+
+---
+
+## TrueColorOutput
+
+Color depth can be adjusted globally:
+
+```cpp
+RenderBuffer::TrueColorOutput = true;  // default: 24-bit SGR sequences
+```
+
+Leave it enabled on modern terminals; flip it off only if you target a terminal without true-color support.
+
+---
+
+## Real example — chat bubble rendering
+
+A chat-bubble-style control uses focus state to swap the color scheme and the message's `isAuthor` flag to tint the message body:
+
+```cpp
+void RenderOverride(RenderContext& context) override
+{
+    auto rin = context.BeginText();
+    if (focused_)
+    {
+        rin << SetBack(Color::WHITE);
+        rin << SetFore(Color::DARK_GRAY) << message_.Timestamp;
+    }
+    else
+    {
+        rin << SetBack(Color::BLACK);
+        rin << SetFore(Color::LIGHT_GRAY) << message_.Timestamp;
+    }
+
+    // Author messages appear in cyan; received messages in yellow
+    rin << SetFore(message_.isAuthor ? Color::CYAN : Color::YELLOW);
+    rin << " " << message_.Text;
+}
+```
+
+This pattern — check `focused_`, then branch on `Color` values — is the standard idiom for focus-aware custom rendering in Terminality.

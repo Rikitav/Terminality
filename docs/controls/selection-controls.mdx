@@ -1,0 +1,233 @@
+---
+title: "Selection controls: TabControl, TreeView, DataGrid, BarrelListBox"
+description: "Organize content into tabs, navigate hierarchical trees, present tabular data, and spin a barrel-style selection list."
+---
+
+These controls manage a current selection over a set of items — pages, tree nodes, rows, or strings — and emit typed events when the selection moves. All are focusable, participate in arrow-key navigation, and keep the selection visible automatically.
+
+---
+
+## TabControl
+
+`TabControl` displays one of several pages at a time behind a row of tab headers. The header row scrolls when there are more tabs than fit, and each tab can optionally show a close box.
+
+### Adding tabs
+
+```cpp
+void AddTab(const std::string& header, std::unique_ptr<ControlBase> content);
+void AddTab(const std::string& header, std::unique_ptr<ControlBase> content, bool closeable);
+void RemoveTab(int index);
+void ClearTabs();
+size_t GetTabCount() const;
+```
+
+```cpp
+auto tabs = init<TabControl>([](TabControl* tc)
+{
+    tc->AddTab("General", init<Label>([](Label* l) { l->Text = L"General settings"; }));
+    tc->AddTab("Network", init<Label>([](Label* l) { l->Text = L"Network settings"; }));
+    tc->AddTab("Logs",    init<Label>([](Label* l) { l->Text = L"Log viewer"; }), /*closeable=*/true);
+
+    tc->SelectedIndex = 0;
+});
+```
+
+### Properties
+
+<ParamField path="SelectedIndex" type="int" default="0">
+  The index of the currently shown tab. Assigning it switches pages immediately.
+</ParamField>
+
+<ParamField path="UnderlineForegroundColor / UnderlineBackgroundColor" type="Color" default="WHITE on BLACK">
+  Colors of the underline beneath the active tab header when the control is not focused.
+</ParamField>
+
+<ParamField path="FocusedUnderlineForegroundColor / FocusedUnderlineBackgroundColor" type="Color" default="RED on BLACK">
+  Underline colors while the tab control holds focus.
+</ParamField>
+
+### Events
+
+<ParamField path="TabClosed" type="Event<int>">
+  Fired with the index of a tab the user closed via its close box (only rendered for tabs added with `closeable = true`).
+</ParamField>
+
+### Keyboard
+
+Left/Right move between tabs; Tab moves focus into the selected tab's content.
+
+---
+
+## TreeView
+
+`TreeView` renders a hierarchy of `TreeNode` objects as an indented, keyboard-navigable list. The model (`TreeNode`) is separate from the view: build and mutate the tree at any time, from any ownership arrangement, and the view refreshes automatically once a node is attached.
+
+### TreeNode — the model
+
+```cpp
+TreeNode* AddChild(std::wstring header, std::wstring tag = L"");   // convenience
+TreeNode* AddChild(std::unique_ptr<TreeNode> child);
+std::unique_ptr<TreeNode> RemoveChild(TreeNode* child);
+std::unique_ptr<TreeNode> RemoveAt(std::size_t index);
+void Clear();
+
+void SetHeader(std::wstring header);
+void SetTag(std::wstring tag);
+bool IsExpanded() const;
+void Expand();
+void Collapse();
+void ToggleExpanded();
+
+Event<> Expanded;    // fired right after the node becomes expanded
+Event<> Collapsed;
+```
+
+### TreeView — the view
+
+```cpp
+TreeNode* AddNode(std::wstring header, std::wstring tag = L"");
+std::unique_ptr<TreeNode> RemoveNode(TreeNode* node);
+void Clear();
+
+TreeNode* GetSelected() const;
+bool Select(TreeNode* node);   // expands ancestors to reveal the node
+void SelectFirst();
+void SelectLast();
+
+void ExpandAll();
+void CollapseAll();
+
+Event<TreeNode*> SelectionChanged;
+Event<TreeNode*> NodeActivated;   // fired on Enter — the "open this item" gesture
+```
+
+Visual configuration: `CollapsedGlyph` (`'+'`), `ExpandedGlyph` (`'-'`), `LeafGlyph` (`' '`), `ShowGlyphs` (`true`), and `IndentSize` (`2`).
+
+### Example
+
+```cpp
+auto tree = init<TreeView>([](TreeView* tv)
+{
+    auto* src = tv->AddNode(L"src");
+    src->AddChild(L"main.cpp");
+    src->AddChild(L"CMakeLists.txt");
+
+    auto* docs = tv->AddNode(L"docs");
+    docs->AddChild(L"index.md");
+
+    tv->NodeActivated += [](TreeNode* node)
+    {
+        // open the file, navigate to the page, ...
+    };
+});
+```
+
+Keyboard: Up/Down move the selection, Left/Right collapse and expand, Home/End jump to the first/last visible node, Enter or Space fires `NodeActivated`.
+
+---
+
+## DataGrid
+
+`DataGrid` presents rows of wide-string cells in fixed-width columns with a header row, selection, and scrolling.
+
+### Properties
+
+<ParamField path="ItemsSource" type="std::vector<std::vector<std::wstring>>">
+  The rows to display. Each inner vector is one row; element `i` renders in column `i`.
+</ParamField>
+
+<ParamField path="SelectedIndex" type="int" default="-1">
+  The currently selected row, or `-1` when nothing is selected.
+</ParamField>
+
+<ParamField path="ShowGridLines" type="bool" default="true">
+  Draw vertical separators between columns.
+</ParamField>
+
+<ParamField path="HeaderForegroundColor / HeaderBackgroundColor" type="Color" default="BLACK on WHITE">
+  Header row colors.
+</ParamField>
+
+<ParamField path="SelectedForegroundColor / SelectedBackgroundColor" type="Color">
+  Selected row colors.
+</ParamField>
+
+### Events
+
+<ParamField path="SelectionChanged" type="Event<int>">
+  Fired with the new row index whenever the selection moves.
+</ParamField>
+
+### Example
+
+```cpp
+auto grid = init<DataGrid>([](DataGrid* dg)
+{
+    dg->AddColumn(L"Name", 20);
+    dg->AddColumn(L"Size", 10);
+    dg->AddColumn(L"Modified", 12);
+
+    dg->ItemsSource = std::vector<std::vector<std::wstring>>
+    {
+        { L"main.cpp",      L"4.2 KB", L"2026-09-20" },
+        { L"README.md",     L"2.8 KB", L"2026-09-18" },
+        { L"Terminality.hpp", L"612 KB", L"2026-09-26" },
+    };
+
+    dg->SelectionChanged += [](int row) { /* row selected */ };
+});
+```
+
+Keyboard: Up/Down move the selection, PageUp/PageDown scroll by a screenful, Home/End jump to the first/last row, Left/Right scroll horizontally when the columns overflow. The view scrolls automatically to keep the selected row visible.
+
+---
+
+## BarrelListBox
+
+`BarrelListBox` renders an `ObservableCollection<std::wstring>` as a spinning barrel: the selected item sits in the vertical center, the previous and next items render directly above and below it, and items farther from the selection are progressively dimmed. Up/Down spin the barrel.
+
+### Properties
+
+<ParamField path="Items" type="ObservableCollection<std::wstring>">
+  The strings to display. Mutations (`push_back`, `erase`, `replace`, `clear`) refresh the control automatically.
+</ParamField>
+
+<ParamField path="SelectedIndex" type="int32_t" default="0">
+  The barrel's current position. Assign it to spin programmatically.
+</ParamField>
+
+<ParamField path="VisibleRows" type="int32_t" default="5">
+  Total rows to render. The control also honors an imposed height: when the parent arranges it taller, more rows render.
+</ParamField>
+
+<ParamField path="Wrap" type="bool" default="true">
+  When `true`, spinning past the first or last item wraps around to the opposite end.
+</ParamField>
+
+### Events
+
+<ParamField path="SelectionChanged" type="Event<std::size_t>">
+  Fired with the new index whenever the selection moves — by keyboard or by assignment.
+</ParamField>
+
+### Example
+
+```cpp
+auto barrel = init<BarrelListBox>([](BarrelListBox* b)
+{
+    b->Items.push_back(L"Monday");
+    b->Items.push_back(L"Tuesday");
+    b->Items.push_back(L"Wednesday");
+    b->Items.push_back(L"Thursday");
+    b->Items.push_back(L"Friday");
+
+    b->SelectionChanged += [](std::size_t index) { /* index selected */ };
+});
+```
+
+Use `GetSelectedItem()` for a pointer to the selected string (or `nullptr` when `Items` is empty).
+
+```cpp
+if (const std::wstring* day = barrel->GetSelectedItem())
+    // use *day
+```
