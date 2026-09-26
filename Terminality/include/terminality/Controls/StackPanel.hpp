@@ -33,7 +33,7 @@ namespace terminality
 
 		StackPanel() = default;
 
-		void AddChild(std::unique_ptr<ControlBase> child);
+		void AddChildControl(std::unique_ptr<ControlBase> child);
 		void Insert(std::size_t index, std::unique_ptr<ControlBase> child);
 		std::unique_ptr<ControlBase> RemoveChild(ControlPredicate predicate);
 		std::unique_ptr<ControlBase> RemoveAt(std::size_t index);
@@ -47,6 +47,14 @@ namespace terminality
 
 		std::size_t VisualChildrenCount() const override;
 		VisualTreeNode* GetVisualChild(std::size_t index) const override;
+
+		template<typename T = ControlBase>
+		inline T* AddChild(std::unique_ptr<T> child)
+		{
+			T* childPtr = child.get();
+			this->AddChildControl(std::move(child));
+			return childPtr;
+		}
 
 	protected:
 		Size MeasureOverride(const Size& availableSize) override;

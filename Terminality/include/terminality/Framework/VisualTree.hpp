@@ -19,6 +19,7 @@ namespace terminality
 		std::unique_ptr<VisualTreeNode> RootNode;
 		std::atomic<bool> Running { false };
 		FocusManager Focus;
+		int32_t Index;
 
 		UILayer() = delete;
 

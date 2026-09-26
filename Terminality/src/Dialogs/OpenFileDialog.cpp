@@ -144,7 +144,7 @@ std::optional<std::filesystem::path> OpenFileDialog::Show(const std::wstring& ti
         root->HorizontalAlignment = HorizontalAlign::Stretch;
         root->VerticalAlignment = VerticalAlign::Stretch;
 
-        root->AddChild(0, 0, init<Border>([&](Border* dialogBorder)
+        root->AddChildControl(0, 0, init<Border>([&](Border* dialogBorder)
         {
             dialogBorder->HorizontalAlignment = HorizontalAlign::Center;
             dialogBorder->VerticalAlignment = VerticalAlign::Center;
@@ -161,7 +161,7 @@ std::optional<std::filesystem::path> OpenFileDialog::Show(const std::wstring& ti
                 dialogContent->AddRow(RowDefinition{ GridLength::Star(1.0f) });
                 dialogContent->AddRow(RowDefinition{ GridLength::Auto() });
 
-                dialogContent->AddChild(0, 0, init<TextBox>([&](TextBox* pathBox)
+                dialogContent->AddChildControl(0, 0, init<TextBox>([&](TextBox* pathBox)
                 {
                     pathBoxPtr = pathBox;
                     pathBox->Text = currentDir.wstring();
@@ -170,7 +170,7 @@ std::optional<std::filesystem::path> OpenFileDialog::Show(const std::wstring& ti
                     pathBox->HorizontalAlignment = HorizontalAlign::Stretch;
                 }));
 
-                dialogContent->AddChild(1, 0, init<ItemsControl<FileSystemEntry>>([&](ItemsControl<FileSystemEntry>* items)
+                dialogContent->AddChildControl(1, 0, init<ItemsControl<FileSystemEntry>>([&](ItemsControl<FileSystemEntry>* items)
                 {
                     items->HorizontalAlignment = HorizontalAlign::Stretch;
                     items->VerticalAlignment = VerticalAlign::Stretch;
@@ -205,7 +205,7 @@ std::optional<std::filesystem::path> OpenFileDialog::Show(const std::wstring& ti
                     });
                 }));
 
-                dialogContent->AddChild(2, 0, init<Button>([&](Button* cancelBtn)
+                dialogContent->AddChildControl(2, 0, init<Button>([&](Button* cancelBtn)
                 {
                     cancelBtn->Text = L"Cancel";
                     cancelBtn->HorizontalAlignment = HorizontalAlign::Right;

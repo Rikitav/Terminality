@@ -24,7 +24,7 @@ MessageBoxResult MessageBox::Show(const std::wstring& title, const std::wstring&
         root->HorizontalAlignment = HorizontalAlign::Stretch;
         root->VerticalAlignment = VerticalAlign::Stretch;
 
-        root->AddChild(0, 0, init<Border>([&](Border* dialogBorder)
+        root->AddChildControl(0, 0, init<Border>([&](Border* dialogBorder)
         {
             dialogBorder->HorizontalAlignment = HorizontalAlign::Center;
             dialogBorder->VerticalAlignment = VerticalAlign::Center;
@@ -40,7 +40,7 @@ MessageBoxResult MessageBox::Show(const std::wstring& title, const std::wstring&
                 dialogContent->VerticalAlignment = VerticalAlign::Top;
                 dialogContent->Margin = Thickness(2, 1, 2, 0);
 
-                dialogContent->AddChild(init<Label>([&](Label* messageBox)
+                dialogContent->AddChildControl(init<Label>([&](Label* messageBox)
                 {
                     messageBox->Text = message;
                     messageBox->SetFocusable(false);
@@ -48,7 +48,7 @@ MessageBoxResult MessageBox::Show(const std::wstring& title, const std::wstring&
                     messageBox->TextWrapping = TextWrap::WrapWholeWords;
                 }));
 
-                dialogContent->AddChild(init<Grid>([&](Grid* buttonGrid)
+                dialogContent->AddChildControl(init<Grid>([&](Grid* buttonGrid)
                 {
                     buttonGrid->Margin = Thickness(0, 1, 0, 0);
                     buttonGrid->HorizontalAlignment = HorizontalAlign::Right;
@@ -57,7 +57,7 @@ MessageBoxResult MessageBox::Show(const std::wstring& title, const std::wstring&
                     auto addButton = [&](const std::wstring& text, MessageBoxResult res)
                     {
                         buttonGrid->AddColumn(ColumnDefinition{ GridLength::Auto() });
-                        buttonGrid->AddChild(0, colIndex++, init<Button>([&](Button* btn)
+                        buttonGrid->AddChildControl(0, colIndex++, init<Button>([&](Button* btn)
                         {
                             btn->Text = text;
                             btn->Clicked += [btn, res, &result]()

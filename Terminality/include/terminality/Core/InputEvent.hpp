@@ -19,6 +19,8 @@ namespace terminality
         CLEAR = 0x0C,               // CLEAR key
         RETURN = 0x0D,              // ENTER key
         MENU = 0x12,                // ALT key
+        SHIFT = 0x10,               // SHIFT key
+        CONTROL = 0x11,             // CONTROL key
         PAUSE = 0x13,               // PAUSE key
         CAPITAL = 0x14,             // CAPS LOCK key
         KANA = 0x15,                // IME Kana mode

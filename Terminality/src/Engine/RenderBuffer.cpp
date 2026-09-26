@@ -19,6 +19,21 @@
 
 using namespace terminality;
 
+bool RenderBuffer::TrueColorOutput = true;
+
+namespace
+{
+	// Maps an RGB color to the 256-color palette (6x6x6 cube + gray ramp),
+	// the same scheme btop uses for its non-truecolor themes.
+	int ColorTo256(const Color& color)
+	{
+		if (color.R == color.G && color.G == color.B)
+			return 232 + (color.R + 5) / 11;
+
+		return 16 + ((color.R + 25) / 51) * 36 + ((color.G + 25) / 51) * 6 + (color.B + 25) / 51;
+	}
+}
+
 #if TERMINALITY_SIMD_SSE2
 // Raw 16-byte compare of two cells. Sound because CellInfo::Padding is
 // value-initialized to zero on every construction and never written afterward,
@@ -47,6 +62,14 @@ void RenderBuffer::AppendAnsiBg(std::wstring& out, const Color& color)
 	if (color.Transparent)
 		return;
 
+	if (!TrueColorOutput)
+	{
+		out += L"\x1b[48;5;";
+		out += std::to_wstring(ColorTo256(color));
+		out += L'm';
+		return;
+	}
+
 	out += L"\x1b[48;2;";
 	out += std::to_wstring(color.R);
 	out += L';';
@@ -60,6 +83,14 @@ void RenderBuffer::AppendAnsiFg(std::wstring& out, const Color& color)
 {
 	if (color.Transparent)
 		return;
+
+	if (!TrueColorOutput)
+	{
+		out += L"\x1b[38;5;";
+		out += std::to_wstring(ColorTo256(color));
+		out += L'm';
+		return;
+	}
 
 	out += L"\x1b[38;2;";
 	out += std::to_wstring(color.R);

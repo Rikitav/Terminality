@@ -12,4 +12,5 @@ add_subdirectory(Terminality)
 # The test application currently relies on the Windows console API.
 if (WIN32)
   add_subdirectory(Terminality.TespApp)
+  add_subdirectory(samples)
 endif()

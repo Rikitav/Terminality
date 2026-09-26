@@ -8,7 +8,7 @@
 
 using namespace terminality;
 
-void StackPanel::AddChild(std::unique_ptr<ControlBase> child)
+void StackPanel::AddChildControl(std::unique_ptr<ControlBase> child)
 {
     if (child == nullptr)
         return;

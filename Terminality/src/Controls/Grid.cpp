@@ -155,7 +155,7 @@ static void AttachChild(ControlBase& child, Grid* parent)
         child.OnAttachedToTree();
 }
 
-void Grid::AddChild(int32_t row, int32_t column, int32_t rowSpan, int32_t colSpan, std::unique_ptr<ControlBase> child)
+void Grid::AddChildControl(int32_t row, int32_t column, int32_t rowSpan, int32_t colSpan, std::unique_ptr<ControlBase> child)
 {
     if (!child)
         return;
@@ -165,14 +165,14 @@ void Grid::AddChild(int32_t row, int32_t column, int32_t rowSpan, int32_t colSpa
     InvalidateMeasure();
 }
 
-void Grid::AddChild(int32_t row, int32_t column, std::unique_ptr<ControlBase> child)
+void Grid::AddChildControl(int32_t row, int32_t column, std::unique_ptr<ControlBase> child)
 {
-    AddChild(row, column, 1, 1, std::move(child));
+    AddChildControl(row, column, 1, 1, std::move(child));
 }
 
-void Grid::AddChild(std::unique_ptr<ControlBase> child)
+void Grid::AddChildControl(std::unique_ptr<ControlBase> child)
 {
-    AddChild(0, 0, 1, 1, std::move(child));
+    AddChildControl(0, 0, 1, 1, std::move(child));
 }
 
 bool Grid::IsUniformMode() const

@@ -24,7 +24,7 @@ void ShowModal(const std::wstring& title, std::unique_ptr<ControlBase> content)
         grid->VerticalAlignment = VerticalAlign::Stretch;
         grid->AddRow(RowDefinition{GridLength::Star()});
         
-        grid->AddChild(0, 0, init<Border>([&](Border* b)
+        grid->AddChildControl(0, 0, init<Border>([&](Border* b)
         {
             b->HeaderText = title + L" (ESC to close)";
             b->Content = std::move(content);
@@ -59,12 +59,12 @@ std::unique_ptr<ControlBase> TestButton()
         p->VerticalContentAlignment = VerticalAlign::Center;
         p->ItemSpacing = 1;
 
-        p->AddChild(init<Label>([](Label* l)
+        p->AddChildControl(init<Label>([](Label* l)
         {
             l->Text = L"Access keys: Alt+O, Alt+C, Alt+X. Default button fires on Enter.";
         }));
 
-        p->AddChild(init<Button>([](Button* b)
+        p->AddChildControl(init<Button>([](Button* b)
         {
             b->Text = L"&OK";
             b->IsDefault = true;
@@ -74,7 +74,7 @@ std::unique_ptr<ControlBase> TestButton()
             };
         }));
 
-        p->AddChild(init<Button>([](Button* b)
+        p->AddChildControl(init<Button>([](Button* b)
         {
             b->Text = L"&Cancel";
             b->IsCancel = true;
@@ -84,7 +84,7 @@ std::unique_ptr<ControlBase> TestButton()
             };
         }));
 
-        p->AddChild(init<Button>([](Button* b)
+        p->AddChildControl(init<Button>([](Button* b)
         {
             b->Text = L"E&xit";
             b->Clicked += []()
@@ -93,7 +93,7 @@ std::unique_ptr<ControlBase> TestButton()
             };
         }));
 
-        p->AddChild(init<Button>([](Button* b)
+        p->AddChildControl(init<Button>([](Button* b)
         {
             b->Text = L"&Disabled";
             b->IsEnabled = false;
@@ -110,24 +110,24 @@ std::unique_ptr<ControlBase> TestCheckBox()
         p->VerticalContentAlignment = VerticalAlign::Center;
         p->ItemSpacing = 1;
 
-        p->AddChild(init<CheckBox>([](CheckBox* cb)
+        p->AddChildControl(init<CheckBox>([](CheckBox* cb)
         {
             cb->Text = L"Option 1 (Unchecked)";
         }));
 
-        p->AddChild(init<CheckBox>([](CheckBox* cb)
+        p->AddChildControl(init<CheckBox>([](CheckBox* cb)
         {
             cb->Text = L"Option 2 (Checked via IsChecked)";
             cb->IsChecked = true;
         }));
 
-        p->AddChild(init<CheckBox>([](CheckBox* cb)
+        p->AddChildControl(init<CheckBox>([](CheckBox* cb)
         {
             cb->Text = L"Option 3 (Three-state)";
             cb->IsThreeState = true;
         }));
 
-        p->AddChild(init<CheckBox>([](CheckBox* cb)
+        p->AddChildControl(init<CheckBox>([](CheckBox* cb)
         {
             cb->Text = L"Option 4 (Disabled)";
             cb->IsChecked = true;
@@ -145,40 +145,40 @@ std::unique_ptr<ControlBase> TestTextBox()
         p->VerticalContentAlignment = VerticalAlign::Center;
         p->ItemSpacing = 1;
 
-        p->AddChild(init<TextBox>([](TextBox* tb)
+        p->AddChildControl(init<TextBox>([](TextBox* tb)
         {
             tb->Text = L"Default text";
             tb->MinSize = Size(20, 1);
         }));
 
-        p->AddChild(init<TextBox>([](TextBox* tb)
+        p->AddChildControl(init<TextBox>([](TextBox* tb)
         {
             tb->PlaceholderText = L"Placeholder text...";
             tb->MinSize = Size(20, 1);
         }));
 
-        p->AddChild(init<TextBox>([](TextBox* tb)
+        p->AddChildControl(init<TextBox>([](TextBox* tb)
         {
             tb->Text = L"Password";
             tb->PasswordChar = L'*';
             tb->MinSize = Size(20, 1);
         }));
 
-        p->AddChild(init<TextBox>([](TextBox* tb)
+        p->AddChildControl(init<TextBox>([](TextBox* tb)
         {
             tb->Text = L"Read-only text";
             tb->IsReadOnly = true;
             tb->MinSize = Size(20, 1);
         }));
 
-        p->AddChild(init<TextBox>([](TextBox* tb)
+        p->AddChildControl(init<TextBox>([](TextBox* tb)
         {
             tb->PlaceholderText = L"Max 10 chars";
             tb->MaxLength = 10;
             tb->MinSize = Size(20, 1);
         }));
 
-        p->AddChild(init<TextBox>([](TextBox* tb)
+        p->AddChildControl(init<TextBox>([](TextBox* tb)
         {
             tb->Text = L"Multi-line (AcceptsReturn = true)\nLine2";
             tb->AcceptsReturn = true;
@@ -196,13 +196,13 @@ std::unique_ptr<ControlBase> TestLabelAndBorder()
         g->AddRow(RowDefinition{GridLength::Auto()});
         g->AddRow(RowDefinition{GridLength::Auto()});
         
-        g->AddChild(0, 0, init<Label>([](Label* l)
+        g->AddChildControl(0, 0, init<Label>([](Label* l)
         {
             l->Text = L"This is a standard label.\nIt can have multiple lines.";
             l->Margin = Thickness(0, 1, 0, 1);
         }));
         
-        g->AddChild(1, 0, init<Border>([](Border* b)
+        g->AddChildControl(1, 0, init<Border>([](Border* b)
         {
             b->HeaderText = L"Border Widget";
             b->Content = init<Label>([](Label* l)
@@ -221,44 +221,44 @@ std::unique_ptr<ControlBase> TestProgressBarAndSpinner()
         p->HorizontalContentAlignment = HorizontalAlign::Stretch;
         p->ItemSpacing = 1;
 
-        p->AddChild(init<Label>([](Label* l)
+        p->AddChildControl(init<Label>([](Label* l)
         {
             l->Text = L"Default Spinner:";
         }));
 
-        p->AddChild(init<Spinner>([](Spinner* s)
+        p->AddChildControl(init<Spinner>([](Spinner* s)
         {
             s->Margin = Thickness(0, 1, 0, 1);
         }));
 
-        p->AddChild(init<Label>([](Label* l)
+        p->AddChildControl(init<Label>([](Label* l)
         {
             l->Text = L"Dots Spinner:";
         }));
 
-        p->AddChild(init<Spinner>([](Spinner* s)
+        p->AddChildControl(init<Spinner>([](Spinner* s)
         {
             s->Frames = Spinner::Dots();
             s->Margin = Thickness(0, 1, 0, 1);
         }));
 
-        p->AddChild(init<Label>([](Label* l)
+        p->AddChildControl(init<Label>([](Label* l)
         {
             l->Text = L"Arrow Spinner:";
         }));
 
-        p->AddChild(init<Spinner>([](Spinner* s)
+        p->AddChildControl(init<Spinner>([](Spinner* s)
         {
             s->Frames = Spinner::Arrow();
             s->Margin = Thickness(0, 1, 0, 1);
         }));
 
-        p->AddChild(init<Label>([](Label* l)
+        p->AddChildControl(init<Label>([](Label* l)
         {
             l->Text = L"Animated ProgressBar:";
         }));
 
-        p->AddChild(init<ProgressBar>([](ProgressBar* pb)
+        p->AddChildControl(init<ProgressBar>([](ProgressBar* pb)
         {
             pb->Margin = Thickness(0, 1, 0, 1);
             DispatchTimer::Current().TickEvent += [pb](float dt)
@@ -269,12 +269,12 @@ std::unique_ptr<ControlBase> TestProgressBarAndSpinner()
             };
         }));
 
-        p->AddChild(init<Label>([](Label* l)
+        p->AddChildControl(init<Label>([](Label* l)
         {
             l->Text = L"Indeterminate ProgressBar:";
         }));
 
-        p->AddChild(init<ProgressBar>([](ProgressBar* pb)
+        p->AddChildControl(init<ProgressBar>([](ProgressBar* pb)
         {
             pb->IsIndeterminate = true;
             pb->Margin = Thickness(0, 1, 0, 1);
@@ -293,10 +293,10 @@ std::unique_ptr<ControlBase> TestGrid1()
         g->AddColumn(ColumnDefinition{GridLength::Cell(10)});
         g->AddColumn(ColumnDefinition{GridLength::Star()});
         
-        g->AddChild(0, 0, init<Border>([](Border* b) { b->Content = init<Label>([](Label* l){ l->Text=L"R0, C0";}); }));
-        g->AddChild(0, 1, init<Border>([](Border* b) { b->Content = init<Label>([](Label* l){ l->Text=L"R0, C1 (Star)";}); }));
-        g->AddChild(1, 0, init<Border>([](Border* b) { b->Content = init<Label>([](Label* l){ l->Text=L"R1, C0 (Star)";}); }));
-        g->AddChild(1, 1, init<Border>([](Border* b) { b->Content = init<Label>([](Label* l){ l->Text=L"R1, C1 (StarxStar)";}); }));
+        g->AddChildControl(0, 0, init<Border>([](Border* b) { b->Content = init<Label>([](Label* l){ l->Text=L"R0, C0";}); }));
+        g->AddChildControl(0, 1, init<Border>([](Border* b) { b->Content = init<Label>([](Label* l){ l->Text=L"R0, C1 (Star)";}); }));
+        g->AddChildControl(1, 0, init<Border>([](Border* b) { b->Content = init<Label>([](Label* l){ l->Text=L"R1, C0 (Star)";}); }));
+        g->AddChildControl(1, 1, init<Border>([](Border* b) { b->Content = init<Label>([](Label* l){ l->Text=L"R1, C1 (StarxStar)";}); }));
     });
 }
 
@@ -310,9 +310,9 @@ std::unique_ptr<ControlBase> TestGrid2()
         g->AddColumn(ColumnDefinition{GridLength::Star()});
         
         // ColSpan test
-        g->AddChild(0, 0, 1, 2, init<Border>([](Border* b) { b->HeaderText = L"ColSpan 2"; b->Content = init<Label>([](Label* l){ l->Text=L"Spans two columns";}); }));
-        g->AddChild(1, 0, init<Border>([](Border* b) { b->Content = init<Label>([](Label* l){ l->Text=L"R1, C0";}); }));
-        g->AddChild(1, 1, init<Border>([](Border* b) { b->Content = init<Label>([](Label* l){ l->Text=L"R1, C1";}); }));
+        g->AddChildControl(0, 0, 1, 2, init<Border>([](Border* b) { b->HeaderText = L"ColSpan 2"; b->Content = init<Label>([](Label* l){ l->Text=L"Spans two columns";}); }));
+        g->AddChildControl(1, 0, init<Border>([](Border* b) { b->Content = init<Label>([](Label* l){ l->Text=L"R1, C0";}); }));
+        g->AddChildControl(1, 1, init<Border>([](Border* b) { b->Content = init<Label>([](Label* l){ l->Text=L"R1, C1";}); }));
     });
 }
 
@@ -326,9 +326,9 @@ std::unique_ptr<ControlBase> TestGrid3()
         g->AddColumn(ColumnDefinition{GridLength::Star()});
         
         // RowSpan test
-        g->AddChild(0, 0, 2, 1, init<Border>([](Border* b) { b->HeaderText = L"RowSpan 2"; b->Content = init<Label>([](Label* l){ l->Text=L"Spans two rows";}); }));
-        g->AddChild(0, 1, init<Border>([](Border* b) { b->Content = init<Label>([](Label* l){ l->Text=L"R0, C1";}); }));
-        g->AddChild(1, 1, init<Border>([](Border* b) { b->Content = init<Label>([](Label* l){ l->Text=L"R1, C1";}); }));
+        g->AddChildControl(0, 0, 2, 1, init<Border>([](Border* b) { b->HeaderText = L"RowSpan 2"; b->Content = init<Label>([](Label* l){ l->Text=L"Spans two rows";}); }));
+        g->AddChildControl(0, 1, init<Border>([](Border* b) { b->Content = init<Label>([](Label* l){ l->Text=L"R0, C1";}); }));
+        g->AddChildControl(1, 1, init<Border>([](Border* b) { b->Content = init<Label>([](Label* l){ l->Text=L"R1, C1";}); }));
     });
 }
 
@@ -340,7 +340,7 @@ std::unique_ptr<ControlBase> TestUniformGrid()
 
         for (int i = 0; i < 9; ++i)
         {
-            g->AddChild(init<Border>([i](Border* b)
+            g->AddChildControl(init<Border>([i](Border* b)
             {
                 b->Content = init<Label>([i](Label* l)
                 {
@@ -357,9 +357,9 @@ std::unique_ptr<ControlBase> TestStackPanel1()
     return init<StackPanel>([](StackPanel* p)
     {
         p->ContentOrientation = Orientation::Vertical;
-        p->AddChild(init<Button>([](Button* b) { b->Text = L"Btn 1"; }));
-        p->AddChild(init<Button>([](Button* b) { b->Text = L"Btn 2"; }));
-        p->AddChild(init<Button>([](Button* b) { b->Text = L"Btn 3"; }));
+        p->AddChildControl(init<Button>([](Button* b) { b->Text = L"Btn 1"; }));
+        p->AddChildControl(init<Button>([](Button* b) { b->Text = L"Btn 2"; }));
+        p->AddChildControl(init<Button>([](Button* b) { b->Text = L"Btn 3"; }));
     });
 }
 
@@ -368,9 +368,9 @@ std::unique_ptr<ControlBase> TestStackPanel2()
     return init<StackPanel>([](StackPanel* p)
     {
         p->ContentOrientation = Orientation::Horizontal;
-        p->AddChild(init<Button>([](Button* b) { b->Text = L"Left"; }));
-        p->AddChild(init<Button>([](Button* b) { b->Text = L"Middle"; }));
-        p->AddChild(init<Button>([](Button* b) { b->Text = L"Right"; }));
+        p->AddChildControl(init<Button>([](Button* b) { b->Text = L"Left"; }));
+        p->AddChildControl(init<Button>([](Button* b) { b->Text = L"Middle"; }));
+        p->AddChildControl(init<Button>([](Button* b) { b->Text = L"Right"; }));
     });
 }
 
@@ -381,8 +381,8 @@ std::unique_ptr<ControlBase> TestStackPanel3()
         p->ContentOrientation = Orientation::Vertical;
         p->HorizontalContentAlignment = HorizontalAlign::Center;
         p->VerticalContentAlignment = VerticalAlign::Center;
-        p->AddChild(init<Label>([](Label* l){ l->Text = L"Centered Vertical StackPanel"; }));
-        p->AddChild(init<Button>([](Button* b){ b->Text = L"Action"; }));
+        p->AddChildControl(init<Label>([](Label* l){ l->Text = L"Centered Vertical StackPanel"; }));
+        p->AddChildControl(init<Button>([](Button* b){ b->Text = L"Action"; }));
     });
 }
 
@@ -463,7 +463,7 @@ std::unique_ptr<ControlBase> TestScrollViewer1()
         {
             for(int i = 0; i < 30; ++i)
             {
-                p->AddChild(init<Label>([i](Label* l)
+                p->AddChildControl(init<Label>([i](Label* l)
                 {
                     l->Text = L"Line " + std::to_wstring(i);
                 }));
@@ -480,7 +480,7 @@ std::unique_ptr<ControlBase> TestScrollViewer2()
         {
             g->AddRow(RowDefinition{GridLength::Cell(50)});
             g->AddColumn(ColumnDefinition{GridLength::Cell(50)});
-            g->AddChild(0, 0, init<Button>([](Button* b){ b->Text = L"Huge Button"; }));
+            g->AddChildControl(0, 0, init<Button>([](Button* b){ b->Text = L"Huge Button"; }));
         });
     });
 }
@@ -494,7 +494,7 @@ std::unique_ptr<ControlBase> TestScrollViewer3()
             p->ContentOrientation = Orientation::Horizontal;
             for(int i = 0; i < 20; ++i)
             {
-                p->AddChild(init<Button>([i](Button* b){ b->Text = L"Btn" + std::to_wstring(i); }));
+                p->AddChildControl(init<Button>([i](Button* b){ b->Text = L"Btn" + std::to_wstring(i); }));
             }
         });
     });
@@ -535,8 +535,8 @@ std::unique_ptr<ControlBase> TestTabControl3()
     {
         tc->AddTab("Controls", init<StackPanel>([](StackPanel* p)
         {
-            p->AddChild(init<CheckBox>([](CheckBox* cb){ cb->Text = L"Check!"; }));
-            p->AddChild(init<Button>([](Button* b){ b->Text = L"Click!"; }));
+            p->AddChildControl(init<CheckBox>([](CheckBox* cb){ cb->Text = L"Check!"; }));
+            p->AddChildControl(init<Button>([](Button* b){ b->Text = L"Click!"; }));
         }));
     
         tc->AddTab("Empty", nullptr);
@@ -545,7 +545,7 @@ std::unique_ptr<ControlBase> TestTabControl3()
         {
             g->AddRow(RowDefinition{GridLength::Star()});
             g->AddColumn(ColumnDefinition{GridLength::Star()});
-            g->AddChild(0,0, init<Label>([](Label* l){ l->Text = L"Inside grid inside tab"; }));
+            g->AddChildControl(0,0, init<Label>([](Label* l){ l->Text = L"Inside grid inside tab"; }));
         }));
     });
 }
@@ -557,13 +557,13 @@ std::unique_ptr<ControlBase> TestTreeView1()
     return init<StackPanel>([](StackPanel* p)
     {
         p->ContentOrientation = Orientation::Vertical;
-        p->AddChild(init<Label>([](Label* l)
+        p->AddChildControl(init<Label>([](Label* l)
         {
             l->Text = L"UP/DOWN move  |  LEFT collapse/up  |  RIGHT expand/down  |  ENTER activate";
             l->Margin = Thickness(0, 0, 0, 1);
         }));
 
-        p->AddChild(init<TreeView>([](TreeView* tv)
+        p->AddChildControl(init<TreeView>([](TreeView* tv)
         {
             tv->MaxSize = Size(-1, 18);
             tv->FocusedBackgroundColor = Color::DARK_BLUE;
@@ -598,13 +598,13 @@ std::unique_ptr<ControlBase> TestTreeView2()
     return init<StackPanel>([](StackPanel* p)
     {
         p->ContentOrientation = Orientation::Vertical;
-        p->AddChild(init<Label>([](Label* l)
+        p->AddChildControl(init<Label>([](Label* l)
         {
             l->Text = L"A=add child to selected  |  R=remove selected  |  E=expand all  |  C=collapse all";
             l->Margin = Thickness(0, 0, 0, 1);
         }));
 
-        p->AddChild(init<TreeView>([](TreeView* tv)
+        p->AddChildControl(init<TreeView>([](TreeView* tv)
         {
             tv->MaxSize = Size(-1, 18);
 
@@ -694,7 +694,7 @@ std::unique_ptr<ControlBase> TestSlider()
     {
         p->ContentOrientation = Orientation::Vertical;
 
-        p->AddChild(init<Label>([](Label* l)
+        p->AddChildControl(init<Label>([](Label* l)
         {
             l->Text = L"Focus the slider. LEFT/RIGHT, PageUp/PageDown, Home/End move it.";
             l->Margin = Thickness(0, 0, 0, 1);
@@ -703,7 +703,7 @@ std::unique_ptr<ControlBase> TestSlider()
         auto valueLabel = init<Label>([](Label* l) { l->Text = L"Value: 25"; });
         Label* labelPtr = valueLabel.get();
 
-        p->AddChild(init<Slider>([labelPtr](Slider* s)
+        p->AddChildControl(init<Slider>([labelPtr](Slider* s)
         {
             s->Minimum = 0.0f;
             s->Maximum = 100.0f;
@@ -719,7 +719,7 @@ std::unique_ptr<ControlBase> TestSlider()
             };
         }));
 
-        p->AddChild(std::move(valueLabel));
+        p->AddChildControl(std::move(valueLabel));
     });
 }
 
@@ -729,13 +729,13 @@ std::unique_ptr<ControlBase> TestExpander()
     {
         p->ContentOrientation = Orientation::Vertical;
 
-        p->AddChild(init<Label>([](Label* l)
+        p->AddChildControl(init<Label>([](Label* l)
         {
             l->Text = L"ENTER/SPACE or LEFT/RIGHT to expand/collapse. DOWN enters content.";
             l->Margin = Thickness(0, 0, 0, 1);
         }));
 
-        p->AddChild(init<Expander>([](Expander* e)
+        p->AddChildControl(init<Expander>([](Expander* e)
         {
             e->Header = L"Section A";
             e->Content = init<Label>([](Label* l)
@@ -745,14 +745,14 @@ std::unique_ptr<ControlBase> TestExpander()
             e->Expand();
         }));
 
-        p->AddChild(init<Expander>([](Expander* e)
+        p->AddChildControl(init<Expander>([](Expander* e)
         {
             e->Header = L"Section B (starts collapsed)";
             e->Content = init<StackPanel>([](StackPanel* sp)
             {
                 sp->ContentOrientation = Orientation::Vertical;
-                sp->AddChild(init<CheckBox>([](CheckBox* c) { c->Text = L"Option 1"; }));
-                sp->AddChild(init<CheckBox>([](CheckBox* c) { c->Text = L"Option 2"; }));
+                sp->AddChildControl(init<CheckBox>([](CheckBox* c) { c->Text = L"Option 1"; }));
+                sp->AddChildControl(init<CheckBox>([](CheckBox* c) { c->Text = L"Option 2"; }));
             });
         }));
     });
@@ -765,20 +765,20 @@ std::unique_ptr<ControlBase> TestBarrelListBox()
         p->ContentOrientation = Orientation::Vertical;
         p->ItemSpacing = 1;
 
-        p->AddChild(init<Label>([](Label* l)
+        p->AddChildControl(init<Label>([](Label* l)
         {
             l->Text = L"Focus the barrel and press UP/DOWN to spin the selection.";
         }));
         
         static Label* selectedLabel = nullptr;
-        p->AddChild(init<Label>([&](Label* c)
+        p->AddChildControl(init<Label>([&](Label* c)
         {
             selectedLabel = c;
             c->Tag = "selected_label";
         }));
 
         static BarrelListBox* barrel = nullptr;
-        p->AddChild(init<BarrelListBox>([&](BarrelListBox* b)
+        p->AddChildControl(init<BarrelListBox>([&](BarrelListBox* b)
         {
             barrel = b;
             b->ExpSize = Size(18, 9);
@@ -827,27 +827,27 @@ std::unique_ptr<ControlBase> TestVisuals()
     return init<StackPanel>([](StackPanel* p)
     {
         p->ContentOrientation = Orientation::Vertical;
-        p->AddChild(init<Label>([](Label* l)
+        p->AddChildControl(init<Label>([](Label* l)
         {
             l->Text = L"Custom Colors!";
             l->ForegroundColor = Color::CYAN;
             l->BackgroundColor = Color::DARK_BLUE;
         }));
         
-        p->AddChild(init<Button>([](Button* b)
+        p->AddChildControl(init<Button>([](Button* b)
         {
             b->Text = L"Focused Colors!";
             b->FocusedForegroundColor = Color::YELLOW;
             b->FocusedBackgroundColor = Color::DARK_RED;
         }));
 
-        p->AddChild(init<Label>([](Label* l)
+        p->AddChildControl(init<Label>([](Label* l)
         {
             l->Text = L"Custom RGB (255, 128, 0) orange text!";
             l->ForegroundColor = Color(255, 128, 0);
         }));
 
-        p->AddChild(init<Canvas>([](Canvas* c)
+        p->AddChildControl(init<Canvas>([](Canvas* c)
         {
             c->MinSize = Size(60, 3);
             c->OnRender = [](RenderContext& ctx, float)
@@ -881,7 +881,7 @@ std::unique_ptr<ControlBase> TestHotkeys()
     return init<StackPanel>([](StackPanel* p)
     {
         p->ContentOrientation = Orientation::Vertical;
-        p->AddChild(init<Label>([](Label* l)
+        p->AddChildControl(init<Label>([](Label* l)
         {
             l->Text = L"Press 'H' or 'CTRL+H' for greetings!";
             
@@ -905,12 +905,12 @@ std::unique_ptr<ControlBase> TestDataGrid()
         p->ContentOrientation = Orientation::Vertical;
         p->ItemSpacing = 1;
 
-        p->AddChild(init<Label>([](Label* l)
+        p->AddChildControl(init<Label>([](Label* l)
         {
             l->Text = L"UP/DOWN/PageUp/PageDown/Home/End move selection. LEFT/RIGHT scroll.";
         }));
 
-        p->AddChild(init<DataGrid>([](DataGrid* dg)
+        p->AddChildControl(init<DataGrid>([](DataGrid* dg)
         {
             dg->AddColumn("Name", 14);
             dg->AddColumn("Role", 16);
@@ -947,12 +947,12 @@ std::unique_ptr<ControlBase> TestMenu()
         p->ContentOrientation = Orientation::Vertical;
         p->ItemSpacing = 1;
 
-        p->AddChild(init<Label>([](Label* l)
+        p->AddChildControl(init<Label>([](Label* l)
         {
             l->Text = L"Focus the menu bar. LEFT/RIGHT move, DOWN/ENTER open. ESC closes.";
         }));
 
-        p->AddChild(init<MenuBar>([](MenuBar* bar)
+        p->AddChildControl(init<MenuBar>([](MenuBar* bar)
         {
             auto fileMenu = init<Menu>([](Menu* m)
             {
@@ -1012,7 +1012,7 @@ public:
         AddRow(RowDefinition{GridLength::Auto()});
         AddRow(RowDefinition{GridLength::Star()});
         
-        AddChild(0, 0, init<Border>([](Border* b)
+        AddChildControl(0, 0, init<Border>([](Border* b)
         {
             b->Content = init<Label>([](Label* l)
             {
@@ -1062,7 +1062,7 @@ public:
         tests_.push_back({L"DataGrid Test", L"Tabular data", TestDataGrid});
         tests_.push_back({L"Menu Test", L"Menu bar + submenus", TestMenu});
         
-        AddChild(1, 0, init<ItemsControl<TestModalDef>>([&](ItemsControl<TestModalDef>* ic)
+        AddChildControl(1, 0, init<ItemsControl<TestModalDef>>([&](ItemsControl<TestModalDef>* ic)
         {
             ic->SetItemsSource(&tests_);
             ic->Scrollable = true;

@@ -117,6 +117,7 @@ void HostApplication::RunUILoop(std::unique_ptr<VisualTreeNode> root)
 
 	timer.Start();
 	NestUILoop(layer);
+	
 	timer.Stop();
 	isRunning = false;
 }
@@ -125,6 +126,14 @@ void HostApplication::NestUILoop(UILayer& layer)
 {
 	DispatchTimer& timer = DispatchTimer::Current();
 	VisualTree& tree = VisualTree::Current();
+
+	/*
+	if (layer.Index > 0)
+	{
+		UILayer& prevLayer = tree.LayerAt(layer.Index - 1);
+		HostApplication::RunIteration(prevLayer);
+	}
+	*/
 
 	layer.Running.store(true);
 	while (layer.Running.load() && timer.IsRunning())
@@ -157,7 +166,7 @@ void HostApplication::NestUILoop(UILayer& layer)
 			break;
 		}
 
-		if (evt.Key != InputKey::None)
+		if (evt.Key != InputKey::None || evt.Modifier != InputModifier::None)
 		{
 			FocusManager& focus = tree.GetFocusManager();
 			VisualTreeNode* focused = focus.GetFocused();

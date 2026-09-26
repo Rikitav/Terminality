@@ -147,7 +147,7 @@ namespace terminality
 
 		virtual std::size_t VisualChildrenCount() const override;
 		virtual VisualTreeNode* GetVisualChild(std::size_t index) const override;
-
+		
 		const ChildIterator child_begin() const;
 		const ChildIterator child_end() const;
 
@@ -155,7 +155,7 @@ namespace terminality
 		void Close();
 
 		template<typename T = ControlBase>
-		T* QueryByTag(std::string_view tag)
+		inline T* QueryByTag(std::string_view tag)
 		{
 			if (Tag.Get() == tag)
 				return dynamic_cast<T*>(this);

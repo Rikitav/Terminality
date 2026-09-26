@@ -62,7 +62,7 @@ void terminality::ItemsControl<T>::RebuildItems()
 	{
 		for (const auto& item : itemsSource_->get())
 		{
-			this->AddChild(itemTemplate_(item));
+			this->AddChildControl(itemTemplate_(item));
 		}
 	}
 }

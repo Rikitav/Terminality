@@ -38,7 +38,7 @@ namespace terminality
 		Property<DataGrid, Color> HeaderForegroundColor { this, "HeaderForegroundColor", Color::BLACK, InvalidationKind::Visual };
 		Property<DataGrid, Color> HeaderBackgroundColor { this, "HeaderBackgroundColor", Color::WHITE, InvalidationKind::Visual };
 		Property<DataGrid, Color> SelectedForegroundColor { this, "SelectedForegroundColor", Color::BLACK, InvalidationKind::Visual };
-		Property<DataGrid, Color> SelectedBackgroundColor { this, "SelectedBackgroundColor", Color::WHITE, InvalidationKind::Visual };
+		Property<DataGrid, Color> SelectedBackgroundColor { this, "SelectedBackgroundColor", Color::BLACK, InvalidationKind::Visual };
 
 		Event<int> SelectionChanged;
 

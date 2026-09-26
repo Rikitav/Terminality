@@ -4,17 +4,13 @@
 
 namespace terminality
 {
-	/// 24-bit RGB color. The named constants mirror the classic 16-color console
-	/// palette (standard VGA values), so existing code keeps its look while any
-	/// custom RGB value can be used directly.
+	/// 24-bit RGB color. The named constants mirror the classic 16-color console palette (standard VGA values), so existing code keeps its look while any custom RGB value can be used directly.
 	struct Color
 	{
 		uint8_t R = 0;
 		uint8_t G = 0;
 		uint8_t B = 0;
 
-		/// When set, the color is treated as "unspecified": RenderBuffer keeps the
-		/// underlying cell color when compositing and emits no SGR sequence.
 		bool Transparent = false;
 
 		constexpr Color() = default;
@@ -23,8 +19,7 @@ namespace terminality
 		bool operator==(const Color& other) const = default;
 		bool operator!=(const Color& other) const = default;
 
-		/// Linear interpolation between two opaque colors; t = 0 gives `from`,
-		/// t = 1 gives `to`. Transparent colors are returned as-is.
+		/// Linear interpolation between two opaque colors; t = 0 gives `from`, t = 1 gives `to`. Transparent colors are returned as-is.
 		static constexpr Color Lerp(Color from, Color to, float t)
 		{
 			if (from.Transparent || to.Transparent || t <= 0.0f)
@@ -43,6 +38,7 @@ namespace terminality
 		{
 			if (color.Transparent || amount <= 0.0f)
 				return color;
+
 			if (amount >= 1.0f)
 				return Color(0, 0, 0);
 
@@ -54,7 +50,6 @@ namespace terminality
 		}
 
 		static const Color TRANSPARENT;
-
 		static const Color BLACK;
 		static const Color DARK_BLUE;
 		static const Color DARK_GREEN;
@@ -81,9 +76,7 @@ namespace terminality
 		}
 	};
 
-	// Inline definitions live outside the struct so Color is a complete type here.
-	inline const Color Color::TRANSPARENT = Color(0, 0, 0).AsTransparent();
-
+	inline const Color Color::TRANSPARENT  = Color(0, 0, 0).AsTransparent();
 	inline const Color Color::BLACK        = Color(0, 0, 0);
 	inline const Color Color::DARK_BLUE    = Color(0, 0, 128);
 	inline const Color Color::DARK_GREEN   = Color(0, 128, 0);

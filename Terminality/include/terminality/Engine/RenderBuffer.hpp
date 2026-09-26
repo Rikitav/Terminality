@@ -58,6 +58,8 @@ namespace terminality
 		void MarkDirty(const Rect& rect);
 
 	public:
+		static bool TrueColorOutput;
+
 		static constexpr std::size_t MAX_WIDTH = 512;
 		static constexpr std::size_t MAX_HEIGHT = 256;
 

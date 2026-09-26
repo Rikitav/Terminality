@@ -87,9 +87,33 @@ namespace terminality
         void SetColumnDefinitions(std::string_view definitions);
         void AddRow(const RowDefinition& def);
         void AddColumn(const ColumnDefinition& def);
-        void AddChild(int32_t row, int32_t column, int32_t rowSpan, int32_t colSpan, std::unique_ptr<ControlBase> child);
-        void AddChild(int32_t row, int32_t column, std::unique_ptr<ControlBase> child);
-        void AddChild(std::unique_ptr<ControlBase> child);
+        void AddChildControl(int32_t row, int32_t column, int32_t rowSpan, int32_t colSpan, std::unique_ptr<ControlBase> child);
+        void AddChildControl(int32_t row, int32_t column, std::unique_ptr<ControlBase> child);
+        void AddChildControl(std::unique_ptr<ControlBase> child);
+
+        template<typename T = ControlBase>
+        inline T* AddChild(std::unique_ptr<T> child)
+        {
+            T* childPtr = child.get();
+            this->AddChildControl(std::move(child));
+            return childPtr;
+        }
+
+        template<typename T = ControlBase>
+        inline T* AddChild(int32_t row, int32_t column, int32_t rowSpan, int32_t colSpan, std::unique_ptr<T> child)
+        {
+            T* childPtr = child.get();
+            this->AddChildControl(row, column, rowSpan, colSpan, std::move(child));
+            return childPtr;
+        }
+
+        template<typename T = ControlBase>
+        inline T* AddChild(int32_t row, int32_t column, std::unique_ptr<T> child)
+        {
+            T* childPtr = child.get();
+            this->AddChildControl(row, column, std::move(child));
+            return childPtr;
+        }
 
     protected:
         bool MoveFocusNext(Direction direction, InputModifier modifiers) override;

@@ -211,7 +211,9 @@ void ControlBase::Render(RenderContext& context)
 		return;
 
 	Rect rect = context.ContextRect();
-	context.RenderRectangle(Point::Zero, rect.AsSize(), GetEffectiveForegroundColor(), GetEffectiveBackgroundColor(), EmptyRectangleStyle);
+
+	if (GetEffectiveBackgroundColor() != Color::TRANSPARENT)
+		context.RenderRectangle(Point::Zero, rect.AsSize(), GetEffectiveForegroundColor(), GetEffectiveBackgroundColor(), EmptyRectangleStyle);
 
 	visualDirty_ = false;
 	RenderOverride(context);
