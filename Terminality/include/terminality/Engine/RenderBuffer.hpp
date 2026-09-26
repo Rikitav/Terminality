@@ -4,6 +4,8 @@
 #include <vector>
 #include <mutex>
 #include <optional>
+#include <string>
+#include <ostream>
 
 #include <terminality/Core/Color.hpp>
 #include <terminality/Core/Geometry.hpp>
@@ -24,18 +26,11 @@ namespace terminality
 
 		CellInfo() = default;
 
-		CellInfo(wchar_t symbol, Color fore = Color::WHITE, Color back = Color::BLACK)
-			: Symbol(symbol), Fore(fore), Back(back) { }
+		CellInfo(wchar_t symbol, Color fore = Color::WHITE, Color back = Color::BLACK);
 
-		bool operator==(const CellInfo& other) const
-		{
-			return Symbol == other.Symbol && Fore == other.Fore && Back == other.Back;
-		}
+		bool operator==(const CellInfo& other) const;
 
-		bool operator!=(const CellInfo& other) const
-		{
-			return !(*this == other);
-		}
+		bool operator!=(const CellInfo& other) const;
 	};
 
 	class RenderBuffer
@@ -65,8 +60,8 @@ namespace terminality
 
 		RenderBuffer(uint32_t initialWidth, uint32_t initialHeight);
 
-		uint32_t Width() const { return width; }
-		uint32_t Height() const { return height; }
+		uint32_t Width() const;
+		uint32_t Height() const;
 		void Resize(uint32_t newWidth, uint32_t newHeight);
 		void Clear(const CellInfo& cell = CellInfo());
 

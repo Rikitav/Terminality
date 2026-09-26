@@ -7,6 +7,11 @@
 
 using namespace terminality;
 
+bool Expander::IsFocusable() const
+{
+	return true;
+}
+
 void Expander::Expand()
 {
 	if (Expanded.Get())

@@ -147,6 +147,11 @@ void MenuBar::MoveSelection(int delta)
 	InvalidateVisual();
 }
 
+bool MenuBar::IsFocusable() const
+{
+	return true;
+}
+
 bool MenuBar::OnKeyDown(InputEvent input)
 {
 	if (!IsEnabled)

@@ -30,7 +30,7 @@ namespace terminality
 		/// Normalized position in [0,1].
 		float Fraction() const;
 
-		bool IsFocusable() const override { return true; }
+		bool IsFocusable() const override;
 		bool OnKeyDown(InputEvent input) override;
 		void OnLostFocus() override;
 

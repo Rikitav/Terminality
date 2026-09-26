@@ -84,6 +84,11 @@ void DataGrid::ArrangeOverride(const Rect& /*contentRect*/)
 	ScrollToSelection();
 }
 
+bool DataGrid::IsFocusable() const
+{
+	return true;
+}
+
 bool DataGrid::OnKeyDown(InputEvent input)
 {
 	if (!IsEnabled)

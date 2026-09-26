@@ -12,8 +12,7 @@ namespace terminality
 		int32_t X;
 		int32_t Y;
 
-		Point(int32_t x = 0, int32_t y = 0)
-			: X(x), Y(y) { }
+		Point(int32_t x = 0, int32_t y = 0);
 
 		bool operator==(const Point& other) const;
 		bool operator!=(const Point& other) const;
@@ -24,11 +23,9 @@ namespace terminality
 		Point From;
 		Point To;
 
-		Vector(Point from = Point(), Point to = Point())
-			: From(from), To(to) { }
+		Vector(Point from = Point(), Point to = Point());
 
-		Vector(int32_t fromX, int32_t fromY, int32_t toX, int32_t toY)
-			: From(fromX, fromY), To(toX, toY) { }
+		Vector(int32_t fromX, int32_t fromY, int32_t toX, int32_t toY);
 
 		bool operator==(const Vector& other) const;
 		bool operator!=(const Vector& other) const;
@@ -42,11 +39,9 @@ namespace terminality
 		int32_t Width;
 		int32_t Height;
 
-		Size(int32_t width = 0, int32_t height = 0)
-			: Width(width), Height(height) { }
+		Size(int32_t width = 0, int32_t height = 0);
 
-		Size(Vector diagonal)
-			: Width(std::max(0, diagonal.To.X - diagonal.From.X)), Height(std::max(0, diagonal.To.Y - diagonal.From.Y)) { }
+		Size(Vector diagonal);
 
 		bool operator==(const Size& other) const;
 		bool operator!=(const Size& other) const;
@@ -62,26 +57,18 @@ namespace terminality
 		int32_t Right;
 		int32_t Bottom;
 
-		Thickness(int32_t uniform = 0)
-			: Left(uniform), Top(uniform), Right(uniform), Bottom(uniform) { }
+		Thickness(int32_t uniform = 0);
 
-		Thickness(int32_t left, int32_t top, int32_t right, int32_t bottom)
-			: Left(left), Top(top), Right(right), Bottom(bottom) { }
+		Thickness(int32_t left, int32_t top, int32_t right, int32_t bottom);
 
 		bool operator==(const Thickness& other) const;
 		bool operator!=(const Thickness& other) const;
 
 		bool IsUniform() const;
 
-		int32_t Horizontal() const
-		{
-			return Left + Right;
-		}
+		int32_t Horizontal() const;
 
-		int32_t Vertical() const
-		{
-			return Top + Bottom;
-		}
+		int32_t Vertical() const;
 	};
 
 	struct Rect
@@ -91,8 +78,7 @@ namespace terminality
 		int32_t Width;
 		int32_t Height;
 
-		Rect(int32_t x = 0, int32_t y = 0, int32_t width = 0, int32_t height = 0)
-			: X(x), Y(y), Width(width), Height(height) { }
+		Rect(int32_t x = 0, int32_t y = 0, int32_t width = 0, int32_t height = 0);
 
 		bool operator==(const Rect& other) const;
 		bool operator!=(const Rect& other) const;

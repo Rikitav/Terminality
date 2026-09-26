@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <optional>
 #include <type_traits>
 #include <ranges>
 #include <algorithm>
@@ -33,7 +34,9 @@ namespace terminality
 	template <typename Predicate>
 	WhereOp<std::decay_t<Predicate>> Where(Predicate&& pred)
 	{
-		return { std::forward<Predicate>(pred) };
+		// The leading {} value-initializes the QueryOperator base; brace
+		// elements bind to bases before members.
+		return { {}, std::forward<Predicate>(pred) };
 	}
 
 	// Select (Transform)
@@ -51,7 +54,7 @@ namespace terminality
 	template <typename Selector>
 	SelectOp<std::decay_t<Selector>> Select(Selector&& sel)
 	{
-		return { std::forward<Selector>(sel) };
+		return { {}, std::forward<Selector>(sel) };
 	}
 
 	// ToList
@@ -72,10 +75,7 @@ namespace terminality
 		}
 	};
 
-	inline ToListOp ToList()
-	{
-		return {};
-	}
+	ToListOp ToList();
 
 	// First
 	template <typename Predicate>
@@ -98,7 +98,7 @@ namespace terminality
 	template <typename Predicate>
 	FirstPredOp<std::decay_t<Predicate>> First(Predicate&& pred)
 	{
-		return { std::forward<Predicate>(pred) };
+		return { {}, std::forward<Predicate>(pred) };
 	}
 
 	struct FirstOp : QueryOperator<FirstOp>
@@ -114,10 +114,7 @@ namespace terminality
 		}
 	};
 
-	inline FirstOp First()
-	{
-		return {};
-	}
+	FirstOp First();
 
 	// FirstOrDefault
 	template <typename Predicate>
@@ -141,7 +138,7 @@ namespace terminality
 	template <typename Predicate>
 	FirstOrDefaultPredOp<std::decay_t<Predicate>> FirstOrDefault(Predicate&& pred)
 	{
-		return { std::forward<Predicate>(pred) };
+		return { {}, std::forward<Predicate>(pred) };
 	}
 
 	struct FirstOrDefaultOp : QueryOperator<FirstOrDefaultOp>
@@ -158,10 +155,7 @@ namespace terminality
 		}
 	};
 
-	inline FirstOrDefaultOp FirstOrDefault()
-	{
-		return {};
-	}
+	FirstOrDefaultOp FirstOrDefault();
 
 	// Any
 	template <typename Predicate>
@@ -184,7 +178,7 @@ namespace terminality
 	template <typename Predicate>
 	AnyPredOp<std::decay_t<Predicate>> Any(Predicate&& pred)
 	{
-		return { std::forward<Predicate>(pred) };
+		return { {}, std::forward<Predicate>(pred) };
 	}
 
 	struct AnyOp : QueryOperator<AnyOp>
@@ -196,10 +190,7 @@ namespace terminality
 		}
 	};
 
-	inline AnyOp Any()
-	{
-		return {};
-	}
+	AnyOp Any();
 
 	// All
 	template <typename Predicate>
@@ -222,7 +213,7 @@ namespace terminality
 	template <typename Predicate>
 	AllOp<std::decay_t<Predicate>> All(Predicate&& pred)
 	{
-		return { std::forward<Predicate>(pred) };
+		return { {}, std::forward<Predicate>(pred) };
 	}
 
 	// Count
@@ -235,10 +226,7 @@ namespace terminality
 		}
 	};
 
-	inline CountOp Count()
-	{
-		return {};
-	}
+	CountOp Count();
 
 	template <typename Predicate>
 	struct CountPredOp : QueryOperator<CountPredOp<Predicate>>
@@ -261,7 +249,7 @@ namespace terminality
 	template <typename Predicate>
 	CountPredOp<std::decay_t<Predicate>> Count(Predicate&& pred)
 	{
-		return { std::forward<Predicate>(pred) };
+		return { {}, std::forward<Predicate>(pred) };
 	}
 
 	// OrderBy
@@ -292,7 +280,7 @@ namespace terminality
 	template <typename KeySelector>
 	OrderByOp<std::decay_t<KeySelector>> OrderBy(KeySelector&& sel)
 	{
-		return { std::forward<KeySelector>(sel) };
+		return { {}, std::forward<KeySelector>(sel) };
 	}
 
 	// OrderByDescending
@@ -324,6 +312,6 @@ namespace terminality
 	template <typename KeySelector>
 	OrderByDescendingOp<std::decay_t<KeySelector>> OrderByDescending(KeySelector&& sel)
 	{
-		return { std::forward<KeySelector>(sel) };
+		return { {}, std::forward<KeySelector>(sel) };
 	}
 }

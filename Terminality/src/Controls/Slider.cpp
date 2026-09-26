@@ -3,6 +3,11 @@
 
 using namespace terminality;
 
+bool Slider::IsFocusable() const
+{
+	return true;
+}
+
 float Slider::Fraction() const
 {
 	float min = Minimum.Get();

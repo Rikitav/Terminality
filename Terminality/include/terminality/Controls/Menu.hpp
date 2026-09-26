@@ -61,11 +61,11 @@ namespace terminality
 		void AddSubMenu(const std::wstring& text, std::shared_ptr<Menu> submenu);
 		void Clear();
 
-		bool IsEmpty() const { return items_.empty(); }
+		bool IsEmpty() const;
 
 		void Open(Point position);
 
-		bool IsFocusable() const override { return true; }
+		bool IsFocusable() const override;
 		bool OnKeyDown(InputEvent input) override;
 		void OnGotFocus() override;
 		void OnLostFocus() override;

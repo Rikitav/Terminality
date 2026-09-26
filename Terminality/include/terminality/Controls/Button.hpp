@@ -45,8 +45,8 @@ namespace terminality
 
 		void Click();
 
-		wchar_t GetAccessKey() const { return accessKey_; }
-		const std::wstring& GetDisplayText() const { return displayText_; }
+		wchar_t GetAccessKey() const;
+		const std::wstring& GetDisplayText() const;
 
 		void OnPropertyChanged(const char* propertyName) override;
 

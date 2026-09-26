@@ -28,6 +28,9 @@ static int32_t HeaderWidth(const TabItem& tab)
 	return width;
 }
 
+TabItem::TabItem(std::string header, std::unique_ptr<ControlBase> content, bool closeable)
+	: Header(std::move(header)), Content(std::move(content)), IsCloseable(closeable) { }
+
 void TabControl::AddTab(const std::string& header, std::unique_ptr<ControlBase> content)
 {
 	AddTab(header, std::move(content), false);
@@ -81,6 +84,11 @@ size_t TabControl::GetTabCount() const
 	return tabs_.size();
 }
 
+bool TabControl::IsFocusable() const
+{
+	return true;
+}
+
 bool TabControl::OnKeyDown(InputEvent input)
 {
 	if (!IsEnabled)
@@ -121,7 +129,7 @@ bool TabControl::OnKeyDown(InputEvent input)
 			return true;
 		}
 	}
-	else if (input.Key == InputKey::DELETE)
+	else if (input.Key == KEY_DELETE)
 	{
 		int idx = SelectedIndex.Get();
 		if (in_bounds(idx, tabs_) && tabs_[idx].IsCloseable)

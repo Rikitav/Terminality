@@ -51,7 +51,7 @@ namespace terminality
 
 		void OnPropertyChanged(const char* propertyName) override;
 
-		bool IsFocusable() const override { return true; }
+		bool IsFocusable() const override;
 		bool OnKeyDown(InputEvent input) override;
 
 	protected:

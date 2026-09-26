@@ -23,10 +23,7 @@ namespace terminality
 
 		UILayer() = delete;
 
-		UILayer(std::unique_ptr<VisualTreeNode> rootNode) : RootNode(std::move(rootNode))
-		{
-			RootNode->SetLayer(this);
-		}
+		UILayer(std::unique_ptr<VisualTreeNode> rootNode);
 
 		UILayer(const UILayer&) = delete;
 		UILayer& operator=(const UILayer&) = delete;
@@ -60,7 +57,7 @@ namespace terminality
 		void StopNestedLayers();
 
 		void Invalidate(const Rect& dirtyRect);
-		bool HasDirtyVisual() const { return dirtyRect_.has_value(); }
+		bool HasDirtyVisual() const;
 
 		void RunLayout(const Size& viewportSize);
 		void RenderLayer(UILayer& layer, RenderBuffer& buffer);

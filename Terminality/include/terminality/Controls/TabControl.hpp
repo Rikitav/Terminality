@@ -22,8 +22,7 @@ namespace terminality
         std::unique_ptr<ControlBase> Content;
         bool IsCloseable = false;
         
-        TabItem(std::string header, std::unique_ptr<ControlBase> content, bool closeable = false)
-            : Header(std::move(header)), Content(std::move(content)), IsCloseable(closeable) {}
+        TabItem(std::string header, std::unique_ptr<ControlBase> content, bool closeable = false);
     };
 
     class TabControl : public ControlBase
@@ -50,7 +49,7 @@ namespace terminality
 
         size_t GetTabCount() const;
 
-        bool IsFocusable() const override { return true; }
+        bool IsFocusable() const override;
 
         bool OnKeyDown(InputEvent input) override;
 

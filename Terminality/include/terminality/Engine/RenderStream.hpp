@@ -27,21 +27,11 @@ namespace terminality
         bool wrap_;
 
     public:
-        RenderStream(RenderContext& context, Point startPos = Point(0, 0))
-            : context_(context), pos_(startPos), fg_(Color::WHITE), bg_(Color::BLACK), wrap_(false) {}
+        RenderStream(RenderContext& context, Point startPos = Point(0, 0));
 
-        RenderStream& operator<<(const Point& point)
-        {
-            pos_ = point;
-            return *this;
-        }
+        RenderStream& operator<<(const Point& point);
 
-        RenderStream& operator<<(const RenderStreamColor& color)
-        {
-            fg_ = color.Foreground.value_or(fg_);
-            bg_ = color.Background.value_or(bg_);
-            return *this;
-        }
+        RenderStream& operator<<(const RenderStreamColor& color);
 
         RenderStream& operator<<(const std::wstring& text);
         RenderStream& operator<<(const std::string& text);
@@ -56,24 +46,11 @@ namespace terminality
         void NewLine();
     };
 
-    inline RenderStreamColor SetColor(Color fg, Color bg = Color::BLACK)
-    {
-        return RenderStreamColor{ fg, bg };
-    }
+    RenderStreamColor SetColor(Color fg, Color bg = Color::BLACK);
 
-    inline RenderStreamColor SetBack(Color bg)
-    {
-        return RenderStreamColor{ std::nullopt, bg };
-    }
+    RenderStreamColor SetBack(Color bg);
 
-    inline RenderStreamColor SetFore(Color fg)
-    {
-        return RenderStreamColor{ fg, std::nullopt };
-    }
+    RenderStreamColor SetFore(Color fg);
 
-    inline RenderStream& endl(RenderStream& stream)
-    {
-        stream.NewLine();
-        return stream;
-    }
+    RenderStream& endl(RenderStream& stream);
 }

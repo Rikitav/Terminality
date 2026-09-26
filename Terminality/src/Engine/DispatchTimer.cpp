@@ -81,6 +81,16 @@ bool DispatchTimer::IsResizing() const
 	return isResizing_;
 }
 
+float DispatchTimer::DeltaTime() const
+{
+	return deltaTime_;
+}
+
+float DispatchTimer::TotalTime() const
+{
+	return totalTime_;
+}
+
 void DispatchTimer::Start()
 {
 	running_.store(true);

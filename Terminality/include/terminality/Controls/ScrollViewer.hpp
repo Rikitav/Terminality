@@ -24,10 +24,7 @@ namespace terminality
 
         ScrollViewer();
 
-        bool IsFocusable() const override
-        {
-            return true;
-        }
+        bool IsFocusable() const override;
 
         void OnPropertyChanged(const char* propertyName) override;
 

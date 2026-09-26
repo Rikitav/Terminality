@@ -28,13 +28,7 @@ namespace terminality
 		std::size_t index_;
 		mutable VisualTreeNode* current_ = nullptr;
 
-		void updateCurrent() const
-		{
-			if (node_ != nullptr && index_ < node_->VisualChildrenCount())
-				current_ = node_->GetVisualChild(index_);
-			else
-				current_ = nullptr;
-		}
+		void updateCurrent() const;
 
 	public:
 		using iterator_category = std::forward_iterator_tag;
@@ -43,46 +37,16 @@ namespace terminality
 		using pointer = VisualTreeNode**;
 		using reference = VisualTreeNode*&;
 
-		ChildIterator(const VisualTreeNode* node, std::size_t index)
-			: node_(node), index_(index)
-		{
-			updateCurrent();
-		}
+		ChildIterator(const VisualTreeNode* node, std::size_t index);
 
-		VisualTreeNode*& operator*() const
-		{
-			return current_;
-		}
+		VisualTreeNode*& operator*() const;
+		VisualTreeNode** operator->() const;
 
-		VisualTreeNode** operator->() const
-		{
-			return &current_;
-		}
+		ChildIterator& operator++();
+		ChildIterator operator++(int);
 
-		ChildIterator& operator++()
-		{
-			++index_;
-			updateCurrent();
-			return *this;
-		}
-
-		ChildIterator operator++(int)
-		{
-			ChildIterator temp = *this;
-			++index_;
-			updateCurrent();
-			return temp;
-		}
-
-		bool operator==(const ChildIterator& other) const
-		{
-			return node_ == other.node_ && index_ == other.index_;
-		}
-
-		bool operator!=(const ChildIterator& other) const
-		{
-			return !(*this == other);
-		}
+		bool operator==(const ChildIterator& other) const;
+		bool operator!=(const ChildIterator& other) const;
 	};
 
 	class ControlBase : public VisualTreeNode

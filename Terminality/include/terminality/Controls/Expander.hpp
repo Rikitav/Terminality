@@ -31,7 +31,7 @@ namespace terminality
 		void Collapse();
 		void Toggle();
 
-		bool IsFocusable() const override { return true; }
+		bool IsFocusable() const override;
 		bool OnKeyDown(InputEvent input) override;
 		void OnGotFocus() override;
 		void OnLostFocus() override;

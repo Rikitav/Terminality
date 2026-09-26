@@ -26,6 +26,55 @@ static InputModifier NormalizeModifiers(InputModifier modifier)
 	return modifier;
 }
 
+void ChildIterator::updateCurrent() const
+{
+	if (node_ != nullptr && index_ < node_->VisualChildrenCount())
+		current_ = node_->GetVisualChild(index_);
+	else
+		current_ = nullptr;
+}
+
+ChildIterator::ChildIterator(const VisualTreeNode* node, std::size_t index)
+	: node_(node), index_(index)
+{
+	updateCurrent();
+}
+
+VisualTreeNode*& ChildIterator::operator*() const
+{
+	return current_;
+}
+
+VisualTreeNode** ChildIterator::operator->() const
+{
+	return &current_;
+}
+
+ChildIterator& ChildIterator::operator++()
+{
+	++index_;
+	updateCurrent();
+	return *this;
+}
+
+ChildIterator ChildIterator::operator++(int)
+{
+	ChildIterator temp = *this;
+	++index_;
+	updateCurrent();
+	return temp;
+}
+
+bool ChildIterator::operator==(const ChildIterator& other) const
+{
+	return node_ == other.node_ && index_ == other.index_;
+}
+
+bool ChildIterator::operator!=(const ChildIterator& other) const
+{
+	return !(*this == other);
+}
+
 void ControlBase::ResetHotkeyExecutionState()
 {
 	hotkeyExecutionState.clear();
@@ -212,7 +261,7 @@ void ControlBase::Render(RenderContext& context)
 
 	Rect rect = context.ContextRect();
 
-	if (GetEffectiveBackgroundColor() != Color::TRANSPARENT)
+	if (!GetEffectiveBackgroundColor().Transparent)
 		context.RenderRectangle(Point::Zero, rect.AsSize(), GetEffectiveForegroundColor(), GetEffectiveBackgroundColor(), EmptyRectangleStyle);
 
 	visualDirty_ = false;

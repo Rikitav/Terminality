@@ -13,6 +13,14 @@
 #include <terminality/Controls/Label.hpp>
 #include <terminality/Controls/Button.hpp>
 
+// The Windows headers define MessageBox as a macro; this translation unit's
+// code (and everything after it in the single-header amalgamation) needs the
+// class name. The class declaration itself is protected by the same #undef in
+// MessageBox.hpp, which runs before <Windows.h> is included there.
+#ifdef MessageBox
+#undef MessageBox
+#endif
+
 using namespace terminality;
 
 MessageBoxResult MessageBox::Show(const std::wstring& title, const std::wstring& message, MessageBoxButton buttons)

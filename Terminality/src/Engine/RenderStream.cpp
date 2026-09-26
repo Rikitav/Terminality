@@ -7,6 +7,22 @@
 
 using namespace terminality;
 
+RenderStream::RenderStream(RenderContext& context, Point startPos)
+    : context_(context), pos_(startPos), fg_(Color::WHITE), bg_(Color::BLACK), wrap_(false) { }
+
+RenderStream& RenderStream::operator<<(const Point& point)
+{
+    pos_ = point;
+    return *this;
+}
+
+RenderStream& RenderStream::operator<<(const RenderStreamColor& color)
+{
+    fg_ = color.Foreground.value_or(fg_);
+    bg_ = color.Background.value_or(bg_);
+    return *this;
+}
+
 RenderStream& RenderStream::operator<<(const std::wstring& text)
 {
     if (text.empty())
@@ -78,4 +94,28 @@ RenderStream& RenderStream::operator<<(RenderStream& (*manipulator)(RenderStream
 void RenderStream::NewLine()
 {
     pos_.X = 0; pos_.Y += 1;
+}
+
+namespace terminality
+{
+    RenderStreamColor SetColor(Color fg, Color bg)
+    {
+        return RenderStreamColor{ fg, bg };
+    }
+
+    RenderStreamColor SetBack(Color bg)
+    {
+        return RenderStreamColor{ std::nullopt, bg };
+    }
+
+    RenderStreamColor SetFore(Color fg)
+    {
+        return RenderStreamColor{ fg, std::nullopt };
+    }
+
+    RenderStream& endl(RenderStream& stream)
+    {
+        stream.NewLine();
+        return stream;
+    }
 }

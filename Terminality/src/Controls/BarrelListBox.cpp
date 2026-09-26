@@ -21,6 +21,11 @@ BarrelListBox::BarrelListBox()
 		[this]() { OnCollectionCleared(); });
 }
 
+bool BarrelListBox::IsFocusable() const
+{
+	return true;
+}
+
 const std::wstring* BarrelListBox::GetSelectedItem() const
 {
 	if (Items.empty())

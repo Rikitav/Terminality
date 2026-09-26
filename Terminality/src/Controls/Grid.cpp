@@ -99,6 +99,9 @@ namespace
 // GridLength
 // ------------------------------------------------------------------
 
+GridLength::GridLength(float value, GridUnitType type)
+	: Value(value), Type(type) { }
+
 GridLength GridLength::Auto()
 {
     return { 0.0f, GridUnitType::Auto };

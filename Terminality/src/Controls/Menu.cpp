@@ -112,6 +112,16 @@ std::wstring Menu::GetDisplayText(const std::wstring& text, wchar_t& accessKey, 
 	return result;
 }
 
+bool Menu::IsEmpty() const
+{
+	return items_.empty();
+}
+
+bool Menu::IsFocusable() const
+{
+	return true;
+}
+
 void Menu::AddItem(const std::wstring& text, std::function<void()> action)
 {
 	items_.push_back(MenuItem{ text, L"", std::move(action), nullptr, false, true, false, false });

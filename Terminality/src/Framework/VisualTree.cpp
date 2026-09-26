@@ -14,13 +14,6 @@ using namespace terminality;
 
 namespace
 {
-	// A layer counts as covering the viewport only if it actually paints every
-	// cell of it: the root must be arranged over the viewport AND have a
-	// non-transparent background. Layer roots are always arranged into the
-	// full viewport rect by RunLayout, so the arranged rect alone cannot tell
-	// a painted full screen apart from a transparent overlay root (e.g. a
-	// centered dialog whose root stretches over the viewport but only draws
-	// the dialog itself) — the background color decides.
 	bool LayerCoversViewport(const UILayer& layer, const Rect& viewportRect)
 	{
 		const VisualTreeNode* root = layer.RootNode.get();
@@ -34,13 +27,18 @@ namespace
 		if (control == nullptr)
 			return true; // non-ControlBase root: assume opaque
 
-		return control->IsVisible && control->GetEffectiveBackgroundColor() != Color::TRANSPARENT;
+		return control->IsVisible && !control->GetEffectiveBackgroundColor().Transparent;
 	}
 }
 
 VisualTree::VisualTree()
 {
 	layers_.reserve(100);
+}
+
+UILayer::UILayer(std::unique_ptr<VisualTreeNode> rootNode) : RootNode(std::move(rootNode))
+{
+	RootNode->SetLayer(this);
 }
 
 VisualTree& VisualTree::Current()
@@ -141,6 +139,11 @@ void VisualTree::Invalidate(const Rect& dirtyRect)
 		dirtyRect_ = dirtyRect;
 	else
 		dirtyRect_ = Rect::Union(*dirtyRect_, dirtyRect);
+}
+
+bool VisualTree::HasDirtyVisual() const
+{
+	return dirtyRect_.has_value();
 }
 
 void VisualTree::CollectDirtyNodeRect(const VisualTreeNode& node)

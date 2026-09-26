@@ -19,7 +19,34 @@
 
 using namespace terminality;
 
+namespace
+{
+	// Written as an expression (not Color::TRANSPARENT) because the Windows
+	// GDI header defines TRANSPARENT as a macro; in the single-header
+	// amalgamation Windows.h precedes this code in the same translation unit.
+	// AsTransparent() is private, so flip the flag directly.
+	const Color TransparentCellColor = []
+	{
+		Color color(0, 0, 0);
+		color.Transparent = true;
+		return color;
+	}();
+}
+
 bool RenderBuffer::TrueColorOutput = true;
+
+CellInfo::CellInfo(wchar_t symbol, Color fore, Color back)
+	: Symbol(symbol), Fore(fore), Back(back) { }
+
+bool CellInfo::operator==(const CellInfo& other) const
+{
+	return Symbol == other.Symbol && Fore == other.Fore && Back == other.Back;
+}
+
+bool CellInfo::operator!=(const CellInfo& other) const
+{
+	return !(*this == other);
+}
 
 namespace
 {
@@ -105,8 +132,8 @@ RenderBuffer::RenderBuffer(uint32_t initialWidth, uint32_t initialHeight)
 {
 	std::lock_guard<std::recursive_mutex> guard(renderMutex);
 
-	buffer.assign(MAX_WIDTH * MAX_HEIGHT, CellInfo(L' ', Color::TRANSPARENT, Color::TRANSPARENT));
-	snapshotBuffer.assign(MAX_WIDTH * MAX_HEIGHT, CellInfo(L' ', Color::TRANSPARENT, Color::TRANSPARENT));
+	buffer.assign(MAX_WIDTH * MAX_HEIGHT, CellInfo(L' ', TransparentCellColor, TransparentCellColor));
+	snapshotBuffer.assign(MAX_WIDTH * MAX_HEIGHT, CellInfo(L' ', TransparentCellColor, TransparentCellColor));
 
 	width = std::min(initialWidth, static_cast<uint32_t>(MAX_WIDTH));
 	height = std::min(initialHeight, static_cast<uint32_t>(MAX_HEIGHT));
@@ -114,6 +141,16 @@ RenderBuffer::RenderBuffer(uint32_t initialWidth, uint32_t initialHeight)
 	snapshotWidth = width;
 	snapshotHeight = height;
 	dirtyRect = Rect(0, 0, static_cast<int32_t>(width), static_cast<int32_t>(height));
+}
+
+uint32_t RenderBuffer::Width() const
+{
+	return width;
+}
+
+uint32_t RenderBuffer::Height() const
+{
+	return height;
 }
 
 void RenderBuffer::Resize(uint32_t newWidth, uint32_t newHeight)
@@ -148,13 +185,13 @@ void RenderBuffer::SetCell(uint32_t x, uint32_t y, const CellInfo& cell)
 		changed = true;
 	}
 
-	if (cell.Fore != Color::TRANSPARENT && target.Fore != cell.Fore)
+	if (!cell.Fore.Transparent && target.Fore != cell.Fore)
 	{
 		target.Fore = cell.Fore;
 		changed = true;
 	}
 
-	if (cell.Back != Color::TRANSPARENT && target.Back != cell.Back)
+	if (!cell.Back.Transparent && target.Back != cell.Back)
 	{
 		target.Back = cell.Back;
 		changed = true;

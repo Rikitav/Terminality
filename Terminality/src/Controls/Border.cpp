@@ -158,7 +158,7 @@ void Border::RenderOverride(RenderContext& context)
 	const BorderStyle style = Style;
 
 	// Background fill inside the border area.
-	if (background != Color::TRANSPARENT)
+	if (!background.Transparent)
 	{
 		context.RenderRectangle(Point(1, 1), Size(rect.Width - 2, rect.Height - 2), foreground, background, DefaultBackgroundStyle);
 	}

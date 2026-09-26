@@ -116,18 +116,8 @@ namespace terminality
 		struct NotifyGuard
 		{
 			TreeView& owner;
-			explicit NotifyGuard(TreeView& o) : owner(o) { owner.suspendNotify_++; }
-			~NotifyGuard()
-			{
-				if (--owner.suspendNotify_ == 0 && owner.modelDirty_)
-				{
-					owner.modelDirty_ = false;
-					owner.RebuildVisible();
-					owner.EnsureSelectionValid();
-					owner.ScrollSelectedIntoView();
-					owner.InvalidateMeasure();
-				}
-			}
+			explicit NotifyGuard(TreeView& o);
+			~NotifyGuard();
 		};
 
 	public:
@@ -165,7 +155,7 @@ namespace terminality
 		void ExpandAll();
 		void CollapseAll();
 
-		bool IsFocusable() const override { return true; }
+		bool IsFocusable() const override;
 		bool OnKeyDown(InputEvent input) override;
 
 	protected:

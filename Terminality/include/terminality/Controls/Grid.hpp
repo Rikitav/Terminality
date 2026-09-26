@@ -26,8 +26,7 @@ namespace terminality
         float Value;
         GridUnitType Type;
 
-        GridLength(float value = 1.0f, GridUnitType type = GridUnitType::Star)
-            : Value(value), Type(type) { }
+        GridLength(float value = 1.0f, GridUnitType type = GridUnitType::Star);
 
         static GridLength Auto();
         static GridLength Cell(int32_t cells);

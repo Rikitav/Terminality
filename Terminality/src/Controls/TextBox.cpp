@@ -344,7 +344,7 @@ bool TextBox::OnKeyDown(InputEvent input)
 			return true;
 		}
 
-		case InputKey::DELETE:
+		case KEY_DELETE:
 		{
 			if (!canModify)
 				return true;

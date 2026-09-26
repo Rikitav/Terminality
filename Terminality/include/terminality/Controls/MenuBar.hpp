@@ -41,7 +41,7 @@ namespace terminality
 		void AddMenu(const std::wstring& header, std::unique_ptr<Menu> menu);
 		void AddMenu(const std::string& header, std::unique_ptr<Menu> menu);
 
-		bool IsFocusable() const override { return true; }
+		bool IsFocusable() const override;
 		bool OnKeyDown(InputEvent input) override;
 
 	protected:

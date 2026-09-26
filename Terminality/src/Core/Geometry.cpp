@@ -8,6 +8,9 @@ using namespace terminality;
 
 const Point Point::Zero = { 0, 0 };
 
+Point::Point(int32_t x, int32_t y)
+	: X(x), Y(y) { }
+
 bool Point::operator==(const Point& other) const
 {
 	return X == other.X && Y == other.Y;
@@ -17,6 +20,12 @@ bool Point::operator!=(const Point& other) const
 {
 	return !(*this == other);
 }
+
+Vector::Vector(Point from, Point to)
+	: From(from), To(to) { }
+
+Vector::Vector(int32_t fromX, int32_t fromY, int32_t toX, int32_t toY)
+	: From(fromX, fromY), To(toX, toY) { }
 
 bool Vector::operator==(const Vector& other) const
 {
@@ -31,6 +40,12 @@ bool Vector::operator!=(const Vector& other) const
 const Size Size::Zero = { 0, 0 };
 const Size Size::Auto = { -1, -1 };
 
+Size::Size(int32_t width, int32_t height)
+	: Width(width), Height(height) { }
+
+Size::Size(Vector diagonal)
+	: Width(std::max(0, diagonal.To.X - diagonal.From.X)), Height(std::max(0, diagonal.To.Y - diagonal.From.Y)) { }
+
 bool Size::operator==(const Size& other) const
 {
 	return Width == other.Width && Height == other.Height;
@@ -43,6 +58,12 @@ bool Size::operator!=(const Size& other) const
 
 const Thickness Thickness::Zero = { 0, 0, 0, 0 };
 const Thickness Thickness::Single = { 1, 1, 1, 1 };
+
+Thickness::Thickness(int32_t uniform)
+	: Left(uniform), Top(uniform), Right(uniform), Bottom(uniform) { }
+
+Thickness::Thickness(int32_t left, int32_t top, int32_t right, int32_t bottom)
+	: Left(left), Top(top), Right(right), Bottom(bottom) { }
 
 bool Thickness::operator==(const Thickness& other) const
 {
@@ -58,6 +79,19 @@ bool Thickness::IsUniform() const
 {
 	return Left == Top && Left == Right && Left == Bottom;
 }
+
+int32_t Thickness::Horizontal() const
+{
+	return Left + Right;
+}
+
+int32_t Thickness::Vertical() const
+{
+	return Top + Bottom;
+}
+
+Rect::Rect(int32_t x, int32_t y, int32_t width, int32_t height)
+	: X(x), Y(y), Width(width), Height(height) { }
 
 bool Rect::operator==(const Rect& other) const
 {

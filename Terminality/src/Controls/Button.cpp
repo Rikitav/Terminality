@@ -63,6 +63,16 @@ void Button::UpdateAccessKey()
 	}
 }
 
+wchar_t Button::GetAccessKey() const
+{
+	return accessKey_;
+}
+
+const std::wstring& Button::GetDisplayText() const
+{
+	return displayText_;
+}
+
 void Button::Click()
 {
 	if (!IsEnabled)

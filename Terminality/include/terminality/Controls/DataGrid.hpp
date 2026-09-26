@@ -49,7 +49,7 @@ namespace terminality
 
 		void ClearColumns();
 
-		bool IsFocusable() const override { return true; }
+		bool IsFocusable() const override;
 
 		bool OnKeyDown(InputEvent input) override;
 

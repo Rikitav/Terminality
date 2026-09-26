@@ -184,6 +184,26 @@ void TreeNode::Clear()
 // TreeView
 // ===========================================================================
 
+TreeView::NotifyGuard::NotifyGuard(TreeView& o)
+	: owner(o) { owner.suspendNotify_++; }
+
+TreeView::NotifyGuard::~NotifyGuard()
+{
+	if (--owner.suspendNotify_ == 0 && owner.modelDirty_)
+	{
+		owner.modelDirty_ = false;
+		owner.RebuildVisible();
+		owner.EnsureSelectionValid();
+		owner.ScrollSelectedIntoView();
+		owner.InvalidateMeasure();
+	}
+}
+
+bool TreeView::IsFocusable() const
+{
+	return true;
+}
+
 TreeView::TreeView()
 {
 	// The invisible root belongs to this view so that top-level nodes added

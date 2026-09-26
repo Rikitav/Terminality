@@ -187,6 +187,12 @@ namespace terminality
         CHAR = 0xFF,                // Got char (Internal)
     };
 
+    // Alias for InputKey::DELETE: the Windows headers define DELETE as a
+    // macro, so translation units that include <Windows.h> first (e.g. the
+    // single-header amalgamation) cannot name InputKey::DELETE directly.
+    // Usage: `case KEY_DELETE:` / `input.Key == KEY_DELETE`.
+    inline const InputKey KEY_DELETE = InputKey::DELETE;
+
     enum class InputModifier
     {
         None = 0,
@@ -226,43 +232,18 @@ namespace terminality
     	wchar_t Char = L'\0';
     	bool Pressed = false;
 
-        InputEvent(wchar_t ch, bool pressed)
-            : Key(InputKey::CHAR), Char(ch), Pressed(pressed) { }
+        InputEvent(wchar_t ch, bool pressed);
 
-    	InputEvent(InputModifier modifier, InputKey key, bool pressed)
-            : Modifier(modifier), Key(key), Pressed(pressed) { }
+    	InputEvent(InputModifier modifier, InputKey key, bool pressed);
 
-    	InputEvent(InputModifier modifier, InputKey key, wchar_t ch, bool pressed)
-            : Modifier(modifier), Key(key), Char(ch), Pressed(pressed) { }
+    	InputEvent(InputModifier modifier, InputKey key, wchar_t ch, bool pressed);
 
-        bool operator==(const InputEvent& other) const
-        {
-            if (Modifier != other.Modifier || Key != other.Key || Pressed != other.Pressed)
-                return false;
-
-            // Character code is only meaningful for actual character events.
-            if (Key == InputKey::CHAR)
-                return Char == other.Char;
-
-            return true;
-        }
+        bool operator==(const InputEvent& other) const;
     };
 
     struct InputEventHasher
     {
-        std::size_t operator()(const InputEvent& e) const
-        {
-            std::size_t hash =
-                (std::hash<int>()(static_cast<int>(e.Modifier)) << 0) ^
-                (std::hash<int>()(static_cast<int>(e.Key)) << 1) ^
-                (std::hash<bool>()(e.Pressed) << 2);
-
-            // Only hash the character for actual character events.
-            if (e.Key == InputKey::CHAR)
-                hash ^= std::hash<wchar_t>()(e.Char) << 3;
-
-            return hash;
-        }
+        std::size_t operator()(const InputEvent& e) const;
     };
 
     template <typename T>

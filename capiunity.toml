@@ -1,0 +1,15 @@
+project = "Terminality"
+output = "out/Terminality.hpp"
+include = ["Terminality/include"]
+sources = ["Terminality/src"]
+exclude = ["include/Terminality.hpp"]
+
+banner = "Terminality — single-header distribution"
+prologue = """
+#ifdef _WINDOWS_
+  #ifndef TERMINALITY_EMMITED_WINDOWS_ERROR
+    #error Include Windows.h after Terminality.hpp
+    #define TERMINALITY_EMMITED_WINDOWS_ERROR
+  #endif // #ifndef TERMINALITY
+#endif // #ifdef _WINDOWS_
+"""

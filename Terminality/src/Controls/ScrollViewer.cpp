@@ -13,6 +13,11 @@ ScrollViewer::ScrollViewer()
     FocusedBackgroundColor = BackgroundColor;
 }
 
+bool ScrollViewer::IsFocusable() const
+{
+	return true;
+}
+
 void ScrollViewer::OnContentChanging(const std::unique_ptr<ControlBase>& oldContent)
 {
     if (oldContent != nullptr)

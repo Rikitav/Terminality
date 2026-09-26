@@ -51,8 +51,8 @@ namespace terminality
 		bool IsRunning() const;
 		bool IsResizing() const;
 
-		float DeltaTime() const { return deltaTime_; }
-		float TotalTime() const { return totalTime_; }
+		float DeltaTime() const;
+		float TotalTime() const;
 
 		void Start();
 		void Stop();

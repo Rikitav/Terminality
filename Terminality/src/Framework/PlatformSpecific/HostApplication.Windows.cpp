@@ -15,6 +15,14 @@
 #include <terminality/Framework/HostApplication.hpp>
 #include <Windows.h>
 
+#ifdef TRANSPARENT
+#undef TRANSPARENT
+#endif
+
+#ifdef MessageBox
+#undef MessageBox
+#endif
+
 using namespace terminality;
 
 namespace
