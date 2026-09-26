@@ -63,6 +63,7 @@ namespace terminality
 		bool HasDirtyVisual() const { return dirtyRect_.has_value(); }
 
 		void RunLayout(const Size& viewportSize);
+		void RenderLayer(UILayer& layer, RenderBuffer& buffer);
 		void Render(RenderBuffer& buffer);
 	};
 }
