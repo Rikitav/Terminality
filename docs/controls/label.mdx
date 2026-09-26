@@ -1,0 +1,70 @@
+---
+title: "Label"
+description: "Render a wide string with wrapping and left, center, right, or justified alignment, and react to text changes."
+---
+
+`Label` renders a `std::wstring` inside its arranged rectangle. It supports three text-wrapping modes and three alignment modes, making it suitable for everything from a single-line prompt prefix to a multi-line message body.
+
+`Label` is a visual control: it never takes keyboard focus and is a direct subclass of `ControlBase`, so `Margin`, `HorizontalAlignment`, `VerticalAlignment`, and `MaxSize` all apply.
+
+## Constructors
+
+```cpp
+Label();                              // empty text, default alignment
+Label(const std::wstring& text);      // initialize with an existing string
+```
+
+## Properties
+
+<ParamField path="Text" type="std::wstring" default='L""'>
+  The string to render. Assigning a new value invalidates the measure pass so the control resizes automatically.
+</ParamField>
+
+<ParamField path="TextWrapping" type="TextWrap" default="TextWrap::NoWrap">
+  Controls how text that is wider than the available width is handled.
+
+  | Value | Behaviour |
+  |---|---|
+  | `TextWrap::NoWrap` | Text is clipped at the right edge. No line breaks are inserted. |
+  | `TextWrap::Wrap` | Line breaks are inserted at any character boundary when the line would overflow. |
+  | `TextWrap::WrapWholeWords` | Line breaks are inserted only at word boundaries, preserving whole words. |
+</ParamField>
+
+<ParamField path="TextAlignment" type="TextAlign" default="TextAlign::Left">
+  Horizontal alignment of each line of text within the label's width.
+
+  | Value | Behaviour |
+  |---|---|
+  | `TextAlign::Left` | Text starts at the left edge (default). |
+  | `TextAlign::Center` | Each line is centred. |
+  | `TextAlign::Right` | Each line is right-aligned. |
+  | `TextAlign::Justify` | Spaces between words are stretched to fill the full width. |
+</ParamField>
+
+## Events
+
+<ParamField path="TextChanged" type="Event<>">
+  Fired by `OnPropertyChanged` whenever the `Text` property is assigned a new value. Subscribe with `+=`.
+</ParamField>
+
+## Example
+
+```cpp
+// Simple prompt prefix
+auto label = init<Label>([](Label* l)
+{
+    l->Text            = L"Rikitav@Tamerlan> ";
+    l->HorizontalAlignment = HorizontalAlign::Left;
+});
+
+// Multi-line status area
+auto status = init<Label>([](Label* l)
+{
+    l->Text         = L"Press ESC to exit. Use arrow keys to navigate.";
+    l->TextWrapping = TextWrap::WrapWholeWords;
+    l->TextAlignment = TextAlign::Center;
+});
+
+// React to text changes
+label->TextChanged += []() { /* refresh dependent state */ };
+```

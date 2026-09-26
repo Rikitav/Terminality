@@ -1,0 +1,67 @@
+---
+title: "Border"
+description: "Wrap a single child in a box-drawing frame with an optional header caption and focus-aware border colors."
+---
+
+`Border` wraps exactly one child control in a box drawn with box-drawing characters. It supports an optional header caption rendered inside the top edge of the box, making it easy to create labelled panels.
+
+## Constructors
+
+```cpp
+Border();                                       // no child
+Border(std::unique_ptr<ControlBase> content);   // with initial child
+```
+
+## Properties
+
+<ParamField path="Content" type="unique_ptr<ControlBase>" default="nullptr">
+  The single child displayed inside the border. The border reserves one cell of padding on each side so the child has a clean inner area.
+</ParamField>
+
+<ParamField path="HeaderText" type="std::wstring" default='L""'>
+  Text drawn into the top edge of the border box. When non-empty it appears inset into the top horizontal line of the rectangle.
+</ParamField>
+
+<ParamField path="BorderColor" type="Color" default="Color::DARK_GRAY">
+  Color of the border lines when the control does not have focus.
+</ParamField>
+
+<ParamField path="FocusedBorderColor" type="Color" default="Color::CYAN">
+  Color of the border lines when the control or one of its descendants has focus.
+</ParamField>
+
+<ParamField path="BorderThickness" type="Thickness" default="Thickness::Single">
+  Inset applied to the content area. The default `Thickness::Single` reserves one cell on every side for the border lines.
+</ParamField>
+
+<ParamField path="Style" type="BorderStyle (function pointer)" default="nullptr">
+  Optional custom glyph function. The signature is `wchar_t (*)(RectanglePos)`. When `nullptr`, the default box-drawing style is used. Use `RectanglePos` values (`LeftTopCorner`, `RightBottomCorner`, `TopHorizontalLine`, etc.) to return different glyphs per position.
+</ParamField>
+
+## Example — labelled panel
+
+```cpp
+AddChild(0, 0, init<Border>([&](Border* panel)
+{
+    panel->Margin     = Thickness(0, 1, 0, 0);
+    panel->HeaderText = L"Chat: Tamerlan";
+
+    panel->Content = init<ItemsControl<MessageModel>>([&](auto* list)
+    {
+        list->SetItemsSource(&chatHistory_);
+        list->Scrollable     = true;
+        list->AutoScrollToEnd = true;
+        list->SetItemTemplate([](const MessageModel& item) -> std::unique_ptr<ControlBase>
+        {
+            return init<Label>([&](Label* l)
+            {
+                l->Text = item.Timestamp + L" " + item.Text;
+            });
+        });
+    });
+}));
+```
+
+<Note>
+  `Border` forwards focus to its `Content` child. The `FocusedBorderColor` activates as soon as any descendant receives focus, giving the user a clear visual indicator of the active panel.
+</Note>

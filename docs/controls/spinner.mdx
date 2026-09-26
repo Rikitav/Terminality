@@ -1,0 +1,32 @@
+---
+title: "Spinner"
+description: "A self-animating single-cell indicator that cycles through customizable frames on every UI tick."
+---
+
+`Spinner` is a single-cell animated indicator that cycles through a sequence of frames driven by the `DispatchTimer`. It is self-animating — you do not need to write any update code. Drop it anywhere you want to signal that a background operation is in progress.
+
+## Properties
+
+<ParamField path="Frames" type="std::vector<std::wstring>" default='{ L"-", L"\\", L"|", L"/" }'>
+  The sequence of strings cycled through during animation. Each element is rendered in turn. Replace this vector to use custom glyphs, Unicode spinners, or multi-character frames.
+</ParamField>
+
+## Example
+
+```cpp
+// Default spinner — renders the classic ASCII rotation
+auto spinner = init<Spinner>([](Spinner* s)
+{
+    s->Margin = Thickness(1, 0, 1, 0);
+});
+
+// Unicode braille spinner
+auto brailleSpinner = init<Spinner>([](Spinner* s)
+{
+    s->Frames = { L"⠋", L"⠙", L"⠹", L"⠸", L"⠼", L"⠴", L"⠦", L"⠧", L"⠇", L"⠏" };
+});
+```
+
+<Note>
+  `Spinner` connects to `DispatchTimer` in its constructor and disconnects when destroyed. You do not need to start or stop it manually — the animation runs for as long as the control exists in the visual tree.
+</Note>

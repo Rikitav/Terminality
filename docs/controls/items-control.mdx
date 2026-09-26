@@ -1,0 +1,84 @@
+---
+title: "ItemsControl<T>"
+description: "Bind an ObservableCollection<T> to a StackPanel via an item template and keep the children in sync with the data automatically."
+---
+
+`ItemsControl<T>` extends `StackPanel` with data-binding: you supply an `ObservableCollection<T>` as the data source and a factory lambda as the item template, and the control keeps its children in sync with the collection automatically.
+
+## Key API
+
+<ParamField path="SetItemsSource(ObservableCollection<T>*)" type="method">
+  Bind the control to a collection. `ItemsControl` subscribes to `ItemAdded`, `ItemRemoved`, `ItemReplaced`, and `CollectionCleared` events and rebuilds or patches its children accordingly. Pass `nullptr` to detach.
+</ParamField>
+
+<ParamField path="SetItemTemplate(lambda)" type="method">
+  Provide a factory function with signature `std::unique_ptr<ControlBase>(const T&)`. Called once per item when the control is bound or when a new item is added. Rebuilds all items immediately when set.
+</ParamField>
+
+<ParamField path="GetItemsSource()" type="method">
+  Returns the currently bound `ObservableCollection<T>*`, or `nullptr` if none is set.
+</ParamField>
+
+## ObservableCollection\<T\>
+
+`ObservableCollection<T>` is a `std::vector`-like container that fires events on every mutation. You own the collection instance; `ItemsControl` only holds a pointer to it.
+
+| Event | Signature | Fired when |
+|---|---|---|
+| `ItemAdded` | `(size_t index, const T&)` | `push_back` or `insert` |
+| `ItemRemoved` | `(size_t index, const T&)` | `pop_back` or `erase` |
+| `ItemReplaced` | `(size_t index, const T& oldItem, const T& newItem)` | `replace` |
+| `CollectionCleared` | `()` | `clear` |
+
+Standard mutation methods (`push_back`, `insert`, `erase`, `replace`, `pop_back`, `clear`) mirror the `std::vector` API and fire the corresponding events automatically.
+
+## Example — chat history
+
+```cpp
+struct MessageModel
+{
+    bool        isAuthor;
+    std::wstring Timestamp;
+    std::wstring Text;
+};
+
+class ChatView : public Border
+{
+    ObservableCollection<MessageModel> history_;
+
+public:
+    ChatView()
+    {
+        HeaderText = L"Chat";
+        Content = init<ItemsControl<MessageModel>>([&](auto* list)
+        {
+            list->Scrollable     = true;
+            list->AutoScrollToEnd = true;
+
+            list->SetItemsSource(&history_);
+
+            list->SetItemTemplate([](const MessageModel& msg) -> std::unique_ptr<ControlBase>
+            {
+                return init<Label>([&](Label* l)
+                {
+                    l->Text = msg.Timestamp + L" " + msg.Text;
+                });
+            });
+        });
+    }
+
+    void PushMessage(MessageModel msg)
+    {
+        // ItemsControl reacts immediately — no manual refresh needed.
+        history_.push_back(std::move(msg));
+    }
+};
+```
+
+<Tip>
+  Call `SetItemsSource` before `SetItemTemplate` if possible. When the template is set, `ItemsControl` rebuilds all existing items immediately, so setting the source first avoids a double rebuild.
+</Tip>
+
+<Note>
+  `ItemsControl<T>` inherits all `StackPanel` properties and methods, including `Scrollable`, `AutoScrollToEnd`, `Looping`, and `AddChild`.
+</Note>

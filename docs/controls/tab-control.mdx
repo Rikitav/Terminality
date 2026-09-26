@@ -1,0 +1,51 @@
+---
+title: "TabControl"
+description: "Display one page at a time behind a scrolling row of tab headers, with closeable tabs and typed tab events."
+---
+
+`TabControl` displays one of several pages at a time behind a row of tab headers. The header row scrolls when there are more tabs than fit, and each tab can optionally show a close box.
+
+## Adding tabs
+
+```cpp
+void AddTab(const std::string& header, std::unique_ptr<ControlBase> content);
+void AddTab(const std::string& header, std::unique_ptr<ControlBase> content, bool closeable);
+void RemoveTab(int index);
+void ClearTabs();
+size_t GetTabCount() const;
+```
+
+```cpp
+auto tabs = init<TabControl>([](TabControl* tc)
+{
+    tc->AddTab("General", init<Label>([](Label* l) { l->Text = L"General settings"; }));
+    tc->AddTab("Network", init<Label>([](Label* l) { l->Text = L"Network settings"; }));
+    tc->AddTab("Logs",    init<Label>([](Label* l) { l->Text = L"Log viewer"; }), /*closeable=*/true);
+
+    tc->SelectedIndex = 0;
+});
+```
+
+## Properties
+
+<ParamField path="SelectedIndex" type="int" default="0">
+  The index of the currently shown tab. Assigning it switches pages immediately.
+</ParamField>
+
+<ParamField path="UnderlineForegroundColor / UnderlineBackgroundColor" type="Color" default="WHITE on BLACK">
+  Colors of the underline beneath the active tab header when the control is not focused.
+</ParamField>
+
+<ParamField path="FocusedUnderlineForegroundColor / FocusedUnderlineBackgroundColor" type="Color" default="RED on BLACK">
+  Underline colors while the tab control holds focus.
+</ParamField>
+
+## Events
+
+<ParamField path="TabClosed" type="Event<int>">
+  Fired with the index of a tab the user closed via its close box (only rendered for tabs added with `closeable = true`).
+</ParamField>
+
+## Keyboard
+
+Left/Right move between tabs; Tab moves focus into the selected tab's content.

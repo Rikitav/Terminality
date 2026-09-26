@@ -1,0 +1,46 @@
+---
+title: "MenuBar"
+description: "A row of top-level captions that opens attached drop-down menus, with access keys and keyboard-driven navigation."
+---
+
+`MenuBar` renders the row of top-level captions and opens the attached menus as drop-downs. Each caption is backed by a [`Menu`](/controls/menu) that defines the drop-down's items.
+
+## Methods
+
+```cpp
+void AddMenu(const std::wstring& header, std::shared_ptr<Menu> menu);
+void AddMenu(const std::wstring& header, std::unique_ptr<Menu> menu);
+// const std::string& overloads for narrow captions
+```
+
+The `&` access-key convention applies to captions too: `L"&File"` opens with **F**.
+
+## Example
+
+```cpp
+auto bar = init<MenuBar>([](MenuBar* bar)
+{
+    auto helpMenu = init<Menu>([](Menu* m)
+    {
+        auto docs = init<Menu>([](Menu* dm)
+        {
+            dm->AddItem(L"&Online Docs", []() { /* ... */ });
+            dm->AddItem(L"&Local Docs",  []() { /* ... */ });
+        });
+
+        m->AddSubMenu(L"&Documentation", std::move(docs));
+        m->AddSeparator();
+        m->AddItem(L"&About", []() { MessageBox::Show(L"Terminality", L"1.0"); });
+    });
+
+    bar->AddMenu(L"&File", std::move(fileMenu));
+    bar->AddMenu(L"&Edit", std::move(editMenu));
+    bar->AddMenu(L"&Help", std::move(helpMenu));
+});
+```
+
+Keyboard: Left/Right move between top-level captions, Enter or Down opens the selected menu. While the bar is focused, pressing a caption's access key opens that menu directly.
+
+```cpp
+grid->AddChildControl(0, 0, std::move(bar));  // typically a fixed-height top row
+```

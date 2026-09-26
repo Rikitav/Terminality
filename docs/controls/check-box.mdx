@@ -1,0 +1,78 @@
+---
+title: "CheckBox"
+description: "A three-state toggle (checked, unchecked, indeterminate) with labelled text and typed toggle events."
+---
+
+`CheckBox` is a three-state toggle: unchecked (`false`), checked (`true`), and indeterminate (`std::nullopt`). It renders a label alongside a state indicator and fires distinct events for each state transition.
+
+## Properties
+
+<ParamField path="Text" type="std::wstring" default='L""'>
+  The label text displayed next to the checkbox indicator.
+</ParamField>
+
+<ParamField path="PressedForegroundColor" type="Color" default="Color::BLACK">
+  Foreground color while the control is held down (key-press visual feedback).
+</ParamField>
+
+<ParamField path="PressedBackgroundColor" type="Color" default="Color::CYAN">
+  Background color while the control is held down.
+</ParamField>
+
+## Events
+
+<ParamField path="Toggled" type="Event<std::optional<bool>>">
+  Fired on every state change. The argument is the new value: `true`, `false`, or `std::nullopt` (indeterminate). This is the most general event — subscribe here if you need to handle all three states.
+
+  ```cpp
+  cb->Toggled += [](std::optional<bool> state)
+  {
+      if (!state.has_value())
+          // indeterminate
+      else if (*state)
+          // checked
+      else
+          // unchecked
+  };
+  ```
+</ParamField>
+
+<ParamField path="Checked" type="Event<>">
+  Fired when the state transitions specifically to `true`. Convenience event if you only care about the checked state.
+</ParamField>
+
+<ParamField path="Unchecked" type="Event<>">
+  Fired when the state transitions specifically to `false`.
+</ParamField>
+
+## Methods
+
+<ParamField path="Toggle(std::optional<bool> value)" type="method">
+  Programmatically set the checkbox state. Pass `true`, `false`, or `std::nullopt` for indeterminate. Fires the appropriate events just as a keyboard activation would.
+</ParamField>
+
+## Keyboard activation
+
+`CheckBox` intercepts **Enter** and **Space** (`InputKey::RETURN` / `InputKey::SPACE`) on `OnKeyDown`/`OnKeyUp`, cycling through its states the same way a mouse click would.
+
+## Example
+
+```cpp
+auto acceptBox = init<CheckBox>([](CheckBox* cb)
+{
+    cb->Text = L"Accept terms and conditions";
+
+    cb->Checked += []()
+    {
+        // enable a submit button, etc.
+    };
+
+    cb->Unchecked += []()
+    {
+        // disable submit button
+    };
+});
+
+// Force indeterminate state from parent logic
+acceptBox->Toggle(std::nullopt);
+```

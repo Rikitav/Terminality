@@ -1,0 +1,57 @@
+---
+title: "ProgressBar"
+description: "Render a horizontal fill bar proportional to a float value between Minimum and Maximum, with custom bar and track colors."
+---
+
+`ProgressBar` renders a horizontal bar that fills proportionally based on `Value` relative to `[Minimum, Maximum]`. It is stateless with respect to animation — you drive the value from a `DispatchTimer` tick or any other source.
+
+## Properties
+
+<ParamField path="Value" type="float" default="0.0f">
+  The current progress value. Must be between `Minimum` and `Maximum`. Assigning a value outside this range clamps the visual fill but does not throw.
+</ParamField>
+
+<ParamField path="Minimum" type="float" default="0.0f">
+  The value that corresponds to an empty bar.
+</ParamField>
+
+<ParamField path="Maximum" type="float" default="100.0f">
+  The value that corresponds to a completely full bar.
+</ParamField>
+
+<ParamField path="BarColor" type="Color" default="Color::GREEN">
+  Color of the filled portion of the bar.
+</ParamField>
+
+<ParamField path="TrackColor" type="Color" default="Color::DARK_GRAY">
+  Color of the unfilled background portion of the bar.
+</ParamField>
+
+## Example — animated progress from a dispatch timer
+
+A value-driven progress bar, animated from `TickEvent`:
+
+```cpp
+auto progress = init<ProgressBar>([](ProgressBar* bar)
+{
+    bar->Margin               = Thickness(1, 0, 1, 0);
+    bar->HorizontalAlignment  = HorizontalAlign::Stretch;
+    bar->VerticalAlignment    = VerticalAlign::Top;
+
+    // Advance at 10 units per second, wrapping back to Minimum at the top
+    DispatchTimer::Current().TickEvent += [bar](float dt)
+    {
+        float current = bar->Value.Get();
+        current += dt * 10.0f;
+
+        if (current > bar->Maximum.Get())
+            current = bar->Minimum.Get();
+
+        bar->Value = current;
+    };
+});
+```
+
+<Tip>
+  `DispatchTimer::Current().TickEvent` delivers a `float dt` (delta-time in seconds) on every UI tick. Multiply by a rate constant to produce smooth, frame-rate-independent animation.
+</Tip>

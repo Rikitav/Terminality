@@ -1,0 +1,42 @@
+---
+title: "Canvas"
+description: "A self-invalidating drawing surface that invokes an OnRender callback every frame with a scoped render context and delta time."
+---
+
+`Canvas` is a self-invalidating drawing surface for free-form rendering. Assign an `OnRender` callback and it is invoked **every frame** with the render context (scoped to the canvas area) and the delta time since the previous frame — the visual is effectively never validated, which makes it the building block for animations and custom-drawn widgets.
+
+## Callback
+
+```cpp
+std::function<void(RenderContext& context, float dt)> OnRender;
+```
+
+## Example — animated sine graph
+
+```cpp
+auto canvas = init<Canvas>([](Canvas* c)
+{
+    c->HorizontalAlignment = HorizontalAlign::Stretch;
+    c->VerticalAlignment   = VerticalAlign::Stretch;
+
+    float phase = 0.0f;
+
+    c->OnRender = [phase](RenderContext& context, float dt) mutable
+    {
+        phase += dt * 2.0f;
+
+        const Rect area = context.ContextRect();
+        const int midY  = area.Height / 2;
+
+        for (int x = 0; x < area.Width; ++x)
+        {
+            const float y = midY + std::sin(phase + x * 0.25f) * (area.Height / 3.0f);
+            context.SetCell(x, static_cast<int>(y), L'*', Color::CYAN, Color::BLACK);
+        }
+    };
+});
+```
+
+<Warning>
+Because `OnRender` runs every frame, keep the callback cheap — the whole UI frame budget is shared. For static custom visuals, subclass `ControlBase` and implement `RenderOverride` with normal dirty-rect invalidation instead.
+</Warning>

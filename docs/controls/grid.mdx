@@ -1,0 +1,152 @@
+---
+title: "Grid"
+description: "Arrange child controls in rows and columns with star, auto, and fixed cell sizing, spans, string-parsed definitions, and uniform mode."
+---
+
+`Grid` divides its space into rows and columns. You define the dimensions of each track with a `GridLength`, then place child controls into specific cells. Children can span multiple rows or columns.
+
+## GridLength
+
+Every row height and column width is described by a `GridLength` value, which combines a numeric value with a sizing mode.
+
+<ParamField path="GridLength::Auto()" type="static factory">
+  Size the track to the largest `DesiredSize` of any child in that track. The track takes exactly as much space as its contents need.
+</ParamField>
+
+<ParamField path="GridLength::Cell(n)" type="static factory">
+  Size the track to exactly `n` terminal cells (characters). Use this for fixed-width columns or fixed-height rows.
+</ParamField>
+
+<ParamField path="GridLength::Star(weight = 1.0f)" type="static factory">
+  Distribute remaining space proportionally. A track with `Star(2.0f)` gets twice the remaining space as a `Star(1.0f)` track. This is the default when you default-construct a `GridLength`.
+</ParamField>
+
+## RowDefinition and ColumnDefinition
+
+<ParamField path="RowDefinition.Height" type="GridLength" default="GridLength::Star()">
+  Sizing mode for this row.
+</ParamField>
+
+<ParamField path="RowDefinition.MinHeight" type="int32_t" default="0">
+  Minimum height in cells. The row will never shrink below this value.
+</ParamField>
+
+<ParamField path="RowDefinition.MaxHeight" type="int32_t" default="-1">
+  Maximum height in cells. `-1` means no limit.
+</ParamField>
+
+<ParamField path="ColumnDefinition.Width" type="GridLength" default="GridLength::Star()">
+  Sizing mode for this column.
+</ParamField>
+
+<ParamField path="ColumnDefinition.MinWidth" type="int32_t" default="0">
+  Minimum width in cells.
+</ParamField>
+
+<ParamField path="ColumnDefinition.MaxWidth" type="int32_t" default="-1">
+  Maximum width in cells. `-1` means no limit.
+</ParamField>
+
+## Methods
+
+<ParamField path="AddRow(const RowDefinition& def)" type="method">
+  Append a row definition. Rows are indexed in the order they are added, starting from `0`.
+</ParamField>
+
+<ParamField path="AddColumn(const ColumnDefinition& def)" type="method">
+  Append a column definition. Columns are indexed in the order they are added, starting from `0`.
+</ParamField>
+
+<ParamField path="AddChild(row, col, child)" type="method">
+  Place a control in a single cell at `(row, col)`. The control occupies exactly one row and one column.
+</ParamField>
+
+<ParamField path="AddChild(row, col, rowSpan, colSpan, child)" type="method">
+  Place a control starting at `(row, col)` and extending across `rowSpan` rows and `colSpan` columns. Useful for headers or panels that need to span the full width.
+</ParamField>
+
+## Example — messenger layout
+
+A classic messenger layout uses a three-row grid: a star-sized chat area, a fixed-height input panel, and a fixed-height status bar.
+
+```cpp
+class MessengerPage : public Grid
+{
+public:
+    MessengerPage()
+    {
+        HorizontalAlignment = HorizontalAlign::Stretch;
+        VerticalAlignment   = VerticalAlign::Stretch;
+
+        // Row 0: chat history — takes all remaining space
+        AddRow(RowDefinition{ GridLength::Star(1.0f) });
+
+        // Row 1: input panel — exactly 3 rows tall
+        AddRow(RowDefinition{ GridLength::Cell(3) });
+
+        // Row 2: status bar — exactly 2 rows tall
+        AddRow(RowDefinition{ GridLength::Cell(2) });
+
+        // Chat history in row 0
+        AddChild(0, 0, init<Border>([&](Border* chatBorder)
+        {
+            chatBorder->HeaderText = L"Chat: Tamerlan";
+            chatBorder->Content = init<ItemsControl<MessageModel>>([&](auto* list)
+            {
+                list->SetItemsSource(&chatHistory_);
+                list->Scrollable    = true;
+                list->AutoScrollToEnd = true;
+            });
+        }));
+
+        // Input grid in row 1
+        AddChild(1, 0, std::make_unique<Border>(init<Grid>([&](Grid* inputGrid)
+        {
+            inputGrid->AddColumn(ColumnDefinition{ GridLength::Auto() });   // spinner
+            inputGrid->AddColumn(ColumnDefinition{ GridLength::Auto() });   // label
+            inputGrid->AddColumn(ColumnDefinition{ GridLength::Star() });   // text box
+
+            inputGrid->AddChild(0, 0, init<Spinner>([](Spinner* s) { s->Margin = Thickness(1, 0, 1, 0); }));
+            inputGrid->AddChild(0, 1, init<Label>([](Label* l) { l->Text = L"Rikitav@Tamerlan> "; }));
+            inputGrid->AddChild(0, 2, init<TextBox>([](TextBox* tb)
+            {
+                tb->HorizontalAlignment = HorizontalAlign::Stretch;
+                tb->AcceptsReturn = false;
+            }));
+        })));
+    }
+};
+```
+
+<Tip>
+  When you omit `AddRow`/`AddColumn` calls entirely, `Grid` creates a single implicit `Star` row and column so it still renders its first child.
+</Tip>
+
+## String-parsed definitions
+
+Rows and columns can also be declared in one shot with an Avalonia-style comma-separated string, via `SetRowDefinitions` / `SetColumnDefinitions`:
+
+```cpp
+grid->SetRowDefinitions("Auto,*,2*,3");   // header row, flexible body, wider body, fixed footer
+grid->SetColumnDefinitions("20,Auto,*");
+```
+
+Each token is `Auto`, `*` or `N*` (star with weight), or a plain integer for a fixed cell count.
+
+## UniformGrid mode
+
+Setting `UniformColumns` and/or `UniformRows` switches the grid into uniform mode: all cells get an equal share of the space (sized to the largest child), and children are placed in row-major order without explicit row/column coordinates.
+
+```cpp
+auto palette = init<Grid>([](Grid* g)
+{
+    g->UniformColumns = 3;
+
+    g->AddChild(init<Button>([](Button* b) { b->Text = L"Red"; }));
+    g->AddChild(init<Button>([](Button* b) { b->Text = L"Green"; }));
+    g->AddChild(init<Button>([](Button* b) { b->Text = L"Blue"; }));
+    g->AddChild(init<Button>([](Button* b) { b->Text = L"Cyan"; }));   // wraps to row 2
+});
+```
+
+`AddChild(child)` without coordinates appends to the next free cell. Leave one of the properties at `0` to let that axis grow with the content.

@@ -1,0 +1,46 @@
+---
+title: "Slider"
+description: "A keyboard-driven value range control with a proportional fill, configurable step, and horizontal or vertical orientation."
+---
+
+`Slider` is a draggable value range control driven entirely by the keyboard. Left/Right (or Up/Down when vertical) move the handle by `Step`; the visual fills proportionally between `Minimum` and `Maximum`.
+
+## Properties
+
+<ParamField path="Minimum / Maximum" type="float" default="0.0f / 100.0f">
+  The value range the slider covers.
+</ParamField>
+
+<ParamField path="Value" type="float" default="0.0f">
+  The current value. Assign it to move the handle programmatically.
+</ParamField>
+
+<ParamField path="Step" type="float" default="1.0f">
+  The amount each key press adds or subtracts.
+</ParamField>
+
+<ParamField path="Orientation" type="Orientation" default="Orientation::Horizontal">
+  `Horizontal` uses Left/Right; `Vertical` uses Up/Down.
+</ParamField>
+
+## Events
+
+<ParamField path="ValueChanged" type="Event<float>">
+  Fired with the new value after every keyboard or programmatic change.
+</ParamField>
+
+## Example
+
+```cpp
+auto volume = init<Slider>([](Slider* s)
+{
+    s->Minimum = 0.0f;
+    s->Maximum = 11.0f;
+    s->Step    = 1.0f;
+    s->Orientation = Orientation::Horizontal;
+
+    s->ValueChanged += [](float value) { /* value in [0, 11] */ };
+});
+```
+
+Use `Fraction()` to read the normalized handle position in `[0, 1]` — handy when rendering a custom slider of your own.

@@ -1,0 +1,62 @@
+---
+title: "Button"
+description: "A focusable labelled button activated with Enter or Space that fires the Clicked event, with customizable pressed colors."
+---
+
+`Button` renders a labelled, clickable widget. It responds to **Enter** and **Space** when focused, visually toggles its pressed state, and fires the `Clicked` event on key-up. You can also trigger a click programmatically with `Click()`.
+
+The focus manager handles arrow-key navigation automatically when the button is placed inside a layout container — you do not wire up navigation manually.
+
+## Properties
+
+<ParamField path="Text" type="std::wstring" default='L""'>
+  The label rendered inside the button. Changing `Text` invalidates the measure pass, so the button resizes to fit its new content automatically.
+</ParamField>
+
+<ParamField path="PressedForegroundColor" type="Color" default="Color::BLACK">
+  Foreground (text) color applied while the button is held down.
+</ParamField>
+
+<ParamField path="PressedBackgroundColor" type="Color" default="Color::CYAN">
+  Background color applied while the button is held down.
+</ParamField>
+
+## Events
+
+<ParamField path="Clicked" type="Event<>">
+  Fired when the user releases **Enter** or **Space** while the button is focused, or when `Click()` is called programmatically. Subscribe with `+=`.
+
+  ```cpp
+  button->Clicked += []() { /* handle click */ };
+  ```
+</ParamField>
+
+## Methods
+
+<ParamField path="Click()" type="method">
+  Programmatically activate the button: sets the pressed visual state, fires `Clicked`, and then clears the pressed state on the next `OnKeyUp`. Use this to trigger button behaviour from hotkeys or external logic.
+</ParamField>
+
+## Keyboard activation
+
+The button intercepts `InputKey::RETURN` and `InputKey::SPACE` on `OnKeyDown`/`OnKeyUp`. It does not consume any other keys, so focus navigation through arrow keys works normally.
+
+## Example — status bar button with click handler
+
+```cpp
+auto statusButton = init<Button>([](Button* btn)
+{
+    btn->Text                 = L"ESC - exit | /help | Chat: Tamerlan";
+    btn->HorizontalAlignment  = HorizontalAlign::Stretch;
+    btn->VerticalAlignment    = VerticalAlign::Top;
+
+    btn->Clicked += []()
+    {
+        MessageBox::Show(L"Help", L"Help screen", MessageBoxButton::YesNoCancel);
+    };
+});
+```
+
+<Tip>
+  Give buttons a `HorizontalAlignment` of `HorizontalAlign::Stretch` inside a `Star`-sized column to fill available width. This makes keyboard-only interfaces feel more like traditional TUI forms.
+</Tip>

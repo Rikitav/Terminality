@@ -1,0 +1,55 @@
+---
+title: "TextBox"
+description: "Single- or multi-line text input with an internal cursor, wrapping, alignment, and Enter-to-send hotkey patterns."
+---
+
+`TextBox` is a single- or multi-line text input. It manages an internal cursor position, handles character insertion and deletion, and fires `TextChanged` after every edit. It is the primary control for accepting free-form text from the user.
+
+## Properties
+
+<ParamField path="Text" type="std::wstring" default='L""'>
+  The current contents of the text box. You can read and write this property at any time. Writing to it moves the cursor to the end of the new string.
+</ParamField>
+
+<ParamField path="TextWrapping" type="TextWrap" default="TextWrap::NoWrap">
+  How text that overflows the width is handled. Set to `TextWrap::Wrap` or `TextWrap::WrapWholeWords` to enable multi-line editing.
+</ParamField>
+
+<ParamField path="TextAlignment" type="TextAlign" default="TextAlign::Left">
+  Horizontal alignment of the text within the control's width.
+</ParamField>
+
+<ParamField path="AcceptsReturn" type="bool" default="false">
+  When `true`, the **Enter** key inserts a newline character instead of being passed to the parent. Set to `false` for single-line inputs where **Enter** should trigger submission logic via `OnHotkey`.
+</ParamField>
+
+## Events
+
+<ParamField path="TextChanged" type="Event<>">
+  Fired after every keystroke that modifies `Text`. Use this to implement live validation or character counters.
+</ParamField>
+
+## Example — chat input with Enter-to-send
+
+A single-line input with Enter-to-send. `AcceptsReturn` is `false` so Enter does not insert a newline, and `OnHotkey` intercepts `InputKey::RETURN` to submit the message.
+
+```cpp
+inputGrid->AddChild(0, 2, init<TextBox>([&](TextBox* inputBox)
+{
+    inputBox->Text                = L"";
+    inputBox->MaxSize             = Size(-1, 1);   // clamp to one row
+    inputBox->HorizontalAlignment = HorizontalAlign::Stretch;
+    inputBox->AcceptsReturn       = false;
+
+    inputBox->OnHotkey(InputModifier::None, InputKey::RETURN, [&](ControlBase* self)
+    {
+        auto* tb = static_cast<TextBox*>(self);
+        chatHistory_.push_back(MessageModel{ true, L"[now]", tb->Text });
+        tb->Text = L"";   // clear after sending
+    });
+}));
+```
+
+<Note>
+  `OnHotkey` is defined on `ControlBase` and is available on every control. It registers a key binding scoped to the control — the lambda receives a `ControlBase*` pointer to `self`, which you cast to the concrete type when needed.
+</Note>

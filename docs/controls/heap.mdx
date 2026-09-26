@@ -1,0 +1,40 @@
+---
+title: "Heap"
+description: "An absolute-positioning container that pins each child to an explicit point and measures to the bounding box of its children."
+---
+
+`Heap` is an absolute-positioning container: each child is pinned to an explicit point, and the heap measures to the bounding box of its children. It is the escape hatch for non-linear layouts — overlays, diagrams, floating tooltips — anywhere a `Grid` or `StackPanel` does not fit.
+
+## Methods
+
+<ParamField path="AddChild(Point position, child)" type="method">
+  Pins `child` at `position` and returns a raw pointer to it. An `(x, y)` overload is available.
+</ParamField>
+
+<ParamField path="RemoveChild(child)" type="method">
+  Detaches and returns the child by raw pointer.
+</ParamField>
+
+<ParamField path="Clear()" type="method">
+  Removes all children.
+</ParamField>
+
+<ParamField path="Count()" type="method">
+  Number of pinned children.
+</ParamField>
+
+## Example
+
+```cpp
+auto heap = init<Heap>([](Heap* h)
+{
+    h->HorizontalAlignment = HorizontalAlign::Stretch;
+    h->VerticalAlignment   = VerticalAlign::Stretch;
+
+    h->AddChild(Point(2, 1),  init<Label>([](Label* l) { l->Text = L"Origin"; }));
+    h->AddChild(Point(20, 8), init<Label>([](Label* l) { l->Text = L"Over here"; }));
+    h->AddChild(40, 3, init<Button>([](Button* b) { b->Text = L"Floating action"; }));
+});
+```
+
+Focus navigation between pinned children follows insertion order, with arrow-key routing handled by the heap itself.

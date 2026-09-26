@@ -1,0 +1,52 @@
+---
+title: "BarrelListBox"
+description: "Render a collection of strings as a spinning barrel with the selection centered and distant options progressively dimmed."
+---
+
+`BarrelListBox` renders an `ObservableCollection<std::wstring>` as a spinning barrel: the selected item sits in the vertical center, the previous and next items render directly above and below it, and items farther from the selection are progressively dimmed. Up/Down spin the barrel.
+
+## Properties
+
+<ParamField path="Items" type="ObservableCollection<std::wstring>">
+  The strings to display. Mutations (`push_back`, `erase`, `replace`, `clear`) refresh the control automatically.
+</ParamField>
+
+<ParamField path="SelectedIndex" type="int32_t" default="0">
+  The barrel's current position. Assign it to spin programmatically.
+</ParamField>
+
+<ParamField path="VisibleRows" type="int32_t" default="5">
+  Total rows to render. The control also honors an imposed height: when the parent arranges it taller, more rows render.
+</ParamField>
+
+<ParamField path="Wrap" type="bool" default="true">
+  When `true`, spinning past the first or last item wraps around to the opposite end.
+</ParamField>
+
+## Events
+
+<ParamField path="SelectionChanged" type="Event<std::size_t>">
+  Fired with the new index whenever the selection moves — by keyboard or by assignment.
+</ParamField>
+
+## Example
+
+```cpp
+auto barrel = init<BarrelListBox>([](BarrelListBox* b)
+{
+    b->Items.push_back(L"Monday");
+    b->Items.push_back(L"Tuesday");
+    b->Items.push_back(L"Wednesday");
+    b->Items.push_back(L"Thursday");
+    b->Items.push_back(L"Friday");
+
+    b->SelectionChanged += [](std::size_t index) { /* index selected */ };
+});
+```
+
+Use `GetSelectedItem()` for a pointer to the selected string (or `nullptr` when `Items` is empty).
+
+```cpp
+if (const std::wstring* day = barrel->GetSelectedItem())
+    // use *day
+```

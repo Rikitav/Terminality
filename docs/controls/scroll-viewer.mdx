@@ -1,0 +1,55 @@
+---
+title: "ScrollViewer"
+description: "Wrap a single child and pan it with arrow keys when its desired size exceeds the viewport, with programmatic scroll offsets."
+---
+
+`ScrollViewer` wraps a single child control and provides panning when the child's desired size exceeds the viewport. The user can scroll with the arrow keys when the control is focused.
+
+## Properties
+
+<ParamField path="Content" type="unique_ptr<ControlBase>">
+  The single child to display and scroll. Assign with `std::move` or `init<T>`.
+</ParamField>
+
+<ParamField path="ScrollX" type="int" default="0">
+  Horizontal scroll offset in cells. Increasing this value pans the content left.
+</ParamField>
+
+<ParamField path="ScrollY" type="int" default="0">
+  Vertical scroll offset in cells. Increasing this value pans the content up.
+</ParamField>
+
+## Measurement methods
+
+<ParamField path="GetExtentWidth()" type="int">
+  The total width of the scrollable content in cells (the child's desired width).
+</ParamField>
+
+<ParamField path="GetExtentHeight()" type="int">
+  The total height of the scrollable content in cells.
+</ParamField>
+
+<ParamField path="GetViewportWidth()" type="int">
+  The visible width of the `ScrollViewer` in cells.
+</ParamField>
+
+<ParamField path="GetViewportHeight()" type="int">
+  The visible height of the `ScrollViewer` in cells.
+</ParamField>
+
+## Example
+
+```cpp
+auto viewer = std::make_unique<ScrollViewer>();
+viewer->HorizontalAlignment = HorizontalAlign::Stretch;
+viewer->VerticalAlignment   = VerticalAlign::Stretch;
+
+viewer->Content = init<Label>([](Label* l)
+{
+    l->Text = L"A very long line that extends beyond the terminal width...";
+    l->TextWrapping = TextWrap::NoWrap;
+});
+
+// Programmatically jump to position (20, 0)
+viewer->ScrollX = 20;
+```

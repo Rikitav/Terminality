@@ -1,0 +1,56 @@
+---
+title: "DataGrid"
+description: "Present rows of wide-string cells in fixed-width columns with a header row, row selection, and automatic scrolling."
+---
+
+`DataGrid` presents rows of wide-string cells in fixed-width columns with a header row, selection, and scrolling.
+
+## Properties
+
+<ParamField path="ItemsSource" type="std::vector<std::vector<std::wstring>>">
+  The rows to display. Each inner vector is one row; element `i` renders in column `i`.
+</ParamField>
+
+<ParamField path="SelectedIndex" type="int" default="-1">
+  The currently selected row, or `-1` when nothing is selected.
+</ParamField>
+
+<ParamField path="ShowGridLines" type="bool" default="true">
+  Draw vertical separators between columns.
+</ParamField>
+
+<ParamField path="HeaderForegroundColor / HeaderBackgroundColor" type="Color" default="BLACK on WHITE">
+  Header row colors.
+</ParamField>
+
+<ParamField path="SelectedForegroundColor / SelectedBackgroundColor" type="Color">
+  Selected row colors.
+</ParamField>
+
+## Events
+
+<ParamField path="SelectionChanged" type="Event<int>">
+  Fired with the new row index whenever the selection moves.
+</ParamField>
+
+## Example
+
+```cpp
+auto grid = init<DataGrid>([](DataGrid* dg)
+{
+    dg->AddColumn(L"Name", 20);
+    dg->AddColumn(L"Size", 10);
+    dg->AddColumn(L"Modified", 12);
+
+    dg->ItemsSource = std::vector<std::vector<std::wstring>>
+    {
+        { L"main.cpp",      L"4.2 KB", L"2026-09-20" },
+        { L"README.md",     L"2.8 KB", L"2026-09-18" },
+        { L"Terminality.hpp", L"612 KB", L"2026-09-26" },
+    };
+
+    dg->SelectionChanged += [](int row) { /* row selected */ };
+});
+```
+
+Keyboard: Up/Down move the selection, PageUp/PageDown scroll by a screenful, Home/End jump to the first/last row, Left/Right scroll horizontally when the columns overflow. The view scrolls automatically to keep the selected row visible.

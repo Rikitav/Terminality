@@ -43,12 +43,27 @@
           {
             "group": "Controls",
             "pages": [
-              "controls/layout-controls",
-              "controls/visual-controls",
-              "controls/interactive-controls",
-              "controls/selection-controls",
-              "controls/misc-controls",
-              "controls/menus"
+              "controls/grid",
+              "controls/stack-panel",
+              "controls/scroll-viewer",
+              "controls/items-control",
+              "controls/label",
+              "controls/border",
+              "controls/progress-bar",
+              "controls/spinner",
+              "controls/button",
+              "controls/text-box",
+              "controls/check-box",
+              "controls/tab-control",
+              "controls/tree-view",
+              "controls/data-grid",
+              "controls/barrel-list-box",
+              "controls/slider",
+              "controls/expander",
+              "controls/canvas",
+              "controls/heap",
+              "controls/menu",
+              "controls/menu-bar"
             ]
           },
           {

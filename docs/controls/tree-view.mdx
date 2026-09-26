@@ -1,0 +1,68 @@
+---
+title: "TreeView"
+description: "Render a hierarchy of TreeNode objects as an indented, keyboard-navigable list with expand, collapse, and activation events."
+---
+
+`TreeView` renders a hierarchy of `TreeNode` objects as an indented, keyboard-navigable list. The model (`TreeNode`) is separate from the view: build and mutate the tree at any time, from any ownership arrangement, and the view refreshes automatically once a node is attached.
+
+## TreeNode — the model
+
+```cpp
+TreeNode* AddChild(std::wstring header, std::wstring tag = L"");   // convenience
+TreeNode* AddChild(std::unique_ptr<TreeNode> child);
+std::unique_ptr<TreeNode> RemoveChild(TreeNode* child);
+std::unique_ptr<TreeNode> RemoveAt(std::size_t index);
+void Clear();
+
+void SetHeader(std::wstring header);
+void SetTag(std::wstring tag);
+bool IsExpanded() const;
+void Expand();
+void Collapse();
+void ToggleExpanded();
+
+Event<> Expanded;    // fired right after the node becomes expanded
+Event<> Collapsed;
+```
+
+## TreeView — the view
+
+```cpp
+TreeNode* AddNode(std::wstring header, std::wstring tag = L"");
+std::unique_ptr<TreeNode> RemoveNode(TreeNode* node);
+void Clear();
+
+TreeNode* GetSelected() const;
+bool Select(TreeNode* node);   // expands ancestors to reveal the node
+void SelectFirst();
+void SelectLast();
+
+void ExpandAll();
+void CollapseAll();
+
+Event<TreeNode*> SelectionChanged;
+Event<TreeNode*> NodeActivated;   // fired on Enter — the "open this item" gesture
+```
+
+Visual configuration: `CollapsedGlyph` (`'+'`), `ExpandedGlyph` (`'-'`), `LeafGlyph` (`' '`), `ShowGlyphs` (`true`), and `IndentSize` (`2`).
+
+## Example
+
+```cpp
+auto tree = init<TreeView>([](TreeView* tv)
+{
+    auto* src = tv->AddNode(L"src");
+    src->AddChild(L"main.cpp");
+    src->AddChild(L"CMakeLists.txt");
+
+    auto* docs = tv->AddNode(L"docs");
+    docs->AddChild(L"index.md");
+
+    tv->NodeActivated += [](TreeNode* node)
+    {
+        // open the file, navigate to the page, ...
+    };
+});
+```
+
+Keyboard: Up/Down move the selection, Left/Right collapse and expand, Home/End jump to the first/last visible node, Enter or Space fires `NodeActivated`.
