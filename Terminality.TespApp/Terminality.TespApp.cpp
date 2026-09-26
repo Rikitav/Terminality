@@ -271,6 +271,20 @@ std::unique_ptr<ControlBase> TestProgressBarAndSpinner()
 
         p->AddChildControl(init<Label>([](Label* l)
         {
+            l->Text = L"Timer fires: 0";
+            l->Margin = Thickness(0, 1, 0, 1);
+
+            static int fireCount = 0;
+            static DispatchTimer::TimerHandle timerHandle;
+
+            timerHandle = DispatchTimer::Current().SetInterval(std::chrono::milliseconds(500), [l]
+            {
+                l->Text = L"Timer fires: " + std::to_wstring(++fireCount);
+            });
+        }));
+
+        p->AddChildControl(init<Label>([](Label* l)
+        {
             l->Text = L"Indeterminate ProgressBar:";
         }));
 

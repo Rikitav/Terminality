@@ -11,10 +11,40 @@
 #include <termios.h>
 #include <unistd.h>
 #include <poll.h>
+#include <fcntl.h>
 #include <cwchar>
 #include <string>
 
 using namespace terminality;
+
+namespace
+{
+	struct WakePipe
+	{
+		int readFd = -1;
+		int writeFd = -1;
+	};
+
+	WakePipe& GetWakePipe()
+	{
+		static WakePipe pipe = []
+		{
+			WakePipe p;
+			int fds[2];
+			if (::pipe(fds) == 0)
+			{
+				fcntl(fds[0], F_SETFL, O_NONBLOCK);
+				fcntl(fds[1], F_SETFL, O_NONBLOCK);
+				p.readFd = fds[0];
+				p.writeFd = fds[1];
+			}
+
+			return p;
+		}();
+
+		return pipe;
+	}
+}
 
 static struct termios original_termios;
 
@@ -99,17 +129,52 @@ Size HostBackend::QueryViewportSize()
 	return Size(w.ws_col, w.ws_row);
 }
 
+void HostBackend::SignalInput()
+{
+	const WakePipe& p = GetWakePipe();
+	if (p.writeFd >= 0)
+	{
+		const char byte = 1;
+		ssize_t result = write(p.writeFd, &byte, 1);
+		(void)result; // EAGAIN when the pipe is full: the signal is already pending
+	}
+}
+
+void HostBackend::ResetInputSignal()
+{
+	const WakePipe& p = GetWakePipe();
+	if (p.readFd < 0)
+		return;
+
+	char buffer[64];
+	while (true)
+	{
+		ssize_t result = read(p.readFd, buffer, sizeof(buffer));
+		if (result <= 0)
+			break;
+	}
+}
+
 InputEvent HostBackend::PollInput(std::chrono::milliseconds timeout)
 {
 	static std::string pending;
 
-	struct pollfd pfd = { STDIN_FILENO, POLLIN, 0 };
+	const int wakeReadFd = GetWakePipe().readFd;
+	struct pollfd fds[2] = {
+		{ STDIN_FILENO, POLLIN, 0 },
+		{ wakeReadFd, POLLIN, 0 }
+	};
+
+	const nfds_t nfds = wakeReadFd >= 0 ? 2 : 1;
 
 	// If we already have buffered bytes, only do a non-blocking check for more.
 	int pollTimeout = pending.empty() ? static_cast<int>(timeout.count()) : 0;
-	int ret = poll(&pfd, 1, pollTimeout);
+	int ret = poll(fds, nfds, pollTimeout);
 
-	if (ret > 0 && (pfd.revents & POLLIN))
+	if (ret > 0 && nfds == 2 && (fds[1].revents & POLLIN))
+		ResetInputSignal();
+
+	if (ret > 0 && (fds[0].revents & POLLIN))
 	{
 		char buffer[256];
 		ssize_t bytesRead = read(STDIN_FILENO, buffer, sizeof(buffer));

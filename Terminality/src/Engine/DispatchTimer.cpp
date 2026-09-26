@@ -7,8 +7,11 @@
 #include <functional>
 
 #include <terminality/Engine/DispatchTimer.hpp>
+#include <terminality/Framework/HostApplication.hpp>
 
 using namespace terminality;
+
+using DueTimersMap = std::vector<std::pair<std::uint64_t, std::function<void()>>>;
 
 DispatchTimer& DispatchTimer::Current()
 {
@@ -39,8 +42,12 @@ void DispatchTimer::InvokeAsync(std::function<void()> task)
 	if (!task)
 		return;
 
-	std::lock_guard<std::mutex> lock(mutex_);
-	tasks_.push_back(std::move(task));
+	{
+		std::lock_guard<std::mutex> lock(mutex_);
+		tasks_.push_back(std::move(task));
+	}
+
+	HostBackend::SignalInput();
 }
 
 void DispatchTimer::ProcessTasks()
@@ -48,10 +55,8 @@ void DispatchTimer::ProcessTasks()
 	std::vector<std::function<void()>> currentTasks;
 	{
 		std::lock_guard<std::mutex> lock(mutex_);
-		if (tasks_.empty())
-			return;
-
-		currentTasks = std::move(tasks_);
+		if (!tasks_.empty())
+			currentTasks = std::move(tasks_);
 	}
 
 	for (const auto& task : currentTasks)
@@ -69,6 +74,92 @@ void DispatchTimer::ProcessTasks()
 			// ...
 		}
 	}
+
+	std::lock_guard<std::mutex> lock(mutex_);
+	if (tasks_.empty())
+		HostBackend::ResetInputSignal();
+}
+
+DispatchTimer::TimerHandle& DispatchTimer::TimerHandle::operator=(TimerHandle&& other) noexcept
+{
+	if (this != &other)
+	{
+		Cancel();
+		id_ = std::exchange(other.id_, 0);
+	}
+
+	return *this;
+}
+
+DispatchTimer::TimerHandle::~TimerHandle()
+{
+	Cancel();
+}
+
+void DispatchTimer::TimerHandle::Cancel()
+{
+	if (id_ == 0)
+		return;
+
+	DispatchTimer::Current().CancelTimer(std::exchange(id_, 0));
+}
+
+bool DispatchTimer::TimerHandle::IsActive() const
+{
+	if (id_ == 0)
+		return false;
+
+	DispatchTimer& timer = DispatchTimer::Current();
+	std::lock_guard<std::mutex> lock(timer.mutex_);
+	return timer.timers_.find(id_) != timer.timers_.end();
+}
+
+void DispatchTimer::CancelTimer(std::uint64_t id)
+{
+	std::lock_guard<std::mutex> lock(mutex_);
+	timers_.erase(id);
+}
+
+DispatchTimer::TimerHandle DispatchTimer::SetInterval(std::chrono::milliseconds interval, std::function<void()> callback)
+{
+	if (!callback)
+		return TimerHandle();
+
+	TimerEntry entry;
+	entry.callback = std::move(callback);
+	entry.period = interval;
+	entry.repeat = true;
+
+	std::lock_guard<std::mutex> lock(mutex_);
+	entry.nextFire = totalTime_ + interval.count() / 1000.0f;
+
+	const std::uint64_t id = nextTimerId_++;
+	timers_.emplace(id, std::move(entry));
+
+	// Wake the UI thread: a short delay may already be due.
+	HostBackend::SignalInput();
+	return TimerHandle(id);
+}
+
+DispatchTimer::TimerHandle DispatchTimer::SetTimeout(std::chrono::milliseconds delay, std::function<void()> callback)
+{
+	if (!callback)
+		return TimerHandle();
+
+	TimerEntry entry;
+	entry.callback = std::move(callback);
+	entry.period = delay;
+	entry.repeat = false;
+
+	std::lock_guard<std::mutex> lock(mutex_);
+	entry.nextFire = totalTime_ + delay.count() / 1000.0f;
+
+	const std::uint64_t id = nextTimerId_++;
+	timers_.emplace(id, std::move(entry));
+
+	// Wake the UI thread: a short delay may already be due.
+	HostBackend::SignalInput();
+	return TimerHandle(id);
 }
 
 bool DispatchTimer::IsRunning() const
@@ -124,6 +215,32 @@ void DispatchTimer::Tick()
 			isResizing_ = false;
 			ResizeFinishedEvent.Emit();
 		}
+	}
+
+	DueTimersMap dueTimers;
+	{
+		std::lock_guard<std::mutex> lock(mutex_);
+		for (const auto& [id, timer] : timers_)
+		{
+			if (totalTime_ >= timer.nextFire)
+				dueTimers.emplace_back(id, timer.callback);
+		}
+	}
+
+	for (const auto& [id, callback] : dueTimers)
+	{
+		if (callback)
+			callback();
+
+		std::lock_guard<std::mutex> lock(mutex_);
+		const auto it = timers_.find(id);
+		if (it == timers_.end())
+			continue; // cancelled (handle destroyed or Cancel()) while firing
+
+		if (it->second.repeat)
+			it->second.nextFire = totalTime_ + it->second.period.count() / 1000.0f;
+		else
+			timers_.erase(it);
 	}
 }
 

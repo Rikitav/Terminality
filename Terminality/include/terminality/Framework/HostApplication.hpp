@@ -21,6 +21,8 @@ namespace terminality
 	public:
 		static Size QueryViewportSize();
 		static InputEvent PollInput(std::chrono::milliseconds timeout);
+		static void SignalInput();
+		static void ResetInputSignal();
 	};
 
 	class HostApplication

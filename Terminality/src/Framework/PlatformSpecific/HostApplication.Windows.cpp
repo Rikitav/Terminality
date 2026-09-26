@@ -23,6 +23,15 @@
 #undef MessageBox
 #endif
 
+namespace
+{
+	HANDLE GetWakeEvent()
+	{
+		static HANDLE event = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+		return event;
+	}
+}
+
 using namespace terminality;
 
 namespace
@@ -297,6 +306,16 @@ Size HostBackend::QueryViewportSize()
     return Size(columns, rows);
 }
 
+void HostBackend::SignalInput()
+{
+    SetEvent(GetWakeEvent());
+}
+
+void HostBackend::ResetInputSignal()
+{
+    ResetEvent(GetWakeEvent());
+}
+
 InputEvent HostBackend::PollInput(std::chrono::milliseconds timeout)
 {
     // Synthesized key-ups are returned before reading new input
@@ -309,7 +328,13 @@ InputEvent HostBackend::PollInput(std::chrono::milliseconds timeout)
     }
 
     static HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
-    DWORD waitResult = WaitForSingleObject(hInput, static_cast<DWORD>(timeout.count()));
+    static HANDLE hWake = GetWakeEvent();
+
+    const HANDLE handles[2] = { hInput, hWake };
+    DWORD waitResult = WaitForMultipleObjects(2, handles, FALSE, static_cast<DWORD>(timeout.count()));
+
+    if (waitResult == WAIT_OBJECT_0 + 1)
+        return InputEvent(InputModifier::None, InputKey::None, false);
 
     if (waitResult != WAIT_OBJECT_0)
         return InputEvent(InputModifier::None, InputKey::None, false);
