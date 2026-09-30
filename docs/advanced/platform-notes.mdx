@@ -40,9 +40,17 @@ The source lists use `file(GLOB_RECURSE)`. After adding or removing `.hpp`/`.cpp
 Terminality is tested against the **latest stable releases** of:
 
 - **MSVC** (Visual Studio 2022 or later) — primary development compiler on Windows
+- **Clang** (LLVM for Windows, `windows-msvc` target) — verified with Clang 22.x
 - **GCC** (13 or later) — used on Windows (via MinGW/Strawberry) and Linux
 
-Because the framework is standard C++20 without modules, other conforming toolchains (newer Clang versions, for example) are expected to work but are not officially tested.
+Because the framework is standard C++20 without modules, any other conforming C++20 toolchain is expected to work as well. The repository ships `CMakePresets.json` (Ninja-based presets for all three compilers) and a `build.bat` driver, so every supported toolchain can be exercised with one command:
+
+```bat
+build.bat msvc Release
+build.bat clang Release
+build.bat mingw Release
+build.bat all Debug        :: every detected toolchain
+```
 
 ## Windows
 
@@ -116,8 +124,16 @@ cmake --build .
 ```
 
 <Tabs>
-  <Tab title="Windows (MSVC)">
-    Open the repository in Visual Studio 2022 and use the **CMake** project support, or run from the Developer Command Prompt:
+  <Tab title="Windows (MSVC / Clang / MinGW)">
+    Use the driver script (MSVC environment is located automatically; Clang and MinGW must be on `PATH`):
+
+    ```bat
+    build.bat msvc Release
+    build.bat clang Release
+    build.bat mingw Release
+    ```
+
+    Or run from a Developer Command Prompt with the generator of your choice:
 
     ```bash
     cmake -G "Visual Studio 17 2022" ..

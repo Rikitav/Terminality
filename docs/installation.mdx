@@ -9,8 +9,8 @@ Terminality is distributed as source in two forms: a classic headers-plus-source
 
 Before you build, make sure you have:
 
-- **C++20-capable compiler** — MSVC (Visual Studio 2022) on Windows or GCC 13+ on Linux. There is no module machinery to support; any conforming C++20 toolchain works.
-- **CMake 3.20 or newer** — the root `CMakeLists.txt` declares `cmake_minimum_required(VERSION 3.20)`.
+- **C++20-capable compiler** — MSVC (Visual Studio 2022+), Clang (LLVM for Windows), or GCC 13+ (MinGW-w64 / Linux). There is no module machinery to support; any conforming C++20 toolchain works.
+- **CMake 3.21 or newer** — the root `CMakeLists.txt` declares `cmake_minimum_required(VERSION 3.20)`, and `CMakePresets.json` (the convenience presets) requires CMake 3.21+.
 - **Git** — to clone the repository.
 
 ## Build Terminality
@@ -109,12 +109,22 @@ This is the simplest option for quick prototypes, single-TU programs, and embedd
 
 <Tabs>
   <Tab title="Windows">
-    Build with MSVC via the Visual Studio 2022 generator, Ninja, or the `cl` command line. The Windows backend (`HostApplication.Windows.cpp`) is selected automatically by CMake when `WIN32` is defined. The test application and samples currently build on Windows only.
+    Three toolchains are verified: **MSVC** (located automatically via `vswhere`), **Clang**, and **MinGW GCC** (both must be on `PATH`). The easiest route is the driver script — it loads the MSVC environment when needed, configures the matching CMake preset, and builds:
+
+    ```bat
+    build.bat msvc Release
+    build.bat clang Debug
+    build.bat mingw Release
+    ```
+
+    Or drive the presets yourself (run inside a Developer Command Prompt for the `msvc` presets):
 
     ```bash
-    cmake .. -G "Visual Studio 17 2022"
-    cmake --build . --config Release
+    cmake --preset msvc-x64-release
+    cmake --build --preset msvc-x64-release
     ```
+
+    Available presets: `msvc-x64-debug/release`, `clang-x64-debug/release`, `mingw-x64-debug/release`. The Windows backend (`HostApplication.Windows.cpp`) is selected automatically by CMake when `WIN32` is defined. The test application and samples currently build on Windows only.
   </Tab>
   <Tab title="Linux">
     Build with GCC 13+ or a compatible C++20 toolchain. The Linux backend (`HostApplication.Linux.cpp`) is selected automatically when `UNIX` is defined. The `terminality` library itself builds and runs on Linux; the test executable is not built there.

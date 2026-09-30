@@ -1,0 +1,89 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}"
+    },
+
+    {
+      "name": "msvc-x64-debug",
+      "displayName": "MSVC x64 Debug",
+      "description": "Visual Studio C++ toolset (cl), Ninja, Debug",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "msvc-x64-release",
+      "displayName": "MSVC x64 Release",
+      "description": "Visual Studio C++ toolset (cl), Ninja, Release",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+
+    {
+      "name": "clang-x64-debug",
+      "displayName": "Clang x64 Debug",
+      "description": "LLVM Clang (windows-msvc), Ninja, Debug",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+    {
+      "name": "clang-x64-release",
+      "displayName": "Clang x64 Release",
+      "description": "LLVM Clang (windows-msvc), Ninja, Release",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+
+    {
+      "name": "mingw-x64-debug",
+      "displayName": "MinGW GCC x64 Debug",
+      "description": "MinGW-w64 GCC (g++), Ninja, Debug",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    },
+    {
+      "name": "mingw-x64-release",
+      "displayName": "MinGW GCC x64 Release",
+      "description": "MinGW-w64 GCC (g++), Ninja, Release",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "msvc-x64-debug",    "configurePreset": "msvc-x64-debug" },
+    { "name": "msvc-x64-release",  "configurePreset": "msvc-x64-release" },
+    { "name": "clang-x64-debug",   "configurePreset": "clang-x64-debug" },
+    { "name": "clang-x64-release", "configurePreset": "clang-x64-release" },
+    { "name": "mingw-x64-debug",   "configurePreset": "mingw-x64-debug" },
+    { "name": "mingw-x64-release", "configurePreset": "mingw-x64-release" }
+  ]
+}
