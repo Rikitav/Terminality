@@ -1,0 +1,96 @@
+---
+title: "ResizePanel"
+description: "A strip container with movable divider lines between children, driven by SHIFT+key pairs with on-screen hint tags."
+---
+
+`ResizePanel` arranges its children in a single line — vertically (default, stacked top to bottom) or horizontally (side by side) — separated by movable divider lines. Each divider owns a pair of keys that, together with **SHIFT**, moves the divider by one cell: the *expand* key moves it up in vertical panels and to the right in horizontal panels; the *retract* key moves it the opposite way. Nesting `ResizePanel`s produces grid-like layouts with dividers at every boundary.
+
+While **SHIFT** is held, the panel renders a hint tag with a rounded border and the panel's focused colors, centered on every divider line's center point, showing the key combination in the form `SHIFT+<retract>\<expand>`.
+
+## Properties
+
+<ParamField path="Orientation" type="Orientation" default="Orientation::Vertical">
+  `Vertical` stacks children with horizontal dividers; `Horizontal` places them side by side with vertical dividers.
+</ParamField>
+
+<ParamField path="SplitterColor" type="Color" default="Color::DARK_GRAY">
+  Color of the divider lines when SHIFT is not held.
+</ParamField>
+
+<ParamField path="FocusedSplitterColor" type="Color" default="Color::CYAN">
+  Color of the divider lines while SHIFT is held.
+</ParamField>
+
+<ParamField path="ShowHints" type="bool" default="true">
+  Render the hint tags while SHIFT is held.
+</ParamField>
+
+<ParamField path="PressedForegroundColor / PressedBackgroundColor" type="Color" default="BLACK on CYAN">
+  Colors of the hint tag while its own SHIFT+key combination is held down. Tags whose combination is not pressed use `FocusedForegroundColor` / `FocusedBackgroundColor`.
+</ParamField>
+
+## Methods
+
+<ParamField path="AddChildControl(child) / AddChild<T>(child)" type="method">
+  Append a control. A new divider (with generated keys) is created between it and the previous child. `AddChild<T>` returns the raw, non-owning pointer.
+</ParamField>
+
+<ParamField path="RemoveChildControl(child) / RemoveAt(index) / Clear()" type="method">
+  Remove children. Dividers are rebuilt; per-index custom key assignments may shift.
+</ParamField>
+
+<ParamField path="SetSplitterKeys(index, retractKey, expandKey)" type="method">
+  Preset the key pair for a divider. Marked as custom, so it survives divider rebuilds and is never overwritten by generated keys.
+</ParamField>
+
+<ParamField path="MoveSplitter(index, delta)" type="method">
+  Move a divider programmatically by `delta` cells (negative toward the retract direction).
+</ParamField>
+
+<ParamField path="GetSplitterOffset(index)" type="method">
+  The divider's current offset in cells from its even-share base position.
+</ParamField>
+
+## Events
+
+<ParamField path="SplitterMoved" type="Event<std::size_t>">
+  Fired with the divider index after every move — by keyboard or by `MoveSplitter`.
+</ParamField>
+
+## Key pairs
+
+Dividers without preset keys get pairs generated from a letter pool (divider 0 → `Q`/`W`, divider 1 → `E`/`R`, and so on). Arrow keys are **never** auto-assigned — see the note below.
+
+<Note>
+  The legacy Windows console (classic conhost) intercepts **Shift+arrow keys** for cell selection before the application ever receives them. Arrow-key splitter pairs therefore only work in Windows Terminal and other modern terminals, and only when set explicitly via `SetSplitterKeys` — the automatic assignment never picks them.
+</Note>
+
+## Example
+
+```cpp
+auto layout = init<ResizePanel>([](ResizePanel* p)
+{
+    p->Orientation = Orientation::Vertical;
+    p->MinSize = Size(60, 20);
+
+    p->AddChildControl(init<Border>([](Border* top)
+    {
+        top->HeaderText = L" Top ";
+        top->Content = init<Label>([](Label* l) { l->Text = L"First section"; });
+    }));
+
+    p->AddChildControl(init<ResizePanel>([](ResizePanel* middle)
+    {
+        middle->Orientation = Orientation::Horizontal;
+
+        middle->AddChildControl(init<Button>([](Button* b) { b->Text = L"Left"; }));
+        middle->AddChildControl(init<Button>([](Button* b) { b->Text = L"Right"; }));
+
+        middle->SetSplitterKeys(0, InputKey::LEFT, InputKey::RIGHT);
+    }));
+
+    p->AddChildControl(init<Label>([](Label* l) { l->Text = L"Bottom section"; }));
+});
+```
+
+Hold **SHIFT** to reveal the hint tags, then press **SHIFT+Q** / **SHIFT+W** (or the preset arrows) to move the dividers.

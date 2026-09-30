@@ -26,6 +26,7 @@
 #include <terminality/Controls/TreeView.hpp>
 #include <terminality/Controls/Heap.hpp>
 #include <terminality/Controls/Expander.hpp>
+#include <terminality/Controls/ResizePanel.hpp>
 
 // terminality.Controls.Visual
 #include <terminality/Controls/Label.hpp>

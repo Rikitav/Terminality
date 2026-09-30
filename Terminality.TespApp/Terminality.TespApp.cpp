@@ -834,6 +834,48 @@ std::unique_ptr<ControlBase> TestHeap()
     });
 }
 
+std::unique_ptr<ControlBase> TestResizePanel()
+{
+    return init<ResizePanel>([](ResizePanel* p)
+    {
+        p->MinSize = Size(60, 20);
+        p->FocusedBackgroundColor = p->BackgroundColor;
+        p->FocusedForegroundColor = Color::DARK_YELLOW;
+
+        p->AddChildControl(init<Border>([](Border* top)
+        {
+            top->HeaderText = L" Top ";
+            top->Content = init<Label>([](Label* l)
+                {
+                    l->Text = L"Hold SHIFT to see hints, then press SHIFT+Q\\W (retract\\expand)";
+                });
+        }));
+
+        p->AddChildControl(init<ResizePanel>([](ResizePanel* middle)
+        {
+            middle->Orientation = terminality::Orientation::Horizontal;
+            middle->FocusedBackgroundColor = middle->BackgroundColor;
+            middle->FocusedForegroundColor = Color::DARK_YELLOW;
+
+            middle->AddChildControl(init<Button>([](Button* btn) { btn->Text = L"Left"; }));
+            middle->AddChildControl(init<Button>([](Button* btn) { btn->Text = L"Center"; }));
+            middle->AddChildControl(init<Button>([](Button* btn) { btn->Text = L"Right"; }));
+
+            middle->SetSplitterKeys(0, InputKey::LEFT, InputKey::RIGHT);
+            middle->SetSplitterKeys(1, InputKey::A, InputKey::D);
+        }));
+
+        p->AddChildControl(init<Border>([](Border* bottom)
+        {
+            bottom->HeaderText = L" Bottom ";
+            bottom->Content = init<Label>([](Label* l)
+                {
+                    l->Text = L"Tab/arrows move focus between the buttons";
+                });
+        }));
+    });
+}
+
 // --- Visuals and Hotkeys ---
 
 std::unique_ptr<ControlBase> TestVisuals()
@@ -1070,6 +1112,7 @@ public:
         tests_.push_back({L"Expander Test", L"Collapsing containers", TestExpander});
         tests_.push_back({L"BarrelListBox Test", L"Barrel-style selection list", TestBarrelListBox});
         tests_.push_back({L"Heap Test", L"Absolute positioning", TestHeap});
+        tests_.push_back({L"ResizePanel Test", L"SHIFT-driven splitters", TestResizePanel});
         
         tests_.push_back({L"Visuals Test", L"Custom colors", TestVisuals});
         tests_.push_back({L"Hotkeys Test", L"Input handling", TestHotkeys});

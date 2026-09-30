@@ -62,6 +62,7 @@
               "controls/expander",
               "controls/canvas",
               "controls/heap",
+              "controls/resize-panel",
               "controls/menu",
               "controls/menu-bar"
             ]
